@@ -6,9 +6,9 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-/*
-don't forget to include the extended socket
+#include <../Network/ExtendedSocket.h>
 
+/*
 pressing the button for the desired function will increment voltage with 1.
 Max level is 5 and pushing "opposite" will result decrease with 1.
 IMPORTANT! This is only for keyboard control, will be different when in use
@@ -88,7 +88,7 @@ int main()
 				break;
 
 			default:
-				printf("Unrecognized input\n")
+				printf("Unrecognized input\n");
 
 	printf("Finished");
 	return 0;
