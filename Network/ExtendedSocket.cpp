@@ -1,18 +1,18 @@
 /*
- * AnalogSIM.cpp
+ * ExtendedSocket.cpp
  *
  *  Created on: Apr 15, 2014
  *      Author: cawl-mobile
  */
 
-#include "AnalogSIM.h"
+#include "ExtendedSocket.h"
 
-AnalogSIM::AnalogSIM() {
+ExtendedSocket::ExtendedSocket() {
 	// TODO Auto-generated constructor stub
 
 }
 
-AnalogSIM::~AnalogSIM() {
+ExtendedSocket::~ExtendedSocket() {
 	// TODO Auto-generated destructor stub
 }
 

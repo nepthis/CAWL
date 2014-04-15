@@ -1,18 +1,18 @@
 /*
- * AnalogSIM.cpp
+ * PacketControl.cpp
  *
  *  Created on: Apr 15, 2014
  *      Author: cawl-mobile
  */
 
-#include "AnalogSIM.h"
+#include "PacketControl.h"
 
-AnalogSIM::AnalogSIM() {
+PacketControl::PacketControl() {
 	// TODO Auto-generated constructor stub
 
 }
 
-AnalogSIM::~AnalogSIM() {
+PacketControl::~PacketControl() {
 	// TODO Auto-generated destructor stub
 }
 
