@@ -6,7 +6,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <../Network/ExtendedSocket.h>
+#include <../Net/ExtendedSocket.h>
 
 /*
 pressing the button for the desired function will increment voltage with 1.
@@ -15,7 +15,10 @@ IMPORTANT! This is only for keyboard control, will be different when in use
 with a joystick or similar
 */
 
+void forwardPacket(packet pkt){
 
+
+}
 int main()
 {
 
@@ -27,16 +30,13 @@ int main()
 	socketOutEbuOne = socket();
 	socketInEbuOne = socket();
 	*/
-
-	//Sockets to/from the simulator will be added together with more functions
-
+	/* For now, ignore the simulator and take keystrokes as input for the steering.
+	 *
+	 *
+	 *
+	 */
 	while((c = getchar()) != EOF)
 		c = tolower(c);
-		/*
-		After editing the inputchar from keyboard to lowercase print it
-		and use a switch to determine the right function for the desired
-		action.
-		*/
 		switch(c)
 			case "w":
 				putchar(c);
