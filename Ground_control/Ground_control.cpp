@@ -16,7 +16,7 @@ with a joystick or similar
 */
 
 
-main()
+int main()
 {
 
 	printf("w; raise boom\ts; lower boom\nq; tilt bucket up\te; tilt bucket down\n");
@@ -41,6 +41,7 @@ main()
 			case "w":
 				putchar(c);
 				if (countBoom <5)
+				{
 					countBoom++;
 					printf("Current level: %d\n", countBoom);
 					/*
@@ -49,28 +50,38 @@ main()
 
 						outSocket send command as char + voltage as int
 					*/
+				}
 				else
+				{
 					printf("At max level\n");
-				break;
+					break;
+				}
 
 			case "s":
 				putchar(c);
 				if(countBoom > -5)
+				{
 					countBoom--;
-					printf("Current level: %d\n", countBoom);	
+					printf("Current level: %d\n", countBoom);
+				}
 				else
+				{
 					printf("At minimum level\n");
-				break;
+					break;
+				}
 
 			case "q":
 				putchar(c);
 				if(countBuck > -5)
+				{
 					countBuck--;
-					printf("Current level: %d\n", countBuck);	
+					printf("Current level: %d\n", countBuck);
+				}
 				else
+				{
 					printf("At minimum level\n");
-
-				break;
+					break;
+				}
 
 			case "e":
 				putchar(c);
