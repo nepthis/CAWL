@@ -2,7 +2,10 @@
  * EBUManager.h
  *
  *  Created on: Apr 16, 2014
- *      Author: cawl-server
+ *      Author: Robin Bond
+ * Description:
+ * This class will be responsible for taking a command and sending it to the right
+ * EBU with the values in the right format.
  */
 #include <string.h>
 #include <stdint.h>
@@ -19,6 +22,7 @@ class EBUManager {
 public:
 	EBUManager();
 	virtual ~EBUManager();
+	void
 	void setEbuAddr(int ebuNum, string addr);
 	//Should probably not be void, but for now they are.
 	void sendCommand(uint16_t pin, uint32_t value);

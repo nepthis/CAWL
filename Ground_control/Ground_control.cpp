@@ -1,3 +1,12 @@
+/*
+ * Ground_control.cpp
+ * Author: Robin Bond
+ * Description:
+ * 	Main program for creating objects for simulator and communication for the
+ * 	gateway at the control site.
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>

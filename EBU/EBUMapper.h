@@ -2,7 +2,10 @@
  * EBUMapper.h
  *
  *  Created on: Apr 16, 2014
- *      Author: cawl-server
+ *      Author: Robin Bond
+ *  Description:
+ *  	The mapper class will be able to map pins and values to the correct
+ *  	EBU and format.
  */
 #include <stdlib.h>
 
