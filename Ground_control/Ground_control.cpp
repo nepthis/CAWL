@@ -68,8 +68,7 @@ int main()
 	 *
 	 */
 	/*
-	socketOutEbuOne = socket();
-	socketInEbuOne = socket();
+
 	*/
 	/* For now, ignore the simulator and take keystrokes as input for the steering.
 	 *
