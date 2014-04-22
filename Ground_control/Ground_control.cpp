@@ -68,8 +68,10 @@ int main()
 	printf("w = raise boom\ts = lower boom\nq = tilt bucket up\te = tilt bucket down\n");
 	printf("z = reset boom level\tx = reset bucket level\n");
 	int c;
-	int countBoom = 0;
-	int countBuck = 0;
+	int countBoomUp = 0;
+	int countBuckUp = 0;
+	int countBoomDown = 0;
+	int countBuckDown = 0;
 	/*
 	 * TODO: Fixa två till variabler och ändra i switch mellan 0-5 för vardera
 	 * det kommer inte att fungera annars då det är 4st funktioner och inte två
@@ -89,10 +91,11 @@ int main()
 		switch(c){
 			case 'w':
 				putchar(c);
+				countBoomDown = 0;
 				if (countBoom < 5)
 				{
-					countBoom++;
-					printf("\nBoom level: %d\n", countBoom);
+					countBoomUp++;
+					printf("\nBoom level: %d\n", countBoomUp);
 					//pkt = createPacket()
 					//extendedSocket.sendPacket()
 				}
@@ -104,10 +107,11 @@ int main()
 
 			case 's':
 				putchar(c);
-				if(countBoom > -5)
+				countBoomUp = 0;
+				if(countBoomDown > -5)
 				{
-					countBoom--;
-					printf("\nBoom level: %d\n", countBoom);
+					countBoomDown--;
+					printf("\nBoom level: %d\n", countBoomDown);
 					//pkt = createPacket()
 					//extendedSocket.sendPacket()
 				}
@@ -118,10 +122,11 @@ int main()
 				break;
 			case 'q':
 				putchar(c);
-				if(countBuck < 5)
+				countBuckDown = 0;
+				if(countBuckUp < 5)
 				{
-					countBuck++;
-					printf("\nBucket level: %d\n", countBuck);
+					countBuckUp++;
+					printf("\nBucket level: %d\n", countBuckUp);
 				}
 				else
 				{
@@ -131,10 +136,11 @@ int main()
 
 			case 'e':
 				putchar(c);
-				if(countBuck > -5)
+				countBuckUp = 0;
+				if(countBuckDown > -5)
 				{
-					countBuck--;
-					printf("\nBucket level: %d\n", countBuck);
+					countBuckDown--;
+					printf("\nBucket level: %d\n", countBuckDown);
 				}
 				else
 				{
@@ -143,12 +149,13 @@ int main()
 				break;
 			case 'z':
 				putchar(c);
-				countBoom = 0;
+				countBoomDown, countBoomUp = 0;
 				printf("\nBoom level reset\n");
 				break;
 			case 'x':
 				putchar(c);
-				countBuck = 0;
+				countBuckDown, countBuckUp = 0;
+
 				printf("\nBucket level reset\n");
 				break;
 

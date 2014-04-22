@@ -19,7 +19,8 @@ using namespace std;
 #define SIM_H_
 
 class Sim {
-	struct socket_in socket_out;
+	struct socket_in addressIn;
+	struct socket_out addressOut;
 	string address;
 	int port;
 	double sentPackages, recPackages;

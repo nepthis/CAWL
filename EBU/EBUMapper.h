@@ -13,20 +13,35 @@
 #define EBUMAPPER_H_
 
 class EBUMapper {
-	struct mapper ebuOne, ebuTwo;
-	double sentPackages, recPackages;
+	class EBUone one;
+	class EBUtwo two;
+	class Answer ans;
 public:
 	EBUMapper();
 	virtual ~EBUMapper();
-	struct answer mapData(uint16_t pin);
 };
 
-typedef struct mapper{
+
+class EBUone{
+
+public:
+	EBUone();
+	virtual ~EBUone();
+};
+
+class EBUtwo{
+
+public:
+	EBUtwo();
+	virtual ~EBUtwo();
 
 };
 
-typedef struct answer{
 
+class Answer{
+public:
+	Answer();
+	virtual ~Answer();
 };
 
 #endif /* EBUMAPPER_H_ */

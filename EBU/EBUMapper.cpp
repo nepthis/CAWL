@@ -7,8 +7,11 @@
 
 #include "EBUMapper.h"
 
+//"main" class
 EBUMapper::EBUMapper() {
 	// TODO Auto-generated constructor stub
+	EBUone = EBUone();
+	EBUtwo = EBUtwo();
 
 }
 
@@ -16,3 +19,15 @@ EBUMapper::~EBUMapper() {
 	// TODO Auto-generated destructor stub
 }
 
+EBUone::EBUone(){
+
+}
+EBUone::~EBUone(){
+
+}
+EBUtwo::EBUtwo(){
+
+}
+EBUtwo::~EBUtwo(){
+
+}
