@@ -2,7 +2,12 @@
  * Sim.h
  *
  *  Created on: Apr 16, 2014
- *      Author: cawl-server
+ *      Author: Robin Bond
+ * Description:
+ * 	A simulator object will be responsible for the connection between Ground control
+ * 	and the simulator. The object will have functions for sending and receiving data
+ * 	between the two systems.
+ *
  */
 #include <sys/socket.h>
 #include <string.h>
@@ -14,7 +19,8 @@ using namespace std;
 #define SIM_H_
 
 class Sim {
-	struct socket_in socket_out;
+	struct socket_in addressIn;
+	struct socket_out addressOut;
 	string address;
 	int port;
 	double sentPackages, recPackages;

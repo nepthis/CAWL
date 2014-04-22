@@ -8,18 +8,13 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <../Net/ExtendedSocket.h>
+#include<../EBU/EBUManager.h>
+
 using namespace std;
 /*
 include the extended socket to Ground control and regular socket to the
 simulator.
 */
-
-double convertVoltToBit(int voltIn)
-{
-	double voltOut = voltIn;
-
-	return voltOut;
-}
 
 
 
@@ -27,21 +22,20 @@ double convertVoltToBit(int voltIn)
  * and forward everything to the right EBU and the right pin with
  * the right values.
  */
-void forwardPacket(packet pkt, socket skt){
-	string str1 = pkt.get();
 
-}
 int main()
 {
-	//Need to fix proper code here
-	socket ebuSocket = socket(0,0,0);
+	EBUManager ebuMan = EBUManager();
 	extendedSocket exSock = extendedSocket();
 	int c;
 	while((c=getchar()) != EOF)
 	{
-		usleep(10000);   //1000 microseconds in a millisecond.
+		usleep(10005);   //1000 microseconds in a millisecond.
 		packet pkt = extendedSocket.getPacket();
-		forwardPacket(pkt, ebuSocket);
+		if ((ebuMan.sendCommand(pkt.pin, pkt.value))<0){
+			perror("error with sending command");
+			return 0;
+		}
 
 	}
 	return 0;
