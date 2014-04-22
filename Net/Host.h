@@ -15,17 +15,17 @@ namespace std {
 class Host {
 
 	private:
-		char o_ip;
+		char o_addr;
 		int  o_port;
 		bool o_server;
 
 	public:
-		Host(char ip , int port , bool server);
+		Host(char addr , int port , bool server);
 		virtual ~Host();
 
-		void SetHost(char ip, int port, bool server);
+		void SetHost(char addr, int port, bool server);
 
-		char GetIp()	{return o_ip;}
+		char GetAddr()	{return o_addr;}
 		int  GetPort()	{return o_port;}
 		bool GetServer(){return o_server;}
 

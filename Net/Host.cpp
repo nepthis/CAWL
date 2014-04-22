@@ -11,19 +11,16 @@
 
 namespace std {
 
-Host::Host(char ip, int port, bool server) {
-	// TODO Auto-generated constructor stub
-	SetHost(ip, port, server);
+Host::Host(char addr, int port, bool server) {
+	SetHost(addr, port, server);
 }
 
 Host::~Host() {
-	// TODO Auto-generated destructor stub
-	//
 	// Add cleanup, no biggy since not that many clients will be created
 }
 
-void Host::SetHost(char ip, int port, bool server) {
-	o_ip = ip;
+void Host::SetHost(char addr, int port, bool server) {
+	o_addr = addr;
 	o_port = port;
 	o_server = server;
 }
