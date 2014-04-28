@@ -20,17 +20,18 @@ using namespace std;
 class EBUManager {
 	int ebuSockOne;
 	int ebuSockTwo;
-	double sentPackages, recPackages;
+	uint16_t analog[24];
+	uint16_t digital[24];
 	struct sockaddr_in ebuOne;
 	struct sockaddr_in ebuTwo;
 public:
 	EBUManager();
 	virtual ~EBUManager();
 	double convertVoltToBit(int volt);
-	int startConnection(int ebuNum, char addrEbu);
-	//Should probably not be void, but for now they are.
-	int sendCommand(uint16_t pin, uint32_t value);
-	int readData(uint16_t pin, uint32_t value);
+	int startConnection(int ebuNum, string addrEbu);
+	int initRelay(void);
+	int sendCommand(EBUPacketIn p);
+	int readData(EBUPacketOut p);
 };
 
 #endif /* EBUMANAGER_H_ */

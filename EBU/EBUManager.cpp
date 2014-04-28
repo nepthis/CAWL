@@ -12,8 +12,6 @@
 
 EBUManager::EBUManager() {
 	// Constructor
-	recPackages = 0;
-	sentPackages = 0;
 	if ((ebuSockOne = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
@@ -40,7 +38,7 @@ int EBUManager::startConnection(int ebuNum, char addrEbu){
 		memset((char *)&ebuOne, 0, sizeof(ebuOne));
 		ebuOne.sin_family = AF_INET;
 		ebuOne.sin_addr.s_addr = htonl(addrEbu);
-		ebuOne.sin_port = htons(0);
+		ebuOne.sin_port = htons(0); //Add right port...
 		if (bind(ebuSockOne, (struct sockaddr *)&ebuOne, sizeof(ebuOne)) < 0) {
 			perror("error with bind");
 			return 0;
@@ -62,7 +60,7 @@ int EBUManager::startConnection(int ebuNum, char addrEbu){
 
 }
 //Should probably not be void, but for now they are.
-int EBUManager::sendCommand(uint16_t pin, uint32_t value){
+int EBUManager::sendCommand(EBUPacket p){
 	return 1; //if success
 }
 int EBUManager::readData(uint16_t pin, uint32_t value){
