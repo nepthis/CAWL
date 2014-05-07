@@ -9,20 +9,18 @@
 
 #include "Host.h"
 
-namespace std {
+namespace Net {
 
-Host::Host(char addr, int port, bool server) {
-	SetHost(addr, port, server);
+Host::Host(std::string a1 ,int port ,bool isServer ,std::string a2) {
+	addr1 = a1;
+	addr2 = a2;
+	o_port = port;
+	o_isServer = isServer;
 }
 
 Host::~Host() {
 	// Add cleanup, no biggy since not that many clients will be created
 }
 
-void Host::SetHost(char addr, int port, bool server) {
-	o_addr = addr;
-	o_port = port;
-	o_server = server;
-}
 
 } /* namespace std */

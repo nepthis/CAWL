@@ -7,15 +7,38 @@
 
 #include "CawlPacket.h"
 
-namespace std {
+// Change to namespace Packets
+namespace  Packets{
 
 CawlPacket::CawlPacket() {
-	// TODO Auto-generated constructor stub
+	prio = streamId = 0;
+}
 
+uint8_t CawlPacket::getPrio() {
+	return prio;
+}
+
+void CawlPacket::setPrio(uint8_t i) {
+	prio = i;
+}
+
+uint8_t CawlPacket::getStreamId() {
+	return streamId;
+}
+
+void CawlPacket::setStreamId(uint8_t i) {
+	streamId = i;
+}
+
+char CawlPacket::getData() {
+	return *data;
+}
+
+void CawlPacket::setData(char c) {
+	memcpy(data,&c,256);
 }
 
 CawlPacket::~CawlPacket() {
-	// TODO Auto-generated destructor stub
-}
+	}
 
 } /* namespace std */

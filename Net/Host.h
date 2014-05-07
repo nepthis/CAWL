@@ -7,29 +7,30 @@
  * Description: Class for holding host variables such as ip etc.
  */
 
+#include <string>
+#include <utility>
+
 #ifndef HOST_H_
 #define HOST_H_
 
-namespace std {
+namespace Net {
 
 class Host {
 
 	private:
-		char o_addr;
+		std::string addr1;
+		std::string addr2;
 		int  o_port;
-		bool o_server;
+		bool o_isServer;
 
 	public:
-		Host(char addr , int port , bool server);
+		Host(std::string, int, bool = false, std::string = "0.0.0.0");
 		virtual ~Host();
 
-		void SetHost(char addr, int port, bool server);
-
-		char GetAddr()	{return o_addr;}
-		int  GetPort()	{return o_port;}
-		bool GetServer(){return o_server;}
-
-};
+		std::pair<std::string,std::string> getAddr(){return std::make_pair(addr1,addr2);}
+		int  getPort(){return o_port;}
+		bool getServer(){return o_isServer;}
+		};
 
 } /* namespace std */
 

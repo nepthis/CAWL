@@ -5,15 +5,33 @@
  *      Author: cawl-mobile
  */
 
-#ifndef CAWLPACKET_H_
-#define CAWLPACKET_H_
+#include <stdint.h>
+#include <cstring>
 
-namespace std {
+#ifndef CAWLPACKET_H
+#define CAWLPACKET_H
+
+namespace Packets {
 
 class CawlPacket {
-public:
-	CawlPacket();
-	virtual ~CawlPacket();
+	public:
+		CawlPacket();
+
+		uint8_t getPrio();
+		void setPrio(uint8_t);
+
+		uint8_t getStreamId();
+		void setStreamId(uint8_t);
+
+		char getData();
+		void setData(char);
+
+		virtual ~CawlPacket();
+
+	private:
+		uint8_t prio, streamId;
+		char data[256];
+
 };
 
 } /* namespace std */
