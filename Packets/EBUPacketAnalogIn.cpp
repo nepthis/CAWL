@@ -5,14 +5,14 @@
  *      Author: cawl-server
  */
 
-#include "EBUPacketIn.h"
+#include "EBUPacketAnalogIn.h"
 
-EBUPacketIn::EBUPacketIn() {
+EBUPacketAnalogIn::EBUPacketAnalogIn() {
 	// TODO Auto-generated constructor stub
 
 }
 
-EBUPacketIn::~EBUPacketIn() {
+EBUPacketAnalogIn::~EBUPacketAnalogIn() {
 	// TODO Auto-generated destructor stub
 }
 

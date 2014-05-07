@@ -1,27 +1,39 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
+//#include <stdio.h>
+//#include <ctype.h>
+//#include <stdlib.h>
+//#include <unistd.h>
 #include <string>
-#include <sys/types.h>
+//#include <sys/types.h>
+#include <signal.h>
+#include <stdint.h>
+
 #include <netinet/in.h>
 #include <netdb.h> 
+
+//For threads and mutex
 #include <pthread.h>
 #include <queue>
 
 #include <../Net/ExtendedSocket.h>
 #include<../EBU/EBUManager.h>
 #include <../Packets/CawlPacket.h>
-#include <../Packets/EBUPacketIn.h>
-#include <mutex>
+#include <../Packets/EBUPacketAnalogIn.h>
+#include <../Packets/EBUPacketAnalogOut.h>
 
+//Mutex setup and quit-condition variable
 using namespace std;
-/*
-include the extended socket to Ground control and regular socket to the
-simulator.
-*/
+pthread_mutex_t mToEBU = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mFroEBU = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
-/*Needs to get the data out, make some calls to a mapping object
+
+//Används för ctrl+c, stänger av allt på ett bättre sätt.
+void INT_handler(int dummy){
+	pthread_cond_signal( &quit );
+	exit(EXIT_SUCCESS);
+}
+
+/* Needs to get the data out, make some calls to a mapping object
  * and forward everything to the right EBU and the right pin with
  * the right values.
  */
@@ -32,48 +44,55 @@ simulator.
  * från buffern. EVERYBODY WINS. behöver mest troligt en buffer för inkommmande data och en
  * för utgående data till/från EBU
  */
-void sendToEBU(queue<EBUPacketIn*> q, EBUManager man){
-	EBUPacketIn p;
-	while(1){
+void sendToEBU(queue<EBUPacketAnalogIn*> q, EBUManager man){
+	EBUPacketAnalogIn p;
+	while(!quit){
+		usleep(100000);
+		pthread_mutex_lock(&mToEBU);
 		//if queue is empty send full stop, this is more of a failsafe for now.
 		if (q.empty()){
-			//send stop
+			//send stop packet, rely on that the simulator repeats command as long
+			//as it wants the command to be sent
 		}
 		p = q.pop();
 				man.sendCommand(p);
+		pthread_mutex_unlock(&mToEBU);
 	}
+}
+void receiveFromGateway(CawlPacket cp,queue<EBUPacketAnalogIn*> q, EBUManager man){
 
 }
-
 /*
  * The main function will run threads for receiving packets from the other
  * gateway and another thread that empties the buffer and send packets to the EBU.
- * TODO: investigates if threads are needed to "read" data from the EBU and more
- * queues.
+ * 2 queues are needed, one from the EBU and one to the EBU
+ * One thread to read data from the extendedSocket and put packets INTO the toEBU queue
+ * One thread to send data to the EBU from the "toEBU" queue
+ * One thread to read data from EBU and put it into the fromEBUqueue
+ * One thread to send data to the extendedSocket from the "fromEBU" queue
  */
-int main()
+int main(void)
 {
-	EBUManager ebuMan = EBUManager();
-	CawlPacket *pkt;
-	queue<EBUPacketIn*> fromEBU;
-	queue<EBUPacketOut*> toEBU;
-	//int gatewaySocket = ExtendedSocket();
-	int quit = 0;
+	signal(SIGINT, INT_handler);
+	atexit(resetRelays);
+	//Object setup
 
-	//gemensam quit-variabel för att stänga av snyggt
-	if((ebuMan.startConnection(1,"10.10.0.1")) < 0){
+	EBUManager ebuMan = EBUManager();
+	queue<EBUPacketAnalogIn*> fromEBU;
+	queue<EBUPacketAnalogOut*> toEBU;
+	int quit = 0;
+	//int gatewaySocket = ExtendedSocket();
+
+	//gemensam quit-variabel för att stänga av snyggt,dvs istället för while(1) så while(!quit)
+	if((ebuMan.startConnection(1)) < 0){
 		perror("Connection to EBU one has failed, terminating");
-		quit = 1;
+		return 0;
+	}
+	if((ebuMan.startConnection(2)) < 0){
+		perror("Connection to EBU one has failed, terminating");
 		return 0;
 	}
 
-	while(1)
-	{
-		usleep(10005);   //1000 microseconds in a millisecond.
-		&pkt = extendedSocket.getPacket();
-
-
-	}
 	return 0;
 }
 

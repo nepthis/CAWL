@@ -28,10 +28,11 @@ public:
 	EBUManager();
 	virtual ~EBUManager();
 	double convertVoltToBit(int volt);
-	int startConnection(int ebuNum, string addrEbu);
+	int startConnection(int ebuNum);
 	int initRelay(void);
-	int sendCommand(EBUPacketIn p);
-	int readData(EBUPacketOut p);
+	int sendCommand(EBUPacketAnalogIn p);
+	int sendCommand(EBUPacketAnalogOut p);
+	//int readData(EBUPacketAnalogOut p);
 };
 
 #endif /* EBUMANAGER_H_ */
