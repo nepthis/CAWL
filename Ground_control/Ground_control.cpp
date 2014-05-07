@@ -23,11 +23,14 @@
 using namespace std;
 
 //Globals because meh.
-Packets::CawlPacket cPack = CawlPacket();
-queue<CawlPacket*> toGateWay;
+Packets::CawlPacket cPack = Packets::CawlPacket();
+Packets::CawlPacket pktOut = Packets::CawlPacket();
+queue<Packets::CawlPacket> toGateWay;
 pthread_mutex_t qCawl = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packet = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t packetOut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
+
 
 
 
@@ -201,6 +204,14 @@ void handleInput(){
 	}
 }
 void deQueue(){
+	while(1){
+		pthread_mutex_lock(&qCawl);
+		pthread_mutex_lock(&packetOut);
+		pktOut = toGateWay.pop();
+		pthread_mutex_unlock(&qCawl);
+		//Send to cawlSocket
+		pthread_mutex_unlock(&packetOut);
+	}
 
 }
 

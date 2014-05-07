@@ -12,10 +12,11 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 
-using namespace std;
 
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
+
+namespace EBU{
 
 class EBUManager {
 	int ebuSockOne;
@@ -27,12 +28,12 @@ class EBUManager {
 public:
 	EBUManager();
 	virtual ~EBUManager();
-	double convertVoltToBit(int volt);
-	int startConnection(int ebuNum);
+	double convertVoltToBit(int);
+	int startConnection(int);
 	int initRelay(void);
-	int sendCommand(EBUPacketAnalogIn p);
-	int sendCommand(EBUPacketAnalogOut p);
-	//int readData(EBUPacketAnalogOut p);
+	int sendCommand(Packets::EBUPacketAnalogIn);
+	int sendCommand(EBUPacketAnalogOut);
+	//int readData(EBUPacketAnalogOut);
 };
-
+}
 #endif /* EBUMANAGER_H_ */

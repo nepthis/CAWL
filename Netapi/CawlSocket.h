@@ -28,7 +28,7 @@
 
 #define RECVBUFSIZE	256
 
-using namespace Netapi;
+namespace Netapi{
 
 class CawlSocket {
 private:
@@ -57,7 +57,7 @@ public:
 	virtual ~CawlSocket();
 
 };
-
-} /* namespace Net */
+}
+/* namespace Net */
 #endif /* CAWLSOCKET_H_ */
 

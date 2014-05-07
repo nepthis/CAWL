@@ -10,6 +10,8 @@
 
 #include "EBUManager.h"
 
+using namespace EBU;
+
 EBUManager::EBUManager() {
 	// Constructor
 	if ((ebuSockOne = socket(AF_INET,SOCK_DGRAM,0)) < 0)
@@ -63,7 +65,7 @@ int EBUManager::startConnection(int ebuNum){
 	return -1; //Failed
 
 }
-int EBUManager::sendCommand(EBUPacketAnalogIn p){
+int EBUManager::sendCommand(Packets::EBUPacketAnalogIn p){
 	dataToSend data = p.getDataToSend();
 //	if (sendto(ebuSockOne)){
 //
@@ -81,4 +83,3 @@ int EBUManager::readData(uint16_t pin, uint32_t value){
 	return 1; //if success
 }
 */
-

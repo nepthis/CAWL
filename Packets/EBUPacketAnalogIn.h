@@ -12,6 +12,8 @@
 typedef struct dataToSend {
 	uint16_t channel[24];
 };
+
+namespace Packets{
 class EBUPacketAnalogIn {
 	struct dataToSend;
 public:
@@ -21,5 +23,5 @@ public:
 	void setChannel(int pin, float value);
 	float getChannel(int pin);
 };
-
+}
 #endif /* EBUPACKETANALOGIN_H_ */

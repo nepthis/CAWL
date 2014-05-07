@@ -14,22 +14,33 @@
 #include <pthread.h>
 #include <queue>
 
-#include <../Net/ExtendedSocket.h>
+#include <../Netapi/CawlSocket.h>
 #include<../EBU/EBUManager.h>
 #include <../Packets/CawlPacket.h>
 #include <../Packets/EBUPacketAnalogIn.h>
 #include <../Packets/EBUPacketAnalogOut.h>
 
-//Mutex setup and quit-condition variable
 using namespace std;
-pthread_mutex_t mToEBU = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mFroEBU = PTHREAD_MUTEX_INITIALIZER;
+//Globals
+int timeToQuit = 0;
+
+Packets::EBUPacketAnalogIn packetAnalogIn;
+
+EBU::EBUManager ebuMan = EBU::EBUManager();
+
+queue<Packets::EBUPacketAnalogIn> fromEBU;
+queue<EBUPacketAnalogOut> toEBU;
+
+pthread_mutex_t qToEBU = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t qFroEBU = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t ebuPAI = PTHREAD_MUTEX_INITIALIZER;
+
 pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
 
 //Används för ctrl+c, stänger av allt på ett bättre sätt.
 void INT_handler(int dummy){
-	pthread_cond_signal( &quit );
+	timeToQuit = 1;
 	exit(EXIT_SUCCESS);
 }
 
@@ -44,22 +55,25 @@ void INT_handler(int dummy){
  * från buffern. EVERYBODY WINS. behöver mest troligt en buffer för inkommmande data och en
  * för utgående data till/från EBU
  */
-void sendToEBU(queue<EBUPacketAnalogIn*> q, EBUManager man){
-	EBUPacketAnalogIn p;
-	while(!quit){
+void sendToEBU(){
+	while(!timeToQuit){
 		usleep(100000);
-		pthread_mutex_lock(&mToEBU);
+		pthread_mutex_lock(&qToEBU);
+		pthread_mutex_lock(&ebuPAI);
 		//if queue is empty send full stop, this is more of a failsafe for now.
-		if (q.empty()){
+		if (toEBU.empty()){
 			//send stop packet, rely on that the simulator repeats command as long
 			//as it wants the command to be sent
+		}else{
+			packetAnalogIn = toEBU.pop();
 		}
-		p = q.pop();
-				man.sendCommand(p);
-		pthread_mutex_unlock(&mToEBU);
+		pthread_mutex_unlock(&qToEBU);
+		ebuMan.sendCommand(packetAnalogIn);
+		pthread_mutex_unlock(&ebuPAI);
+
 	}
 }
-void receiveFromGateway(CawlPacket cp,queue<EBUPacketAnalogIn*> q, EBUManager man){
+void receiveFromGateway(Packets::CawlPacket cp,queue<Packets::EBUPacketAnalogIn*> q, EBU::EBUManager man){
 
 }
 /*
@@ -75,22 +89,13 @@ int main(void)
 {
 	signal(SIGINT, INT_handler);
 	atexit(resetRelays);
-	//Object setup
-
-	EBUManager ebuMan = EBUManager();
-	queue<EBUPacketAnalogIn*> fromEBU;
-	queue<EBUPacketAnalogOut*> toEBU;
-	int quit = 0;
-	//int gatewaySocket = ExtendedSocket();
-
+	Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket();
 	//gemensam quit-variabel för att stänga av snyggt,dvs istället för while(1) så while(!quit)
 	if((ebuMan.startConnection(1)) < 0){
 		perror("Connection to EBU one has failed, terminating");
-		return 0;
 	}
 	if((ebuMan.startConnection(2)) < 0){
 		perror("Connection to EBU one has failed, terminating");
-		return 0;
 	}
 
 	return 0;
