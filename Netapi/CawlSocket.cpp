@@ -7,7 +7,7 @@
 
 #include "CawlSocket.h"
 
-namespace Net {
+namespace Netapi {
 
 CawlSocket::CawlSocket() {
 	// TODO Auto-generated constructor stub
@@ -18,11 +18,6 @@ CawlSocket::~CawlSocket() {
 	// TODO Auto-generated destructor stub
 }
 
-} /* namespace Net */
-
-CawlSocket::CawlSocket() {
-
-}
 
 int CawlSocket::send(Packets::CawlPacket *p) {
 	return 0;
@@ -37,4 +32,5 @@ int CawlSocket::bind(Host *h) {
 }
 
 CawlSocket::~CawlSocket() {
+}
 }

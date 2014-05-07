@@ -13,7 +13,7 @@
 #ifndef HOST_H_
 #define HOST_H_
 
-namespace Net {
+namespace Netapi {
 
 class Host {
 

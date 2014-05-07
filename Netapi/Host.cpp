@@ -9,7 +9,7 @@
 
 #include "Host.h"
 
-namespace Net {
+namespace Netapi {
 
 Host::Host(std::string a1 ,int port ,bool isServer ,std::string a2) {
 	addr1 = a1;

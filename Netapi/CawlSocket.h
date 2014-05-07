@@ -28,7 +28,7 @@
 
 #define RECVBUFSIZE	256
 
-using namespace Net;
+using namespace Netapi;
 
 class CawlSocket {
 private:
@@ -41,13 +41,14 @@ private:
 	struct sctp_event_subscribe event = {0};
 	char pRecvBuffer[RECVBUFSIZE + 1] = {0};
 
-	char * Address;
+	char * szAddress;
 	int iPort;
-	char * Msg;
+	char * szMsg;
 	int iMsgSize;
+	int isServer;
 
 public:
-	CawlSocket();
+	int CawlSocket();
 	// Cawlpacket needs to be changed from std to Net
 	int send(Packets::CawlPacket*);
 	int rec(Packets::CawlPacket*);

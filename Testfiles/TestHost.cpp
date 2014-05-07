@@ -7,10 +7,10 @@
 
 #include <stdio.h>
 #include <string>
-#include "../Net/Host.h"
+#include "../Netapi/Host.h"
 #include <utility>
 
-using namespace Net;
+using namespace Netapi;
 
 int main(){
 	Host host1 = Host("10.0.0.1", 10, true, "10.0.0.2");
