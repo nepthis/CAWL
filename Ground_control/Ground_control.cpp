@@ -22,19 +22,41 @@
 #include "../Packets/CawlPacket.h"
 using namespace std;
 
-//Globals because meh.
+//Globals, because threads. Could and should make a struct for these if there is time left.
 Packets::CawlPacket cPack = Packets::CawlPacket();
 Packets::CawlPacket pktOut = Packets::CawlPacket();
+
+Netapi::CawlSocket socketOut = Netapi::CawlSocket();
+
 queue<Packets::CawlPacket> toGateWay;
+
 pthread_mutex_t qCawl = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packet = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packetOut = PTHREAD_MUTEX_INITIALIZER;
+
 pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
+//These should preferrably be in a struct and passed to the functions in question...
+int c;
+int countBoomUp = 0;
+int countBuckUp = 0;
+int countBoomDown = 0;
+int countBuckDown = 0;
+char type;
+uint8_t pin;
+uint8_t value;
+uint8_t ebuNum;
+char g_buffer[32];
+
+int pleased = 0;
 
 
 
-void enQueuePacket(char t, uint8_t p, uint8_t v,uint8_t n, char buffer[]){
+/*
+ * enQueuePacket takes the data and a char buffer and copies in the data into the buffer
+ * afterwards it creates a packet and copies it into a queue. (I think it copies the packet, at least)
+ */
+void enQueuePacket(char t, uint8_t p, uint8_t v,uint8_t n, char buffer[32]){
 	memcpy(buffer+0, &t, 1);
 	memcpy(buffer+1, &p, 1);
 	memcpy(buffer+2, &v, 1);
@@ -96,38 +118,27 @@ char getch() {
 		perror ("tcsetattr ~ICANON");
 	return (buf);
 }
-
 /*
 pressing the button for the desired function will increment voltage with 1.
 Max level is 5 and pushing "opposite" will result decrease with 1.
 IMPORTANT! This is only for keyboard control, will be different when in use
 with a joystick or similar from the simulator.
  */
-void handleInput(){
-	int c;
-	int countBoomUp = 0;
-	int countBuckUp = 0;
-	int countBoomDown = 0;
-	int countBuckDown = 0;
-	char type;
-	uint8_t pin;
-	uint8_t value;
-	uint8_t ebuNum;
-	char buffer[256];
-	while((c = getch()) != EOF){
+void *handleInput(void *parg){
+	while(((c = getch()) != EOF) or (not pleased)){
 		c = tolower(c);
 		switch(c){
 		case 'w':
 			putchar(c);
 			countBoomDown = 0;
 			value = countBoomDown;
-			boomDown(value, buffer);
+			boomDown(value, g_buffer);
 			if (countBoomUp < 5)
 			{
 				countBoomUp++;
 				printf("\nBoom level: %d\n", countBoomUp);
 				value = countBoomUp;
-				boomUp(value,buffer);
+				boomUp(value,g_buffer);
 			}
 			else
 			{
@@ -139,13 +150,13 @@ void handleInput(){
 			putchar(c);
 			countBoomUp = 0;
 			value = countBoomUp;
-			boomUp(value, buffer);
+			boomUp(value, g_buffer);
 			if(countBoomDown > -5)
 			{
 				countBoomDown--;
 				printf("\nBoom level: %d\n", countBoomDown);
 				value = countBoomDown*-1;
-				boomDown(value,buffer);
+				boomDown(value,g_buffer);
 			}
 			else
 			{
@@ -156,13 +167,13 @@ void handleInput(){
 			putchar(c);
 			countBuckDown = 0;
 			value = countBuckDown;
-			bucketDown(value, buffer);
+			bucketDown(value, g_buffer);
 			if(countBuckUp < 5)
 			{
 				countBuckUp++;
 				printf("\nBucket level: %d\n", countBuckUp);
 				value = countBuckUp;
-				bucketUp(value, buffer);
+				bucketUp(value, g_buffer);
 			}
 			else
 			{
@@ -178,7 +189,7 @@ void handleInput(){
 				countBuckDown--;
 				printf("\nBucket level: %d\n", countBuckDown);
 				value = countBuckDown*-1;
-				bucketDown(value,buffer);
+				bucketDown(value,g_buffer);
 			}
 			else
 			{
@@ -202,29 +213,33 @@ void handleInput(){
 			break;
 		}
 	}
+	pthread_exit(NULL);
 }
-void deQueue(){
-	while(1){
+/*
+ * Function for sending the data through the CAWL socket to the other Gateway
+ * Locks the FIFO queue and the packet required to hold the data temporarily
+ * and then sends it.
+ */
+void *deQueue(void *parg){
+	while(not pleased){
 		pthread_mutex_lock(&qCawl);
 		pthread_mutex_lock(&packetOut);
 		pktOut = toGateWay.pop();
 		pthread_mutex_unlock(&qCawl);
-		//Send to cawlSocket
+		socketOut.send(&pktOut);
 		pthread_mutex_unlock(&packetOut);
 	}
-
+	pthread_exit(NULL);
 }
 
 int main()
 {
-
 	printf("w = raise boom\ts = lower boom\nq = tilt bucket up\te = tilt bucket down\n");
 	printf("z = reset boom level\tx = reset bucket level\n");
-	/*
-	 * init threads for handleinput()
-	 */
-
-
+	pthread_t inputHandler;
+	pthread_t dataSender;
+	pthread_create(&inputHandler, NULL, handleInput, NULL);
+	pthread_create(&dataSender, NULL, deQueue, NULL);
 
 	printf("Finished");
 	return 0;

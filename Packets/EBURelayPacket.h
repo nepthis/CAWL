@@ -4,7 +4,7 @@
  *  Created on: May 5, 2014
  *      Author: Robin Bond
  *      Desc: class for the struct that contains the array for the relays + defines for using shorthand names
- *      for the different relays.
+ *      for the different relays. Most of this is borrowed from the Wheel Loader Project group.
  *
  */
 
@@ -151,15 +151,23 @@
 #define R_res6 	110
 #define R_res7 	111
 
+typedef struct EBUrelays{
+	uint8_t channel;
+} EBUrelays;
+
+namespace Packets{
+
 class EBURelayPacket {
 	EBUrelays er;
 public:
 	EBURelayPacket();
 	virtual ~EBURelayPacket();
+	EBUrelays getRelays(void);
+	void setRelayValue(int relay, int value);
+	uint8_t getRelayValue( int relay);
 };
 
-typedef struct EBUrelays{
-	uint8_t channel[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-} EBUrelays;
+}
+
 
 #endif /* EBURELAYPACKET_H_ */
