@@ -11,7 +11,7 @@
 using namespace Packets;
 
 EBURelayPacket::EBURelayPacket() {
-	er.channel[14]=0;
+	er.channel[14]={0};
 }
 
 EBURelayPacket::~EBURelayPacket() {
@@ -33,5 +33,6 @@ uint8_t EBURelayPacket::getRelayValue( int relay) {
 	int byte = relay / 8;
 	int offset = relay % 8;
 	uint8_t mask = 0x01 << offset;
-	return er.channel[byte] & mask;
+	uint8_t result = er.channel[byte] & mask;
+	return result >>offset;
 }

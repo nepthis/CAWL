@@ -10,9 +10,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 #include <sys/socket.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
+#include "../Packets/EBUPacketAnalogOut.h"
+#include "../Packets/EBURelayPacket.h"
 
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
@@ -24,9 +30,11 @@ class EBUManager {
 	//int oneAnalogIn;
 	int oneAnalogOut;
 	int oneRelay;
+
 	int destinationPort;
+
 	Packets::EBURelayPacket relayPack;
-	//struct sockaddr_in addrOneAnalogIn; //Port 25101, Analog data FROM the EBU
+	//struct sockaddr_in addrOneAnalogIn; Port 25101, Analog data FROM the EBU
 	struct sockaddr_in addrOneAnalogOut;//Port 25200, data TO the EBU
 	struct sockaddr_in addrOneRelay; //Port 25400, send relay data here
 //	struct sockaddr_in addrTwoAnalogIn;

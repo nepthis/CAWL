@@ -151,15 +151,17 @@
 #define R_res6 	110
 #define R_res7 	111
 
-typedef struct EBUrelays{
-	uint8_t channel;
-} EBUrelays;
+#include <stdint.h>
 
 namespace Packets{
 
+typedef struct EBUrelays{
+	uint8_t channel[14];
+}EBUrelays ;
+
 class EBURelayPacket {
-	EBUrelays er;
 public:
+	EBUrelays er;
 	EBURelayPacket();
 	virtual ~EBURelayPacket();
 	EBUrelays getRelays(void);

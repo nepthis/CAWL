@@ -68,31 +68,23 @@ EBUManager::~EBUManager() {
 
 
 int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
-	ebuAnOut data = p.getChannel();
+	Packets::ebuAnOut data = p.getChannel();
 	destinationPort = 25200;
 	int error;
 	switch(ebuNum){
 	case 1:
-		error = sendto(oneAnalogOut, (char*)&p, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
-		if( error){
-			perror("Failed to send");
-			return -1;
-		}
+		sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
 	}
 	return 1; //if success
 }
 
 int EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
-	EBUrelays data = rPack.getRelays();
+	Packets::EBUrelays data = rPack.getRelays();
 	destinationPort = 25200;
 	int error;
 	switch(ebuNum){
 	case 1:
-		error = sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
-		if( error){
-			perror("Failed to send");
-			return -1;
-		}
+		sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
 	}
 	return 1; //if success
 }
