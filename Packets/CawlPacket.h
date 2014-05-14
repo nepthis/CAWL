@@ -14,6 +14,7 @@
 namespace Packets {
 
 class CawlPacket {
+
 public:
 	uint8_t prio, streamId;
 	char * data;

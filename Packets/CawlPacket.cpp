@@ -8,8 +8,7 @@
 #include "CawlPacket.h"
 
 // Change to namespace Packets
-namespace  Packets{
-
+using namespace  Packets;
 CawlPacket::CawlPacket(uint8_t p ,uint8_t s,char* d) {
 	data = d;
 	prio = p;
@@ -18,6 +17,7 @@ CawlPacket::CawlPacket(uint8_t p ,uint8_t s,char* d) {
 }
 
 CawlPacket::~CawlPacket() {
-	}
 
-} /* namespace std */
+}
+
+/* namespace std */

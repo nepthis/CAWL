@@ -169,14 +169,20 @@ Packets::EBUPacketAnalogOut stopPacket = Packets::EBUPacketAnalogOut();
 Packets::CawlPacket cPack = Packets::CawlPacket();;
 Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
 
+
 EBU::EBUManager ebuMan = EBU::EBUManager();
+Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", true);
+Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
 queue<Packets::EBUPacketAnalogIn> fromEBU;
-queue<Packets::EBUPacketAnalogOut> AnalogToEBU;
+queue<Packets::EBUPacketAnalogOut>analogToEBU;
 
 pthread_mutex_t qToEBU = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t qFroEBU = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ebuPAO = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t m_gwSocket = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t m_ebuMan = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t m_cawlPacket = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
@@ -198,30 +204,57 @@ void INT_handler(int dummy){
  * från buffern. EVERYBODY WINS. behöver mest troligt en buffer för inkommmande data och en
  * för utgående data till/från EBU ??? Profit
  */
-void sendToEBU(){
+void *sendToEBU(void *parg){
 	while(!timeToQuit){
 		//The sleep is to make sure that we don't flood the EBU, and since the EBU responds with 10Hz then will do the same.
 		usleep(100000);
 		pthread_mutex_lock(&qToEBU);
 		pthread_mutex_lock(&ebuPAO);
-		//if queue is empty send full stop, this is more of a failsafe for now.
+		pthread_mutex_lock(&m_ebuMan);
 		if (AnalogToEBU.empty()){
 			packetAnalogOut = stopPacket;
 		}else{
 			packetAnalogOut = AnalogToEBU.pop();
 		}
-		pthread_mutex_unlock(&qToEBU);
 		ebuMan.sendAnalogCommand(packetAnalogOut, 1);
+		pthread_mutex_unlock(&m_ebuMan);
+		pthread_mutex_unlock(&qToEBU);
 		pthread_mutex_unlock(&ebuPAO);
 
 	}
+	pthread_exit(NULL);
 }
-void receiveFromGateway(){
-//Packets::CawlPacket cp,queue<Packets::EBUPacketAnalogIn*> q, EBU::EBUManager man
+void *receiveFromGateway(void *parg){
+	char type;
+	int pin;
+	int value;
+	int ebu;
+	while(not timeToQuit){
+		pthread_mutex_lock(&m_gwSocket);
+		pthread_mutex_lock(&m_cawlPacket);
+		gatewaySocket.rec(cPack);
+		memcpy(&type, cPack.data, sizeof(char));
+		memcpy(&pin, cPack.data+8, sizeof(int));
+		memcpy(&value, cPack.data+24, sizeof(int));
+		memcpy(&ebu, cPack.data+40,sizeof(int));
+		//later on, fix switch for analog, digital etc
+		pthread_mutex_unlock(&m_cawlPacket);
+		pthread_mutex_unlock(&m_gwSocket);
+		pthread_mutex_lock(&ebuPAO);
+		pthread_mutex_lock(&qToEBU);
+		packetAnalogOut.setChannelValue(value,pin);
+		analogToEBU.push(packetAnalogOut);
+		pthread_mutex_unlock(&qToEBU);
+		pthread_mutex_unlock(&ebuPAO);
+
+
+	}
+	pthread_exit(NULL);
 }
 
 
-void resetRelays(){
+void resetRelays(void){
+	//pthread_mutex_lock(&m_relayPacket);
 	rPack = Packets::EBURelayPacket(); //nollvärden för allt
 	ebuMan.sendRelayCommand(rPack, 1);
 	//ebuMan.sendRelayCommand(rPack, 2);
@@ -235,26 +268,28 @@ void resetRelays(){
  * One thread to read data from EBU and put it into the fromEBUqueue
  * One thread to send data to the extendedSocket from the "fromEBU" queue
  */
+
 int main(void)
 {
 	signal(SIGINT, INT_handler);
 	atexit(resetRelays);
-	Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket();
+	resetRelays();
+	rPack.setRelayValue(R_A9,1);
+	rPack.setRelayValue(R_A10,1);
+	rPack.setRelayValue(R_A11,1);
+	rPack.setRelayValue(R_A12,1);
+	ebuMan.sendRelayCommand(rPack, 1);
+	sleep(1);
+	pthread_t t1;
+	pthread_t t2;
+	pthread_create(&t1, NULL, sendToEBU, NULL);
+	pthread_create(&t2, NULL, receiveFromGateway, NULL);
 
-/*
+	/*
 	pthread_t ebuSender;
 	pthread_t gateWayReceiver;
- */
+	 */
 
-	int toggle = 0;
-	while(1){
-		sleep(1);
-		if(toggle){
-
-		}
-
-
-	}
 	return 0;
 }
 
