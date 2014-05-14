@@ -22,27 +22,33 @@
 #include <queue>
 
 #include "../Packets/CawlPacket.h"
-#include "../Packets/CawlPacket.cpp"
+//#include "../Packets/CawlPacket.cpp"
 #include "../Packets/EBUPacketAnalogOut.h"
 #include "../Netapi/CawlSocket.h"
 #include "../Netapi/Host.h"
+
 using namespace std;
 
 //Globals, because threads. Could and should make a struct for these if there is time left.
 //Packets::CawlPacket cPack = Packets::CawlPacket();
 
-Packets::CawlPacket pktOut = Packets::CawlPacket();
+char * tempbuff = {0};
+
+Packets::CawlPacket pktOut = Packets::CawlPacket((uint8_t)1,(uint8_t)1,tempbuff);
 //Packets::EBUPacketAnalogOut  analogPacket = Packets::EBUPacketAnalogOut();
 Netapi::Host client = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1");
+
+
 Netapi::CawlSocket socketOut = Netapi::CawlSocket(client);
-EBU::EBUManager em = EBU::EBUManager();
+
+//EBU::EBUManager em = EBU::EBUManager();
 
 queue<Packets::CawlPacket> toGateWay;
 
 pthread_mutex_t qCawl = PTHREAD_MUTEX_INITIALIZER;
 //pthread_mutex_t packet = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packetOut = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_ebuman = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t m_ebuman = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
@@ -69,7 +75,8 @@ void *deQueue(void *parg){
 	while(not pleased){
 		pthread_mutex_lock(&qCawl);
 		pthread_mutex_lock(&packetOut);
-		pktOut = toGateWay.pop();
+		pktOut = toGateWay.front();
+		toGateWay.pop();
 		pthread_mutex_unlock(&qCawl);
 		socketOut.send(pktOut);
 		//em.sendAnalogCommand()
@@ -90,7 +97,7 @@ void enQueuePacket(char t, int  p, int v,int n, char buffer[64]){
 	pthread_mutex_lock(&qCawl);
 	toGateWay.push(pktOut);
 	pthread_mutex_unlock(&qCawl);
-	pthread_mutex_unlock(&packet);
+	pthread_mutex_unlock(&packetOut);
 }
 void boomUp(int voltage, char buffer[64]){
 	char type ='a';
@@ -288,26 +295,27 @@ void INT_handler(int dummy){
 }
 int main()
 {
+
 	signal(SIGINT, INT_handler);
 	printf("w = raise boom\ts = lower boom\nq = tilt bucket up\te = tilt bucket down\n");
-//	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
-//	rp.setRelayValue(R_A9, 0);
-//	rp.setRelayValue(R_A10, 0);
-//	rp.setRelayValue(R_A11, 0);
-//	rp.setRelayValue(R_A12, 0);
-//	printf("values of the array are %d, %d, %d, %d\n",rp.getRelayValue(R_A9),rp.getRelayValue(R_A10),rp.getRelayValue(R_A11),rp.getRelayValue(R_A12));
-//	rp.setRelayValue(R_A9, 1);
-//	rp.setRelayValue(R_A10, 1);
-//	rp.setRelayValue(R_A11, 1);
-//	rp.setRelayValue(R_A12, 1);
-//	printf("The values set are %d, %d, %d and %d\n", R_A9, R_A10, R_A11, R_A12);
-//	printf("values of the array are %d, %d, %d, %d\n",rp.getRelayValue(R_A9),rp.getRelayValue(R_A10),rp.getRelayValue(R_A11),rp.getRelayValue(R_A12));
-//
-//	sleep(1);
-//	printf("relay packet is configured, will send in 2s\n");
-//	sleep(2);
-//	em.sendRelayCommand(rp,1);
-//	printf("Packet sent. Creating worker-thread\n");
+	//	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
+	//	rp.setRelayValue(R_A9, 0);
+	//	rp.setRelayValue(R_A10, 0);
+	//	rp.setRelayValue(R_A11, 0);
+	//	rp.setRelayValue(R_A12, 0);
+	//	printf("values of the array are %d, %d, %d, %d\n",rp.getRelayValue(R_A9),rp.getRelayValue(R_A10),rp.getRelayValue(R_A11),rp.getRelayValue(R_A12));
+	//	rp.setRelayValue(R_A9, 1);
+	//	rp.setRelayValue(R_A10, 1);
+	//	rp.setRelayValue(R_A11, 1);
+	//	rp.setRelayValue(R_A12, 1);
+	//	printf("The values set are %d, %d, %d and %d\n", R_A9, R_A10, R_A11, R_A12);
+	//	printf("values of the array are %d, %d, %d, %d\n",rp.getRelayValue(R_A9),rp.getRelayValue(R_A10),rp.getRelayValue(R_A11),rp.getRelayValue(R_A12));
+	//
+	//	sleep(1);
+	//	printf("relay packet is configured, will send in 2s\n");
+	//	sleep(2);
+	//	em.sendRelayCommand(rp,1);
+	//	printf("Packet sent. Creating worker-thread\n");
 
 	pthread_t t1;
 	pthread_t t2;
