@@ -21,10 +21,6 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	sctp_event_subscribe event = {0};
 	sctp_initmsg initmsg = {0};
 	pRecvBuffer[RECVBUFSIZE + 1] = (0);
-
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(h.port);
-	addr.sin_addr.s_addr = inet_addr(h.addr1);
 	isServer = h.isServer;
 
 	if (isServer) {
@@ -34,8 +30,14 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 		if (setsockopt(SctpScocket, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
 			throw 2;
 		}
+
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(h.port);
+		addr.sin_addr.s_addr = inet_addr(h.addr1);
+
+
 		if (bind(SctpScocket, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0){
-			throw 3;
+			throw 33;
 		}
 		if (listen(SctpScocket, 1) < 0) {
 			throw 4;
@@ -101,6 +103,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 		else
 		{
 			p.data = pRecvBuffer;
+			break;
 		}
 	}
 }
