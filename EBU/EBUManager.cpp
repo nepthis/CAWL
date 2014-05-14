@@ -14,67 +14,78 @@ using namespace EBU;
 
 EBUManager::EBUManager() {
 	// Constructor
-	if ((ebuSockOne = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	destinationPort = 0;
+	slen = sizeof(struct sockaddr_in);
+	//Not going to read data from the EBU. Yet.
+	//	if ((oneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	//	{
+	//		perror("socket error");
+	//
+	//	}
+	//----------------------------------Sockets------------------------------------------------
+	if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
-
-	}if ((ebuSockTwo = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+		printf ("Error number is: %s\n",strerror(errno));
+	}
+	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
 
 	}
+	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------ADRESSES-------------------------------------
+	//--------------------------------EBUAnalogOut for ebu1------------------------
+	memset((char *)&addrOneAnalogOut, 0, sizeof(addrOneAnalogOut));
+	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr)); //Lättare att använda
+	addrOneAnalogOut.sin_port = htons(25200);
+
+	//--------------------------------Relays for ebu1--------------------------------------
+	memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
+	inet_pton(AF_INET, "10.0.0.2", &(addrOneRelay.sin_addr)); //Lättare att använda
+	addrOneRelay.sin_port = htons(25400); //port for relay data is 25400
+
+	//------------------------------Bind for recv socket ------------------------------------
+	/*
+	 * only needed for the receiving EBUPacketAnalogIn and digitalin, not done yet.
+	if (bind(oneRelay, (struct sockaddr *)&addrOneRelay, sizeof(addrOneRelay)) < 0) {
+		perror("error with bind");
+		printf ("Error number is: %s\n",strerror(errno));
+	}
+	 */
+	/*
+	if (bind(oneAnalogOut, (struct sockaddr *)&addrOneAnalogOut, sizeof(addrOneAnalogOut)) < 0) {
+		perror("error with bind");
+		printf ("Error number is: %s\n",strerror(errno));
+	}
+	 */
 }
 
 EBUManager::~EBUManager() {
 	// TODO Auto-generated destructor stub
 }
 
-//Hmm, kan vara onödig.
-double EBUManager::convertVoltToBit(int voltIn)
-{
-	double voltOut = voltIn;
 
-	return voltOut;
-}
-int EBUManager::startConnection(int ebuNum){
-	if (ebuNum == 1){
-		memset((char *)&ebuOne, 0, sizeof(ebuOne));
-//		ebuOne.sin_family = AF_INET;
-//		ebuOne.sin_addr.s_addr = htonl('10.10.0.1');
-		inet_pton(AF_INET, "10.10.0.1", &(ebuOne.sin_addr)); //Lättare att använda
-		ebuOne.sin_port = htons(0); //Add right port...
-		if (bind(ebuSockOne, (struct sockaddr *)&ebuOne, sizeof(ebuOne)) < 0) {
-			perror("error with bind");
-			return -1;
-		}
-		return 1;
+int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
+	Packets::ebuAnOut data = p.getChannel();
+	destinationPort = 25200;
+	int error;
+	switch(ebuNum){
+	case 1:
+		sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
 	}
-	if(ebuNum == 2){
-		memset((char *)&ebuTwo, 0, sizeof(ebuTwo));
-		//ebuTwo.sin_family = AF_INET;
-		inet_pton(AF_INET, "10.10.0.2", &(ebuTwo.sin_addr)); //Lättare att använda
-		//ebuTwo.sin_addr.s_addr = htonl(address);
-		ebuTwo.sin_port = htons(0);//PORRTTTSSSS
-		if (bind(ebuSockOne, (struct sockaddr *)&ebuTwo, sizeof(ebuTwo)) < 0) {
-			perror("error with bind");
-			return -1;
-		}
-		return 1;
-	}
-
-	return -1; //Failed
-
-}
-int EBUManager::sendCommand(Packets::EBUPacketAnalogIn p){
-	dataToSend data = p.getDataToSend();
-//	if (sendto(ebuSockOne)){
-//
-//	}
-
-	//delete packet after sent, maybe.
 	return 1; //if success
 }
-int EBUManager::sendCommand(EBUPacketAnalogOut p){
+
+int EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
+	Packets::EBUrelays data = rPack.getRelays();
+	destinationPort = 25200;
+	int error;
+	switch(ebuNum){
+	case 1:
+		sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
+	}
 	return 1; //if success
 }
 /*
@@ -82,4 +93,4 @@ int EBUManager::readData(uint16_t pin, uint32_t value){
 
 	return 1; //if success
 }
-*/
+ */

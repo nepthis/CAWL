@@ -10,8 +10,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/socket.h>
+#include <stdio.h>
 
+#include <sys/socket.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "../Packets/EBUPacketAnalogOut.h"
+#include "../Packets/EBURelayPacket.h"
 
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
@@ -19,21 +26,26 @@
 namespace EBU{
 
 class EBUManager {
-	int ebuSockOne;
-	int ebuSockTwo;
-	uint16_t analog[24];
-	uint16_t digital[24];
-	struct sockaddr_in ebuOne;
-	struct sockaddr_in ebuTwo;
+	socklen_t slen;
+	//int oneAnalogIn;
+	int oneAnalogOut;
+	int oneRelay;
+
+	int destinationPort;
+
+	Packets::EBURelayPacket relayPack;
+	//struct sockaddr_in addrOneAnalogIn; Port 25101, Analog data FROM the EBU
+	struct sockaddr_in addrOneAnalogOut;//Port 25200, data TO the EBU
+	struct sockaddr_in addrOneRelay; //Port 25400, send relay data here
+//	struct sockaddr_in addrTwoAnalogIn;
+//	struct sockaddr_in addrTwoAnalogOut;
 public:
 	EBUManager();
 	virtual ~EBUManager();
-	double convertVoltToBit(int);
-	int startConnection(int);
-	int initRelay(void);
-	int sendCommand(Packets::EBUPacketAnalogIn);
-	int sendCommand(EBUPacketAnalogOut);
-	//int readData(EBUPacketAnalogOut);
+	//ebuNum (1 = ebu one, 2 = ebutwo)
+	int sendAnalogCommand(Packets::EBUPacketAnalogOut, int ebuNum);
+	int sendRelayCommand(Packets::EBURelayPacket, int ebuNum);
+
 };
 }
 #endif /* EBUMANAGER_H_ */
