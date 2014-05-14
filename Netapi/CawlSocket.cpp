@@ -8,6 +8,7 @@
 #include "CawlSocket.h"
 #include "../Netapi/Host.h"
 #include "../Packets/CawlPacket.h"
+#include <cstring>
 
 namespace Netapi {
 
@@ -87,6 +88,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 		memset((void *)&addr, 0, sizeof(struct sockaddr_in));
 		from_len = (socklen_t)sizeof(struct sockaddr_in);
 		memset((void *)&sinfo, 0, sizeof(struct sctp_sndrcvinfo));
+		memset((void *)&pRecvBuffer, 0,RECVBUFSIZE);
 
 		n = sctp_recvmsg(SctpScocket, (void*)pRecvBuffer, RECVBUFSIZE,
 				(struct sockaddr *)&addr, &from_len, &sinfo, &flags);
