@@ -14,23 +14,12 @@
 namespace Packets {
 
 class CawlPacket {
-	public:
-		CawlPacket();
+public:
+	uint8_t prio, streamId;
+	char * data;
+	CawlPacket(uint8_t p ,uint8_t s = 0, char* d =(char *)"");
 
-		uint8_t getPrio();
-		void setPrio(uint8_t);
-
-		uint8_t getStreamId();
-		void setStreamId(uint8_t);
-
-		char getData();
-		void setData(char);
-
-		virtual ~CawlPacket();
-
-	private:
-		uint8_t prio, streamId;
-		char data[256];
+	virtual ~CawlPacket();
 
 };
 

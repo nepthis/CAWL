@@ -11,11 +11,11 @@
 
 namespace Netapi {
 
-Host::Host(std::string a1 ,int port ,bool isServer ,std::string a2) {
+Host::Host(char* a1, int p, char* a2, bool s) {
 	addr1 = a1;
 	addr2 = a2;
-	o_port = port;
-	o_isServer = isServer;
+	port = p;
+	isServer = s;
 }
 
 Host::~Host() {

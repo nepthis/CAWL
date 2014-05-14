@@ -10,32 +10,11 @@
 // Change to namespace Packets
 namespace  Packets{
 
-CawlPacket::CawlPacket() {
-	prio = streamId = 0;
-}
+CawlPacket::CawlPacket(uint8_t p ,uint8_t s,char* d) {
+	data = d;
+	prio = p;
+	streamId = s;
 
-uint8_t CawlPacket::getPrio() {
-	return prio;
-}
-
-void CawlPacket::setPrio(uint8_t i) {
-	prio = i;
-}
-
-uint8_t CawlPacket::getStreamId() {
-	return streamId;
-}
-
-void CawlPacket::setStreamId(uint8_t i) {
-	streamId = i;
-}
-
-char CawlPacket::getData() {
-	return *data;
-}
-
-void CawlPacket::setData(char c) {
-	memcpy(data,&c,256);
 }
 
 CawlPacket::~CawlPacket() {

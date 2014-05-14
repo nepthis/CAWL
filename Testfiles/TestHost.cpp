@@ -7,23 +7,23 @@
 
 #include <stdio.h>
 #include <string>
+#include <stdint.h>
 #include "../Netapi/Host.h"
-#include <utility>
 
 using namespace Netapi;
 
 int main(){
-	Host host1 = Host("10.0.0.1", 10, true, "10.0.0.2");
+	Host host = Host((char*)"10.0.0.1",231);
+
 	std::string boo;
-	if(host1.getServer()){
+
+	if(host.isServer){
 		boo = "True";
 	}else{
 		boo = "False";
 	}
 
-	std::pair <std::string, std::string> addr = host1.getAddr();
-
-	printf("Address1: %s , Address2: %s , Port: %i ,IsServer: %s \n", addr.first.c_str() , addr.second.c_str(),  host1.getPort(), boo.c_str());
+	printf("Address1: %s , Address2: %s , Port: %i ,IsServer: %s \n", host.addr1 , host.addr2,  host.port, boo.c_str());
 	return 0;
 }
 

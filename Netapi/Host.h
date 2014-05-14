@@ -9,6 +9,7 @@
 
 #include <string>
 #include <utility>
+#include <stdint.h>
 
 #ifndef HOST_H_
 #define HOST_H_
@@ -16,21 +17,16 @@
 namespace Netapi {
 
 class Host {
-
-	private:
-		std::string addr1;
-		std::string addr2;
-		int  o_port;
-		bool o_isServer;
-
 	public:
-		Host(std::string, int, bool = false, std::string = "0.0.0.0");
+		Host(char* a1,int p, char* a2=(char*)"0.0.0.0", bool s=false);
 		virtual ~Host();
 
-		std::pair<std::string,std::string> getAddr(){return std::make_pair(addr1,addr2);}
-		int  getPort(){return o_port;}
-		bool getServer(){return o_isServer;}
-		};
+		char * addr1;
+		char * addr2;
+		int  port;
+		bool isServer;
+
+};
 
 } /* namespace std */
 
