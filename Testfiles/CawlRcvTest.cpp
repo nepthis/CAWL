@@ -23,6 +23,10 @@ int main(){
 	Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1);
 	ssocket.rec(packet);
 	printf("Recieved: %s \n",packet.data);
+
+	packet.data = (char*)"Hmmmmmmm";
+	printf("\n size: %i  \n", sizeof(packet.data));
+	ssocket.send(packet);
 	}catch (int e){
 		printf("Exception, nr: %i \n", e);
 		printf("After bind errno: %d\n", errno);
