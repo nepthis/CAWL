@@ -1,191 +1,4 @@
-//#include <stdio.h>
-//#include <ctype.h>
-//#include <stdlib.h>
-//#include <unistd.h>
-#include <string>
-//#include <sys/types.h>
-#include <signal.h>
-#include <stdint.h>
-
-#include <netinet/in.h>
-#include <netdb.h> 
-
-//For threads and mutex
-#include <pthread.h>
-#include <queue>
-
-#include <../Netapi/CawlSocket.h>
-#include<../EBU/EBUManager.h>
-#include <../Packets/CawlPacket.h>
-#include <../Packets/EBUPacketAnalogIn.h>
-#include <../Packets/EBUPacketAnalogOut.h>
-#define R_S19 	0
-#define R_S20 	1
-#define R_P15 	2
-#define R_P16 	3
-
-#define R_S21 	4
-#define R_res1	5
-#define R_res2	6
-#define R_res3	7
-
-#define R_S15	8
-#define R_S16 	9
-#define R_P11 	10
-#define R_P12 	11
-
-#define R_S17 	12
-#define R_S18 	13
-#define R_P13 	14
-#define R_P14 	15
-
-#define R_S11 	16
-#define R_S12 	17
-#define R_P7 	18
-#define R_P8 	19
-
-#define R_S13 	20
-#define R_S14 	21
-#define R_P9 	22
-#define R_P10 	23
-
-#define R_S7 	24
-#define R_S8 	25
-#define R_P3 	26
-#define R_P4 	27
-
-#define R_S9 	28
-#define R_S10 	29
-#define R_P5 	30
-#define R_P6 	31
-
-#define R_S1 	32
-#define R_S2 	33
-#define R_S3 	34
-#define R_S4 	35
-
-#define R_S5 	36
-#define R_S6 	37
-#define R_P1 	38
-#define R_P2 	39
-
-#define R_F2 	40
-#define R_D37 	41
-#define R_F3 	42
-#define R_D38 	43
-
-#define R_F4 	44
-#define R_D39 	45
-#define R_F5 	46
-#define R_F6 	47
-
-#define R_D21 	48
-#define R_CAN1 	49
-#define R_J1708 50
-#define R_CAN2 	51
-
-#define R_D34 	52
-#define R_D35 	53
-#define R_F1 	54
-#define R_D36 	55
-
-#define R_D30 	56
-#define R_D17 	57
-#define R_D31 	58
-#define R_D18 	59
-
-#define R_D32 	60
-#define R_D19 	61
-#define R_D33 	62
-#define R_D20 	63
-
-#define R_D7 	64
-#define R_D27 	65
-#define R_D14 	66
-#define R_D8 	67
-
-#define R_D28 	68
-#define R_D15 	69
-#define R_D29 	70
-#define R_D16 	71
-
-#define R_D4 	72
-#define R_D11 	73
-#define R_D5 	74
-#define R_D25 	75
-
-#define R_D12 	76
-#define R_D6 	77
-#define R_D26 	78
-#define R_D13 	79
-
-#define R_D1 	80
-#define R_D22 	81
-#define R_D2 	82
-#define R_D9 	83
-
-#define R_D23 	84
-#define R_D3 	85
-#define R_D10 	86
-#define R_D24 	87
-
-#define R_A11 	88
-#define R_A19 	89
-#define R_A6 	90
-#define R_A12 	91
-
-#define R_A20 	92
-#define R_A7 	93
-#define R_A13 	94
-#define R_res4 	95
-
-#define R_A3 	96
-#define R_A9 	97
-#define R_A17 	98
-#define R_A4 	99
-
-#define R_A10 	100
-#define R_A18 	101
-#define R_A5 	102
-#define R_res5 	103
-
-#define R_A14 	104
-#define R_A1 	105
-#define R_A15 	106
-#define R_A2 	107
-
-#define R_A8 	108
-#define R_A16 	109
-#define R_res6 	110
-#define R_res7 	111
-
-using namespace std;
-//Globals
-
-int timeToQuit = 0;
-
-Packets::EBUPacketAnalogOut packetAnalogOut = Packets::EBUPacketAnalogOut();
-Packets::EBUPacketAnalogOut stopPacket = Packets::EBUPacketAnalogOut();
-Packets::CawlPacket cPack = Packets::CawlPacket();;
-Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
-
-
-EBU::EBUManager ebuMan = EBU::EBUManager();
-Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", true);
-Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
-
-queue<Packets::EBUPacketAnalogIn> fromEBU;
-queue<Packets::EBUPacketAnalogOut>analogToEBU;
-
-pthread_mutex_t qToEBU = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t qFroEBU = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t ebuPAO = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_gwSocket = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_ebuMan = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_cawlPacket = PTHREAD_MUTEX_INITIALIZER;
-
-pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
-
+#include "Major_Tom.h"
 
 //Används för ctrl+c, stänger av allt på ett bättre sätt.
 void INT_handler(int dummy){
@@ -193,82 +6,81 @@ void INT_handler(int dummy){
 	exit(EXIT_SUCCESS);
 }
 
-/* Needs to get the data out, make some calls to a mapping object
- * and forward everything to the right EBU and the right pin with
- * the right values.
- */
-
 
 /*
- * Ny lösning, skapa tråd för att ta emot paket till en buffer och en annan tråd för att skicka
- * från buffern. EVERYBODY WINS. behöver mest troligt en buffer för inkommmande data och en
- * för utgående data till/från EBU ??? Profit
+ * Takes the front element out from the buffer and sends it to the right
+ * EBU with a EBUPacketAnalogOut based on data found in the CawlPacket.
  */
 void *sendToEBU(void *parg){
+//	uint8_t type;
+//	int pin;
+//	int value;
+//	int ebu;
 	while(!timeToQuit){
-		//The sleep is to make sure that we don't flood the EBU, and since the EBU responds with 10Hz then will do the same.
+		//The sleep is to make sure that we don't flood the EBU, and since the EBU responds with 10Hz then we will do the same.
 		usleep(100000);
-		pthread_mutex_lock(&qToEBU);
-		pthread_mutex_lock(&ebuPAO);
+		pthread_mutex_lock(&m_PacketAnalogOut);
 		pthread_mutex_lock(&m_ebuMan);
-		if (AnalogToEBU.empty()){
+		if (packetBuffer.empty()){
+			//Send stop to all EBUs and all types
 			packetAnalogOut = stopPacket;
+			ebuMan.sendAnalogCommand(packetAnalogOut, 1);
 		}else{
-			packetAnalogOut = AnalogToEBU.pop();
+			cPack = packetBuffer.front();
+			printf("\nContents of datapack: %s\n", cPack.data);
+			packetBuffer.pop();
+//			memcpy(&type, cPack.data,8);
+//			memcpy(&pin, cPack.data+8, 16);
+//			memcpy(&value, cPack.data+24, 16);
+//			memcpy(&ebu, cPack.data+40,16);
+			printf("\nPacket data contains: %i, %i, %i, %i\n", dc.type, dc.pin, dc.value,dc.ebuNum);
+			printf("\nContents of datapack: %s\n", cPack.data);
+			memcpy(&dc, cPack.data, sizeof(dc));
+			printf("\nPacket data contains: %i, %i, %i, %i\n", dc.type, dc.pin, dc.value,dc.ebuNum);
+			switch (dc.type){
+			case 1:
+				packetAnalogOut.setChannelValue(dc.value, dc.pin);
+				ebuMan.sendAnalogCommand(packetAnalogOut, dc.ebuNum);
+			}
 		}
-		ebuMan.sendAnalogCommand(packetAnalogOut, 1);
 		pthread_mutex_unlock(&m_ebuMan);
-		pthread_mutex_unlock(&qToEBU);
-		pthread_mutex_unlock(&ebuPAO);
-
+		pthread_mutex_unlock(&m_PacketAnalogOut);
 	}
 	pthread_exit(NULL);
 }
 void *receiveFromGateway(void *parg){
-	char type;
-	int pin;
-	int value;
-	int ebu;
 	while(not timeToQuit){
-		pthread_mutex_lock(&m_gwSocket);
+		//pthread_mutex_lock(&m_gwSocket);
+		pthread_mutex_lock(&m_packetBuffer);
 		pthread_mutex_lock(&m_cawlPacket);
 		gatewaySocket.rec(cPack);
-		memcpy(&type, cPack.data, sizeof(char));
-		memcpy(&pin, cPack.data+8, sizeof(int));
-		memcpy(&value, cPack.data+24, sizeof(int));
-		memcpy(&ebu, cPack.data+40,sizeof(int));
-		//later on, fix switch for analog, digital etc
+		//Packets::CawlPacket temp = cPack;
+		//packetBuffer.push(temp);
+		memcpy(&dc, cPack.data, sizeof(dc));
+		packetAnalogOut.setChannelValue(dc.value, dc.pin);
+		ebuMan.sendAnalogCommand(packetAnalogOut, dc.ebuNum);
 		pthread_mutex_unlock(&m_cawlPacket);
-		pthread_mutex_unlock(&m_gwSocket);
-		pthread_mutex_lock(&ebuPAO);
-		pthread_mutex_lock(&qToEBU);
-		packetAnalogOut.setChannelValue(value,pin);
-		analogToEBU.push(packetAnalogOut);
-		pthread_mutex_unlock(&qToEBU);
-		pthread_mutex_unlock(&ebuPAO);
-
-
+		pthread_mutex_unlock(&m_packetBuffer);
+		//pthread_mutex_unlock(&m_gwSocket);
 	}
 	pthread_exit(NULL);
 }
 
-
+/*
+ * Resets all relays to 0, that is everything turns off.
+ */
 void resetRelays(void){
-	//pthread_mutex_lock(&m_relayPacket);
-	rPack = Packets::EBURelayPacket(); //nollvärden för allt
+	rPack = Packets::EBURelayPacket();
 	ebuMan.sendRelayCommand(rPack, 1);
 	//ebuMan.sendRelayCommand(rPack, 2);
 }
 /*
- * The main function will run threads for receiving packets from the other
- * gateway and another thread that empties the buffer and send packets to the EBU.
- * 2 queues are needed, one from the EBU and one to the EBU
- * One thread to read data from the extendedSocket and put packets INTO the toEBU queue
- * One thread to send data to the EBU from the "toEBU" queue
- * One thread to read data from EBU and put it into the fromEBUqueue
- * One thread to send data to the extendedSocket from the "fromEBU" queue
+ * One thread for receiving through the CawlSocket and pushing packets into a
+ * buffer.
+ * Another thread will empty the buffer and send the packet to the right EBU
+ * with the right values.
+ *TODO add support for receiving digital and relay packet info as well
  */
-
 int main(void)
 {
 	signal(SIGINT, INT_handler);
@@ -280,16 +92,12 @@ int main(void)
 	rPack.setRelayValue(R_A12,1);
 	ebuMan.sendRelayCommand(rPack, 1);
 	sleep(1);
-	pthread_t t1;
+	//pthread_t t1;
 	pthread_t t2;
-	pthread_create(&t1, NULL, sendToEBU, NULL);
+	//pthread_create(&t1, NULL, sendToEBU, NULL);
 	pthread_create(&t2, NULL, receiveFromGateway, NULL);
-
-	/*
-	pthread_t ebuSender;
-	pthread_t gateWayReceiver;
-	 */
-
+	pthread_join(t2,NULL);
+	printf("Threads finished");
 	return 0;
 }
 

@@ -7,7 +7,6 @@
 
 #include "CawlSocket.h"
 #include "../Netapi/Host.h"
-#include "../Packets/CawlPacket.h"
 #include <cstring>
 
 namespace Netapi {
