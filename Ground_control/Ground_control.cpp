@@ -15,7 +15,7 @@ Packets::CawlPacket pktOut = Packets::CawlPacket((uint8_t)1,(uint8_t)1,tempbuff)
 
 
 //Packets::EBUPacketAnalogOut  analogPacket = Packets::EBUPacketAnalogOut();
-Netapi::Host client = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1");
+Netapi::Host client = Netapi::Host((char*)"130.240.108.68", 1235, (char*)"127.0.0.1");
 
 
 Netapi::CawlSocket socketOut = Netapi::CawlSocket(client);

@@ -18,7 +18,7 @@ namespace Netapi {
 
 class Host {
 	public:
-		Host(char* a1,int p, char* a2=(char*)"0.0.0.0", bool s=false);
+		Host(char* addr_server,int port, char* addr_bind=(char*)"0.0.0.0", bool is_server=false);
 		virtual ~Host();
 
 		char * addr1;

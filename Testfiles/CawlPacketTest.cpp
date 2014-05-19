@@ -2,7 +2,10 @@
  * CawlPacketTest.cpp
  *
  *  Created on: May 6, 2014
- *      Author: cawl-mobile
+ *      Author: Håkan Therén
+ *
+ *      Description: Simple test script for testing CawlPacket.cpp
+ *
  */
 
 

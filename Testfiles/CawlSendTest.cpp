@@ -2,7 +2,10 @@
  * CawlRcvTest.cpp
  *
  *  Created on: May 12, 2014
- *      Author: cawl-mobile
+ *      Author: Håkan Therén
+ *
+ *      Description: Simple test script for testing CawlSocket.cpp
+ *      			 to be used with CawlRcvTest.cpp
  */
 
 #include <stdio.h>
@@ -11,7 +14,6 @@
 
 #include "../Netapi/CawlSocket.h"
 #include "../Netapi/Host.h"
-//#include "../Netapi/CawlSocket.cpp"
 #include "../Packets/CawlPacket.h"
 
 using namespace std;
@@ -30,5 +32,4 @@ int main(){
 		printf("After bind errno: %d\n", errno);
 		perror("Description: ");
 	}
-	//printf("Data recieved: %s  \n", (char*)"ch");
 }
