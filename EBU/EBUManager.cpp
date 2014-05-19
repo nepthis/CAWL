@@ -80,7 +80,7 @@ int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 
 int EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 	Packets::EBUrelays data = rPack.getRelays();
-	destinationPort = 25200;
+	//destinationPort = 25200;
 	int error;
 	switch(ebuNum){
 	case 1:

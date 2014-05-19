@@ -6,35 +6,14 @@
  * 	gateway at the control site.
  *
  */
+#include "Ground_control.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <termios.h>
-#include <signal.h>
-
-#include <pthread.h>
-#include <queue>
-
-#include "../Packets/CawlPacket.h"
-//#include "../Packets/CawlPacket.cpp"
-#include "../Packets/EBUPacketAnalogOut.h"
-#include "../Netapi/CawlSocket.h"
-#include "../Netapi/Host.h"
-
-using namespace std;
-
-//Globals, because threads. Could and should make a struct for these if there is time left.
-//Packets::CawlPacket cPack = Packets::CawlPacket();
-
-char * tempbuff = {0};
+char * tempbuff =(char*) "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww";
 
 Packets::CawlPacket pktOut = Packets::CawlPacket((uint8_t)1,(uint8_t)1,tempbuff);
+
+
+
 //Packets::EBUPacketAnalogOut  analogPacket = Packets::EBUPacketAnalogOut();
 Netapi::Host client = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1");
 
@@ -50,60 +29,70 @@ pthread_mutex_t qCawl = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packetOut = PTHREAD_MUTEX_INITIALIZER;
 //pthread_mutex_t m_ebuman = PTHREAD_MUTEX_INITIALIZER;
 
-pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
-
-//These should preferrably be in a struct and passed to the functions in question...
-int c;
-int countBoomUp = 0;
-int countBuckUp = 0;
-int countBoomDown = 0;
-int countBuckDown = 0;
-char type;
-uint8_t pin;
-uint8_t value;
-uint8_t ebuNum;
-char g_buffer[64]= {0};
-int pleased = 0;
-
-
-
 /*
  * enQueuePacket takes the data and a char buffer and copies in the data into the buffer
  * afterwards it creates a packet and copies it into a queue. (I think it copies the packet, at least)
  */
 void *deQueue(void *parg){
 	while(not pleased){
-		pthread_mutex_lock(&qCawl);
-		pthread_mutex_lock(&packetOut);
-		pktOut = toGateWay.front();
-		toGateWay.pop();
-		pthread_mutex_unlock(&qCawl);
-		socketOut.send(pktOut);
-		//em.sendAnalogCommand()
-		pthread_mutex_unlock(&packetOut);
+//		pthread_mutex_lock(&threadQueue);
+//		while (!running_queue)
+//			pthread_cond_wait(&t_queue, &threadQueue);
+//		running_queue = 0;
+//		pthread_mutex_unlock(&threadQueue);
+		//pthread_mutex_lock(&qCawl);
+		//pthread_mutex_lock(&packetOut);
+		if(toGateWay.empty()){
+			printf("Queue is empty\n");
+			//pthread_mutex_unlock(&qCawl);
+			//pthread_mutex_unlock(&packetOut);
+		}else{
+			pktOut = toGateWay.front();
+			toGateWay.pop();
+			socketOut.send(pktOut);
+			//pthread_mutex_unlock(&qCawl);
+			//pthread_mutex_unlock(&packetOut);
+		}
+//	    pthread_mutex_lock(&threadHandle);
+//	    running_handle= 1;
+//	    pthread_cond_signal(&t_handle);
+//	    pthread_mutex_unlock(&threadHandle);
+//		//em.sendAnalogCommand()
+
 	}
-	pthread_cond_signal(&quit);
 	pthread_exit(NULL);
 }
-void enQueuePacket(char t, int  p, int v,int n, char buffer[64]){
-	memcpy(buffer+0, &t, sizeof(char));
-	memcpy(buffer+8, &p, sizeof(int));
-	memcpy(buffer+24, &v, sizeof(int));
-	memcpy(buffer+40, &n, sizeof(int));
+void enQueuePacket(uint8_t t, int  p, int v,int n){
 	pthread_mutex_lock(&packetOut);
-	pktOut.data=buffer;
+	pthread_mutex_lock(&qCawl);
+	printf("before copy\n");
+	printf("to be copied: %c, %i, %i, %i\n", t,p,v,n);
+//	memcpy(g_buffer+0, &t, sizeof(uint8_t));
+//	memcpy(g_buffer+8, &p, sizeof(int));
+//	memcpy(g_buffer+40, &v, sizeof(int));
+//	memcpy(g_buffer+72, &n, sizeof(int));
+	dc.type = t;
+	dc.pin = p;
+	dc.value = v;
+	dc.ebuNum = n;
+	printf("after copy\n");
+	printf("\nPacket contains: %c, %i, %i, %i\n", dc.type, dc.pin, dc.value,dc.ebuNum);
+	pktOut.data=(char*)&dc;
+	printf("packet buffer contains: %c, %i, %i, %i\n", (uint8_t)pktOut.data[0],(int)pktOut.data[8],(int)pktOut.data[40], (int)pktOut.data[72]);
 	pktOut.prio = 1;
 	pktOut.streamId = 1;
-	pthread_mutex_lock(&qCawl);
-	toGateWay.push(pktOut);
+	socketOut.send(pktOut);
+	//toGateWay.push(pktOut);
+	printf("Packet PUSHED\n");
 	pthread_mutex_unlock(&qCawl);
 	pthread_mutex_unlock(&packetOut);
+	//printf("locks unlocked\n");
 }
-void boomUp(int voltage, char buffer[64]){
-	char type ='a';
+void boomUp(int voltage){
+	uint8_t type =1;
 	int pin = AO_9;
 	int ebuNum = 1;
-	enQueuePacket(type, pin, voltage, ebuNum, buffer);
+	enQueuePacket(type, pin, voltage, ebuNum);
 	//enQueuePacket(type, pin, value, ebuNum,buffer);
 	//pthread_mutex_lock(&packet);
 	//pthread_mutex_lock(&m_ebuman);
@@ -118,11 +107,11 @@ void boomUp(int voltage, char buffer[64]){
 
 
 }
-void boomDown(int voltage, char buffer[64]){
-	char type ='a';
+void boomDown(int voltage){
+	uint8_t type =1;
 	int pin = AO_10;
 	int ebuNum = 1;
-	enQueuePacket(type, pin, voltage, ebuNum, buffer);
+	enQueuePacket(type, pin, voltage, ebuNum);
 	//enQueuePacket(type, pin, value, ebuNum, buffer);
 	//	pthread_mutex_lock(&packet);
 	//	pthread_mutex_lock(&m_ebuman);
@@ -135,11 +124,11 @@ void boomDown(int voltage, char buffer[64]){
 	//	pthread_mutex_unlock(&m_ebuman);
 	//	pthread_mutex_unlock(&packet);
 }
-void bucketUp(int voltage, char buffer[64]){
-	char type ='a';
+void bucketUp(int voltage){
+	uint8_t type =1;
 	int pin = AO_11;
 	int ebuNum = 1;
-	enQueuePacket(type, pin, voltage, ebuNum, buffer);
+	enQueuePacket(type, pin, voltage, ebuNum);
 	//enQueuePacket(type, pin, value, ebuNum, buffer);
 	//	pthread_mutex_lock(&packet);
 	//	pthread_mutex_lock(&m_ebuman);
@@ -148,11 +137,13 @@ void bucketUp(int voltage, char buffer[64]){
 	//	pthread_mutex_unlock(&m_ebuman);
 	//	pthread_mutex_unlock(&packet);
 }
-void bucketDown(int voltage, char buffer[64]){
-	char type ='a';
+void bucketDown(int voltage){
+	uint8_t type =1;
 	int pin = AO_12;
 	int ebuNum = 1;
-	enQueuePacket(type, pin, voltage, ebuNum, buffer);
+
+	enQueuePacket(type, pin, voltage, ebuNum);
+
 	//enQueuePacket(type, pin, value, ebuNum, buffer);
 	//	pthread_mutex_lock(&packet);
 	//	pthread_mutex_lock(&m_ebuman);
@@ -193,94 +184,92 @@ IMPORTANT! This is only for keyboard control, will be different when in use
 with a joystick or similar from the simulator.
  */
 void *handleInput(void *parg){
+	int c;
 	while((c = getch()) != EOF){
+//		pthread_mutex_lock(&threadHandle);
+//		while (!running_handle)
+//			pthread_cond_wait(&t_handle, &threadHandle);
+//		running_handle= 0;
+//		pthread_mutex_unlock(&threadHandle);
 		c = tolower(c);
 		switch(c){
 		case 'w':
 			putchar(c);
 			countBoomDown = 0;
-			boomDown(countBoomDown, g_buffer);
+			boomDown(countBoomDown);
 			if (countBoomUp < 5)
 			{
 				countBoomUp++;
 				printf("\nBoom level: %d\n", countBoomUp);
-				boomUp(countBoomUp,g_buffer);
+				boomUp(countBoomUp);
 			}
 			else
 			{
 				printf("\nBoom at max level\n");
-				boomUp(countBoomUp,g_buffer);
+				boomUp(countBoomUp);
 			}
 			break;
 
 		case 's':
 			putchar(c);
 			countBoomUp = 0;
-			boomUp(0, g_buffer);
+			boomUp(0);
 			if(countBoomDown > -5)
 			{
 				countBoomDown--;
 				printf("\nBoom level: %d\n", countBoomDown);
-				boomDown((countBoomDown*-1),g_buffer);
+				boomDown((countBoomDown*-1));
 			}
 			else
 			{
 				printf("\nBoom at min level\n");
-				boomDown((countBoomDown*-1),g_buffer);
+				boomDown((countBoomDown*-1));
 			}
 			break;
 		case 'q':
 			putchar(c);
 			countBuckDown = 0;
-			bucketDown(countBuckDown, g_buffer);
+			bucketDown(countBuckDown);
 			if(countBuckUp < 5)
 			{
 				countBuckUp++;
 				printf("\nBucket level: %d\n", countBuckUp);
-				bucketUp(countBuckUp, g_buffer);
+				bucketUp(countBuckUp);
 			}
 			else
 			{
 				printf("\nBucket at max level\n");
-				bucketUp(countBuckUp, g_buffer);
+				bucketUp(countBuckUp);
 			}
 			break;
 
 		case 'e':
 			putchar(c);
 			countBuckUp = 0;
-			bucketUp(countBuckUp, g_buffer);
+			bucketUp(countBuckUp);
 			if(countBuckDown > -5)
 			{
 				countBuckDown--;
 				printf("\nBucket level: %d\n", countBuckDown);
-				bucketDown(countBuckDown,g_buffer);
+				bucketDown(countBuckDown);
 			}
 			else
 			{
 				printf("\nBucket at min level\n");
-				bucketDown((countBuckDown*-1),g_buffer);
+				bucketDown((countBuckDown*-1));
 			}
 			break;
-			//		case 'z':
-			//			putchar(c);
-			//			countBoomDown, countBoomUp = 0;
-			//			printf("\nBoom level reset\n");
-			//			break;
-			//		case 'x':
-			//			putchar(c);
-			//			countBuckDown, countBuckUp = 0;
-			//
-			//			printf("\nBucket level reset\n");
-			//			break;
+
 
 		default:
 			printf("\nUnrecognized input\n");
 			break;
 		}
+//		pthread_mutex_lock(&threadQueue);
+//		running_queue = 1;
+//		pthread_cond_signal(&t_queue);
+//		pthread_mutex_unlock(&threadQueue);
 	}
-	printf("main loop failed");
-	pthread_cond_signal(&quit);
 	pthread_exit(NULL);
 }
 /*
@@ -297,7 +286,7 @@ int main()
 {
 
 	signal(SIGINT, INT_handler);
-	printf("w = raise boom\ts = lower boom\nq = tilt bucket up\te = tilt bucket down\n");
+
 	//	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
 	//	rp.setRelayValue(R_A9, 0);
 	//	rp.setRelayValue(R_A10, 0);
@@ -318,16 +307,18 @@ int main()
 	//	printf("Packet sent. Creating worker-thread\n");
 
 	pthread_t t1;
-	pthread_t t2;
-	int err1 = pthread_create(&t1, NULL, handleInput, NULL);
-	int err2 = pthread_create(&t2, NULL, deQueue, NULL);
+	//pthread_t t2;
+	pthread_create(&t1, NULL, handleInput, NULL);
+	//pthread_create(&t2, NULL, deQueue, NULL);
 
-	if (err1 or err2){
-		perror("Something went wrong with the thread");
-	}
-	printf("Threads created, awaiting input");
+	//	if (err1 or err2){
+	//		perror("Something went wrong with the thread");
+	//		printf("\nError number%i", errno);
+	//	}
+	printf("Threads created, awaiting input\n");
+	printf("w = raise boom\ts = lower boom\nq = tilt bucket up\te = tilt bucket down\n");
 	pthread_join(t1,NULL);
-	pthread_join(t2,NULL);
+	//pthread_join(t2,NULL);
 
 	printf("Finished");
 	return 0;
