@@ -38,10 +38,11 @@
 namespace Packets{
 
 typedef struct ebuAnOut{
-	uint16_t channel[24];
+	uint16_t channel[];
 }ebuAnOut;
 
 class EBUPacketAnalogOut {
+	int destination;
 	ebuAnOut toEBU;
 public:
 	EBUPacketAnalogOut();
@@ -52,6 +53,8 @@ public:
 	//Set the value of a specific channel/pin to the EBU. if too high, max will be set, if too low lowest will be set
 	int setChannelValue(int volt, int pin);
 	virtual ~EBUPacketAnalogOut();
+	int getDestination(void);
+	void setDestination(int dest);
 };
 }
 

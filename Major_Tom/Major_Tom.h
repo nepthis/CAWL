@@ -4,7 +4,9 @@
  *  Created on: May 16, 2014
  *      Author: Robin Bond
  *	Description: This header file contains all globals and variables used in
- *	the .cpp file + all includes and defines
+ *	the .cpp file + all includes and defines. The main Function of Major_Tom
+ *	is to act as the application on the wheel loader's laptop that will
+ *	interpret data from the EBU and send data from the simulator to the EBU.
  */
 //#include <stdio.h>
 //#include <ctype.h>
@@ -175,22 +177,11 @@ using namespace std;
 
 #ifndef MAJOR_TOM_H_
 #define MAJOR_TOM_H_
-typedef struct dataCont{
-	uint8_t type;
-	uint8_t pin;
-	uint8_t value;
-	uint8_t ebuNum;
-}dataCont;
 
-//Globals
-
-dataCont dc = {0,0,0,0};
 int timeToQuit = 0;
 
-Packets::EBUPacketAnalogOut packetAnalogOut = Packets::EBUPacketAnalogOut();
+
 Packets::EBUPacketAnalogOut stopPacket = Packets::EBUPacketAnalogOut();
-Packets::CawlPacket cPack = Packets::CawlPacket(0);
-Packets::CawlPacket tempPack = Packets::CawlPacket(0);
 Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
 
 
@@ -198,12 +189,9 @@ EBU::EBUManager ebuMan = EBU::EBUManager();
 Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", true);
 Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
-queue<Packets::CawlPacket> packetBuffer;;
+queue<Packets::CawlPacket> packetBuffer = std::queue<Packets::CawlPacket>();
 
 pthread_mutex_t m_packetBuffer = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_PacketAnalogOut = PTHREAD_MUTEX_INITIALIZER;
-//Mutex for the cawlsocket will be needed later for twoway communication
-//pthread_mutex_t m_gwSocket = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t m_ebuMan = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t m_cawlPacket = PTHREAD_MUTEX_INITIALIZER;
 

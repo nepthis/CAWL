@@ -8,16 +8,13 @@
  */
 #include "Ground_control.h"
 
-char * tempbuff =(char*) "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww";
-
-Packets::CawlPacket pktOut = Packets::CawlPacket((uint8_t)1,(uint8_t)1,tempbuff);
+Packets::CawlPacket pktOut = Packets::CawlPacket((uint8_t)1);
 
 
 
 //Packets::EBUPacketAnalogOut  analogPacket = Packets::EBUPacketAnalogOut();
+
 Netapi::Host client = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1");
-
-
 Netapi::CawlSocket socketOut = Netapi::CawlSocket(client);
 
 //EBU::EBUManager em = EBU::EBUManager();
@@ -25,8 +22,9 @@ Netapi::CawlSocket socketOut = Netapi::CawlSocket(client);
 queue<Packets::CawlPacket> toGateWay;
 
 pthread_mutex_t qCawl = PTHREAD_MUTEX_INITIALIZER;
-//pthread_mutex_t packet = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t packetOut = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t packet = PTHREAD_MUTEX_INITIALIZER;
+
 //pthread_mutex_t m_ebuman = PTHREAD_MUTEX_INITIALIZER;
 
 /*

@@ -10,7 +10,8 @@ using namespace Packets;
 
 EBUPacketAnalogOut::EBUPacketAnalogOut() {
 	// TODO Auto-generated constructor stub
-	toEBU.channel[24] = {0};
+	toEBU.channel[24] = { };
+	destination = 0;
 
 }
 
@@ -41,4 +42,10 @@ uint16_t EBUPacketAnalogOut::getChannelValue(int pin) {
 	return toEBU.channel[pin];
 }
 
+int Packets::EBUPacketAnalogOut::getDestination(void) {
+	return destination;
+}
 
+void Packets::EBUPacketAnalogOut::setDestination(int dest) {
+	destination = dest;
+}

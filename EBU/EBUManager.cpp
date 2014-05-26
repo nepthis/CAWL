@@ -38,7 +38,7 @@ EBUManager::EBUManager() {
 	//-----------------------------------------ADRESSES-------------------------------------
 	//--------------------------------EBUAnalogOut for ebu1------------------------
 	memset((char *)&addrOneAnalogOut, 0, sizeof(addrOneAnalogOut));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr)); //Lättare att använda
+	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
 	addrOneAnalogOut.sin_port = htons(25200);
 
 	//--------------------------------Relays for ebu1--------------------------------------
@@ -69,11 +69,12 @@ EBUManager::~EBUManager() {
 
 int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 	Packets::ebuAnOut data = p.getChannel();
-	destinationPort = 25200;
-	int error;
+	//destinationPort = 25200;
 	switch(ebuNum){
 	case 1:
 		sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
+//	case 2:
+//		sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
 	}
 	return 1; //if success
 }
@@ -81,7 +82,6 @@ int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 int EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 	Packets::EBUrelays data = rPack.getRelays();
 	//destinationPort = 25200;
-	int error;
 	switch(ebuNum){
 	case 1:
 		sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);

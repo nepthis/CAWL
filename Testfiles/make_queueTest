@@ -1,0 +1,2 @@
+all:
+	c++ QueueTest.cpp ../Packets/CawlPacket.cpp ../Packets/EBUPacketAnalogOut.cpp -o queueTest
