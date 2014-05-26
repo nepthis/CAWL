@@ -36,23 +36,19 @@ private:
 	int SctpScocket, n, flags;
 	socklen_t from_len;
 
-	//forget about memset(,0,)
 	struct sockaddr_in addr;
+	struct sockaddr_in saddr;
 	struct sctp_sndrcvinfo sinfo;
 	struct sctp_event_subscribe event;
 	struct sctp_initmsg initmsg;
 	char pRecvBuffer[RECVBUFSIZE + 1];
-
 	bool isServer;
 
 public:
 	CawlSocket(Host& h);
-	// Cawlpacket needs to be changed from std to Net
-	void send(Packets::CawlPacket& p);
-	void rec(Packets::CawlPacket& p);
-
+	void send(Packets::CawlPacket& packet);
+	void rec(Packets::CawlPacket& packet);
 	virtual ~CawlSocket();
-
 };
 }
 /* namespace Net */
