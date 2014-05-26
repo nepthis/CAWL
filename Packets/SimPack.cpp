@@ -10,8 +10,7 @@
 namespace Packets {
 
 SimPack::SimPack() {
-	fromSim = commandPacket{0,0,0,0,0,0,0,0,0,0,0,0};
-
+	fromSim = commandPacket{0,0,0,0,0,0,0,0,0,0,0,0}; //init the data struct
 }
 
 SimPack::~SimPack() {
