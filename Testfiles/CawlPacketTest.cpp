@@ -11,11 +11,13 @@
 
 #include "../Packets/CawlPacket.h"
 #include <stdio.h>
+#include <typeinfo>
+#include <cstring>
+
 using namespace::Packets;
 
 int main(){
-	CawlPacket packet = CawlPacket(1,0,(char*)"smurfar");
-
-	//char * data = packet.GetData();
-	printf("Data: %s , Prio: %i , Streamid: %i \n",packet.GetData() ,packet.prio ,packet.streamId);
+	CawlPacket packet = CawlPacket(1,0,(char*)"smurfarnäas vaerskstad yaoooo");
+	packet.SetSnd();
+	printf("Data: %s , Prio: %i , Streamid: %i , Send timestamp %ld \n",packet.data ,packet.prio ,packet.streamId ,packet.time_snd);
 }

@@ -84,6 +84,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 // TODO add stream param etc.
 
 void CawlSocket::send(Packets::CawlPacket& p) {
+	p.SetSnd();
 	if (sctp_sendmsg(SctpScocket, /*(const void *)p.data*/(char*)&p, sizeof(p), (struct
 			sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
 		throw 4;
@@ -115,6 +116,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1,(char*)"TESTAAAAAAAAAAAAAAAAAAAAAAAAAAATTTT");
 			printf("%i \n",sizeof(packet));
 			memcpy(&packet,&pRecvBuffer, sizeof(Packets::CawlPacket));
+			packet.SetRcv();
 			p = packet;
 			break;
 		}

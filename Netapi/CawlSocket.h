@@ -26,7 +26,7 @@
 #ifndef CAWLSOCKET_H_
 #define CAWLSOCKET_H_
 
-#define RECVBUFSIZE	256
+#define RECVBUFSIZE	512
 #define PPID 1234
 
 namespace Netapi{

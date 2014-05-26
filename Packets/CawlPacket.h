@@ -7,12 +7,15 @@
  *      Description: Class to be used for storing data when sending in CawlSocket.cpp
  */
 
-#include <stdint.h>
-#include <ctime>
-
-
 #ifndef CAWLPACKET_H
 #define CAWLPACKET_H
+
+#include <stdint.h>
+#include <ctime>
+#include <sys/time.h>
+#include <string>
+#include <cstring>
+
 
 namespace Packets {
 /*
@@ -35,9 +38,14 @@ typedef struct CawlPacket{
 	time_t time_snd, time_arr;
 
 	CawlPacket(uint8_t prio = 0,uint8_t stream_id = 0, char* data =(char *)"");
-	virtual ~CawlPacket();
+
 	void SetData(char* data);
 	char* GetData();
+
+	void SetSnd();
+	void SetRcv();
+
+	virtual ~CawlPacket();
 }CawlPacket;
 
 } /* namespace std */
