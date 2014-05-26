@@ -13,7 +13,7 @@
 #include <cstring>
 
 #include "CawlSocket.h"
-#include "../Netapi/Host.h"
+//#include "../Netapi/Host.h"
 
 namespace Netapi {
 
@@ -84,7 +84,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 // TODO add stream param etc.
 
 void CawlSocket::send(Packets::CawlPacket& p) {
-	if (sctp_sendmsg(SctpScocket, (const void *)p.data, strlen(p.data), (struct
+	if (sctp_sendmsg(SctpScocket, /*(const void *)p.data*/(char*)&p, sizeof(p), (struct
 			sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
 		throw 4;
 	}
@@ -112,7 +112,10 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			throw 5;
 
 		} else {
-			p.data = pRecvBuffer;
+			Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1,(char*)"TESTAAAAAAAAAAAAAAAAAAAAAAAAAAATTTT");
+			printf("%i \n",sizeof(packet));
+			memcpy(&packet,&pRecvBuffer, sizeof(Packets::CawlPacket));
+			p = packet;
 			break;
 		}
 	}

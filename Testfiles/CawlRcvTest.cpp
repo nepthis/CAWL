@@ -26,7 +26,7 @@ int main(){
 	ssocket.rec(packet);
 	printf("Recieved: %s \n",packet.data);
 
-	packet.data = (char*)"Hmmmmmmm";
+	packet.SetData((char*)"Hmmmmmmm");
 	ssocket.send(packet);
 	}catch (int e){
 		printf("Exception, nr: %i \n", e);

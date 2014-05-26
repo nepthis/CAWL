@@ -15,7 +15,7 @@
 #define HOST_H_
 
 namespace Netapi {
-
+/*
 class Host {
 	public:
 		Host(char* addr_server,int port, char* addr_bind=(char*)"0.0.0.0", bool is_server=false);
@@ -27,6 +27,16 @@ class Host {
 		bool isServer;
 
 };
+*/
+
+typedef struct Host{
+	char * addr1;
+	char * addr2;
+	int  port;
+	bool isServer;
+	Host(char* addr_server,int port, char* addr_bind=(char*)"0.0.0.0", bool is_server=false);
+	virtual ~Host();
+}Host;
 
 } /* namespace std */
 

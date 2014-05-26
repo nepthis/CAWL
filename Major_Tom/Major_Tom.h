@@ -195,7 +195,7 @@ Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
 
 
 EBU::EBUManager ebuMan = EBU::EBUManager();
-Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", true);
+Netapi::Host h = Netapi::Host((char*)"130.240.109.70", 1235, (char*)"130.240.109.70", true);
 Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
 queue<Packets::CawlPacket> packetBuffer;;
