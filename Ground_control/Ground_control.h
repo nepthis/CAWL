@@ -45,7 +45,6 @@ int countBuckUp = 0;
 int countBoomDown = 0;
 int countBuckDown = 0;
 dataCont dc = {0,0,0,0};
-char g_buffer[256]= {0};
 int pleased = 0;
 
 

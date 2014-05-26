@@ -9,29 +9,31 @@
  * 	between the two systems.
  *
  */
-#include <sys/socket.h>
-#include <string.h>
-#include <../Packets/DataPacket.h>
-#include <time.h>
-using namespace std;
 
 #ifndef SIM_H_
 #define SIM_H_
-
+#include <sys/socket.h>
+#include <errno.h>
+#include <string.h>
+#include <time.h>
+#include "../Packets/SimPack.h"
+#define ownIP "192.168.2.100"
+#define simIP "192.168.2.97"
+using namespace std;
 class Sim {
-	struct socket_in addressIn;
-	struct socket_out addressOut;
+	socklen_t slen;
+	int simulatorSocket;
+	int realID;
+	struct sockaddr_in simAddr;
+	struct sockaddr_in ownAddr;
 	string address;
 	int port;
-	double sentPackages, recPackages;
-	time_t startTime;
+	//time_t startTime;
 public:
 	Sim();
 	virtual ~Sim();
-	void startConnection (string address, int port);
-	void closeConnection(void);
-	void recPac(void);
-	void sendPac(header hdr, data dt);
+	Packets::SimPack recPac(void);
+	void sendPac();
 };
 
 

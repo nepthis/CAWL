@@ -30,11 +30,9 @@ class EBUManager {
 	//int oneAnalogIn;
 	int oneAnalogOut;
 	int oneRelay;
-
 	int destinationPort;
-
 	Packets::EBURelayPacket relayPack;
-	//struct sockaddr_in addrOneAnalogIn; Port 25101, Analog data FROM the EBU
+	//struct sockaddr_out addrOneAnalogIn; Port 25101, Analog data FROM the EBU
 	struct sockaddr_in addrOneAnalogOut;//Port 25200, data TO the EBU
 	struct sockaddr_in addrOneRelay; //Port 25400, send relay data here
 //	struct sockaddr_in addrTwoAnalogIn;
