@@ -19,7 +19,6 @@ Host::Host(char* a1, int p, char* a2, bool s) {
 }
 
 Host::~Host() {
-	// Add cleanup, no biggy since not that many clients will be created
 }
 
 

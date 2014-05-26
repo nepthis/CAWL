@@ -2,27 +2,43 @@
  * CawlPacket.h
  *
  *  Created on: Apr 17, 2014
- *      Author: cawl-mobile
+ *      Author: Håkan Therén
+ *
+ *      Description: Class to be used for storing data when sending in CawlSocket.cpp
  */
 
 #include <stdint.h>
-#include <cstring>
+#include <ctime>
+
 
 #ifndef CAWLPACKET_H
 #define CAWLPACKET_H
 
 namespace Packets {
-
+/*
 class CawlPacket {
 
 public:
 	uint8_t prio, streamId;
 	char * data;
-	CawlPacket(uint8_t p ,uint8_t s = 0, char* d =(char *)"");
+	CawlPacket(uint8_t prio = 0,uint8_t stream_id = 0, char* data =(char *)"");
 
 	virtual ~CawlPacket();
 
 };
+
+*/
+
+typedef struct CawlPacket{
+	uint8_t prio, streamId, data_size;
+	char data[256];
+	time_t time_snd, time_arr;
+
+	CawlPacket(uint8_t prio = 0,uint8_t stream_id = 0, char* data =(char *)"");
+	virtual ~CawlPacket();
+	void SetData(char* data);
+	char* GetData();
+}CawlPacket;
 
 } /* namespace std */
 
