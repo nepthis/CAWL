@@ -11,7 +11,7 @@
 using namespace Packets;
 
 EBURelayPacket::EBURelayPacket() {
-	er.channel[14]={0};
+	er.channel[14]= ((int)0);
 }
 
 EBURelayPacket::~EBURelayPacket() {

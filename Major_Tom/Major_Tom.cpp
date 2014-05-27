@@ -8,7 +8,7 @@
 
 #include "Major_Tom.h"
 
-//Används för ctrl+c, stänger av allt på ett bättre sätt.
+//Används för ctrl+c, stänger av allt på ett bättre sätt. hoppas jag.
 void INT_handler(int dummy){
 	timeToQuit = 1;
 	exit(EXIT_SUCCESS);
@@ -60,9 +60,21 @@ void INT_handler(int dummy){
 void *recPacket(void *parg){
 	Packets::CawlPacket recPack = Packets::CawlPacket(0);
 	while(not timeToQuit){
+		sleep(1);
 		pthread_mutex_lock(&m_packetBuffer);
-		gatewaySocket.rec(recPack);
-		packetBuffer.push(recPack);
+		if(packetBuffer.size() > 100){
+			continue;
+		}else{
+			try{
+				gatewaySocket.rec(recPack);
+			}catch(int e){
+				printf("ERROR %i\n", e);
+			}
+
+			printf("Packet received\n");
+			packetBuffer.push(recPack);
+		}
+
 		pthread_mutex_unlock(&m_packetBuffer);
 	}
 	pthread_exit(NULL);
@@ -73,7 +85,8 @@ void *sendPacket(void *parg){
 	while(not timeToQuit){
 		pthread_mutex_lock(&m_packetBuffer);
 		if(packetBuffer.empty()){
-			ebuMan.sendAnalogCommand(stopPacket, 1);
+			printf("The value of pin 9 is: %i \n", stopPacket.getChannelValue(AO_9));
+			//ebuMan.sendAnalogCommand(stopPacket, 1);
 			//ebuMan.sendAnalogCommand(stopPacket, 2);
 		}else{
 			sendPack = packetBuffer.front();
@@ -82,7 +95,8 @@ void *sendPacket(void *parg){
 			tempbuff = (char*) malloc(sizeof(analogOut));
 			memcpy(tempbuff, sendPack.data, sizeof(analogOut));
 			memcpy(&analogOut, tempbuff, sizeof(analogOut));
-			ebuMan.sendAnalogCommand(analogOut, analogOut.getDestination());
+			//ebuMan.sendAnalogCommand(analogOut, analogOut.getDestination());
+			printf("The value of pin 9 is: %i \n", analogOut.getChannelValue(AO_9));
 		}
 		pthread_mutex_unlock(&m_packetBuffer);
 	}

@@ -9,10 +9,19 @@
 using namespace std;
 
 Ground::Ground() {
-	countBoomUp = countBuckUp = countBoomDown = countBuckDown = pleased = 0;
-	c = new Netapi::Host((char*)"130.240.109.70", 1235, (char*)"127.0.0.1");
-	socketOut = new Netapi::CawlSocket(*c);
-	simulator = Sim();
+	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
+	pleased = 0;
+	try{
+		client =   Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", false);
+		printf("addr is: %s\n", client.GetBindAddr());
+		socketOut =   Netapi::CawlSocket(client);
+	}catch(int e){
+		printf("error %i\n", e);
+		perror("Description");
+		exit(0);
+	}
+
+	simulator = new Simulator::Sim();
 }
 //used for testing EBU only, does not really handle or send data in correct way.
 //void Ground::handleInput() {
@@ -156,7 +165,20 @@ int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) 
 	memcpy(thetemp, &pkt, sizeof(pkt));
 	Packets::CawlPacket out = Packets::CawlPacket(prio, streamID);
 	memcpy(out.data, thetemp, sizeof(pkt));
-	socketOut->send(out);
+	printf("datavalues are %i\n", out.streamId);
+	try{
+		printf("sending\n");
+		socketOut.send(out);
+		printf("EBU packet sent with destination EBU: %i and value: %i\n", pkt.getDestination(), pkt.getChannelValue(AO_9));
+	}catch(int e){
+		printf("ERROR %i\n", e);
+		perror("Description: ");
+		printf("Packet not sent\n");
+		exit(0);
+	}
+
+	//free( thetemp);
+	//delete &out;
 	return 1;
 }
 
@@ -177,25 +199,18 @@ int Ground::setBucket(float value, Packets::EBUPacketAnalogOut* pkt) {
 int Ground::PacketHandler() {
 	Packets::SimPack sp = Packets::SimPack();
 	Packets::EBUPacketAnalogOut epao = Packets::EBUPacketAnalogOut();
-	int toggle = 0;
-	while(not pleased){
-		//		if (toggle){
-		//			epao.setChannelValue(0,AO_9);
-		//			epao.setChannelValue(5,AO_10);
-		//		}else{
-		//			epao.setChannelValue(5,AO_9);
-		//			epao.setChannelValue(1,AO_10);
-		//		}
-		sp = simulator.recPac();
-		setEbuOne(sp, &epao);
-		sendPacket(1, 1, epao);
-	}
+	sp = simulator->recPac();
+	printf("Packet received from simulator with ID %i\n", sp.fromSim.packetId);
+	setEbuOne(&sp, &epao);
+	printf("epao contains %i %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_10));
+	sendPacket(1, 1, epao);
+
 	return 1;
 }
 
-int Ground::setEbuOne(Packets::SimPack sp, Packets::EBUPacketAnalogOut* epao) {
+int Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) {
 	epao->setDestination(1);
-	commandPacket simData = sp.getData();
+	Packets::commandPacket simData = sp->getData();
 	setBoom((float)simData.analog[2], epao);
 	setBucket((float)simData.analog[3], epao);
 	return 1;
@@ -208,15 +223,17 @@ void INT_handler(int dummy){
 	exit(EXIT_SUCCESS);
 }
 
-void runThread(Ground *g) {
-	g->PacketHandler();
-}
+//void runThread(Ground *g) {
+//	g->PacketHandler();
+//}
 
 int main()
 {
 	signal(SIGINT, INT_handler);
 	Ground g = Ground();
-	g.PacketHandler();
+	while (1){
+		g.PacketHandler();
+	}
 	//	pthread_t t1;
 	//	pthread_create(&t1, NULL, runThread, (void*)g);
 	//	printf("Threads created, awaiting input\n");

@@ -37,7 +37,7 @@ private:
 	socklen_t from_len;
 	bool metrics;
 
-	struct sockaddr_in addr;
+
 	struct sockaddr_in saddr;
 	struct sctp_sndrcvinfo sinfo;
 	struct sctp_event_subscribe event;
@@ -46,6 +46,7 @@ private:
 	bool isServer;
 
 public:
+	struct sockaddr_in addr;
 	CawlSocket();
 	CawlSocket(Host& h);
 	void send(Packets::CawlPacket& packet);

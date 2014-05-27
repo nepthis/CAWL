@@ -48,6 +48,7 @@ time_t CawlPacket::GetDelay() {
 }
 
 CawlPacket::~CawlPacket() {
+
 }
 
 /* namespacestd */

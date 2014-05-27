@@ -20,14 +20,18 @@ using namespace std;
 
 int main(){
 	try{
-	Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1");
-	Netapi::CawlSocket ssocket = Netapi::CawlSocket(h);
-	Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1,(char*)"TESTTTTTAAAAAAAAAAAAAAAAATTTT");
-	packet.SetData((char*)"YEAHHHHHHHHHH");
-	ssocket.send(packet);
+		Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", false);
+		Netapi::CawlSocket ssocket = Netapi::CawlSocket(h);
+		Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1,(char*)"TESTTTTTAAAAAAAAAAAAAAAAATTTT");
+		string ip;
 
-	ssocket.rec(packet);
-	printf("Recieved: %s , Timestamp: Send/Rcv: %ld / %ld\n",packet.data,packet.time_snd,packet.time_arr);
+		printf("address is before sending: %\n", ssocket.addr.sin_addr);
+		while(1){
+			packet.SetData((char*)"YEAHHHHHHHHHH");
+			ssocket.send(packet);
+		}
+		ssocket.rec(packet);
+		printf("Recieved: %s , Timestamp: Send/Rcv: %ld / %ld\n",packet.data,packet.time_snd,packet.time_arr);
 	}catch (int e){
 		printf("Exception, nr: %i \n", e);
 		printf("After bind errno: %d\n", errno);

@@ -8,6 +8,13 @@
  *	is to act as the application on the wheel loader's laptop that will
  *	interpret data from the EBU and send data from the simulator to the EBU.
  */
+
+
+
+
+
+#ifndef MAJOR_TOM_H_
+#define MAJOR_TOM_H_
 //#include <stdio.h>
 //#include <ctype.h>
 //#include <stdlib.h>
@@ -27,7 +34,6 @@
 #include "../Netapi/CawlSocket.h"
 #include"../EBU/EBUManager.h"
 #include "../Packets/CawlPacket.h"
-//#include "../Packets/EBUPacketAnalogIn.h"
 #include "../Packets/EBUPacketAnalogOut.h"
 
 #define R_S19 	0
@@ -172,12 +178,6 @@
 
 using namespace std;
 
-
-
-
-#ifndef MAJOR_TOM_H_
-#define MAJOR_TOM_H_
-
 int timeToQuit = 0;
 
 
@@ -186,7 +186,7 @@ Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
 
 
 EBU::EBUManager ebuMan = EBU::EBUManager();
-Netapi::Host h = Netapi::Host((char*)"130.240.109.70", 1235, (char*)"130.240.109.70", true);
+Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", true);
 Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
 queue<Packets::CawlPacket> packetBuffer = std::queue<Packets::CawlPacket>();

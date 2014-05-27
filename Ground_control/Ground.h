@@ -20,9 +20,12 @@
 #include <netinet/in.h>
 #include <termios.h>
 #include <signal.h>
+
 #include "../Netapi/CawlSocket.h"
-#include "../Simulator/Sim.h"
 #include "../Packets/EBUPacketAnalogOut.h"
+#include "../Simulator/Sim.h"
+
+
 
 #define address1 "127.0.0.1"
 #define address2 "121.0.0.1"
@@ -32,15 +35,15 @@ class Ground {
 private:
 	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;
 	int pleased;
-	Netapi::Host* c;
-	Netapi::CawlSocket* socketOut;
-	Sim simulator;
+	Netapi::Host client;
+	Simulator::Sim* simulator;
 public:
+	Netapi::CawlSocket socketOut;
 	Ground(	);
 	//void handleInput(void);
 	//Packets::CawlPacket createPacket(uint8_t type,uint8_t  pin, uint8_t value,uint8_t ebuNumber);
 	int PacketHandler();
-	int setEbuOne(Packets::SimPack sp, Packets::EBUPacketAnalogOut* epao);
+	int setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
 	int sendPacket(int prio, int streamID,  Packets::EBUPacketAnalogOut pkt);
 	int setBoom(float value, Packets::EBUPacketAnalogOut* pkt);
 	int setBucket(float value, Packets::EBUPacketAnalogOut* pkt);
