@@ -16,6 +16,28 @@
 
 namespace Netapi {
 
+CawlSocket::CawlSocket() {
+	n=0;
+	flags=0;
+	from_len = 0;
+	metrics = false;
+
+	sockaddr_in addr = {0};
+	sockaddr_in saddr = {0};
+	sctp_sndrcvinfo sinfo = {0};
+	sctp_event_subscribe event = {0};
+	sctp_initmsg initmsg = {0};
+	pRecvBuffer[RECVBUFSIZE + 1] = (0);
+	isServer = h.isServer;
+
+	//server addr params
+	saddr.sin_family = AF_INET;
+	saddr.sin_port = htons(h.port);
+	saddr.sin_addr.s_addr = inet_addr(h.addr2);
+	SctpScocket = 0;
+
+}
+
 CawlSocket::CawlSocket(Netapi::Host& h) {
 	n=0;
 	flags=0;
