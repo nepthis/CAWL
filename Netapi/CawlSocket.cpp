@@ -32,8 +32,8 @@ CawlSocket::CawlSocket() {
 
 	//server addr params
 	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(h.port);
-	saddr.sin_addr.s_addr = inet_addr(h.addr2);
+	saddr.sin_port = htons(1);
+	saddr.sin_addr.s_addr = inet_addr("0.0.0.0");
 	SctpScocket = 0;
 
 }
