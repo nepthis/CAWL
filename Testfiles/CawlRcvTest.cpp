@@ -24,12 +24,11 @@ int main(){
 		Netapi::CawlSocket ssocket = Netapi::CawlSocket(h);
 		Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1);
 		int counter = 0;
-		while(1){
-			counter++;
-			ssocket.rec(packet);
-			printf("Recieved: %s, counter is %i \n",packet.data, counter);
 
-		}
+		counter++;
+		ssocket.rec(packet);
+		printf("Recieved: %s, counter is %i \n",packet.data, counter);
+
 		packet.SetData((char*)"Hmmmmmmm");
 		ssocket.send(packet);
 	}catch (int e){

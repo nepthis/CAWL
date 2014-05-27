@@ -108,12 +108,20 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 
 void CawlSocket::send(Packets::CawlPacket& p) {
 	p.SetSnd();
-	if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), (struct
-			sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
-		throw 4;
+	if (isServer){
+		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), (struct
+				sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
+			throw 4;
+		}
+
+	}else{
+		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), NULL, 0,
+				htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0)
+		{
+			throw 4;
+		}
 	}
 }
-
 //Recieve data from endpoint and store data in Cawlpacket
 
 void CawlSocket::rec(Packets::CawlPacket& p) {
