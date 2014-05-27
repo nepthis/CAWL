@@ -135,8 +135,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			throw 5;
 
 		} else {
-			Packets::CawlPacket packet = Packets::CawlPacket((uint8_t)1,(uint8_t)1,(char*)"TESTAAAAAAAAAAAAAAAAAAAAAAAAAAATTTT");
-			printf("%i \n",sizeof(packet));
+			Packets::CawlPacket packet;
 			memcpy(&packet,&pRecvBuffer, sizeof(Packets::CawlPacket));
 			packet.SetRcv();
 			p = packet;
