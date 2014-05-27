@@ -60,17 +60,26 @@ void INT_handler(int dummy){
 void *recPacket(void *parg){
 	Packets::CawlPacket recPack = Packets::CawlPacket(0);
 	while(not timeToQuit){
-		sleep(1);
+		printf("1s\n");
 		pthread_mutex_lock(&m_packetBuffer);
 		if(packetBuffer.size() > 100){
-			continue;
+			try{
+				printf("2\n");
+				gatewaySocket.rec(recPack);
+				packetBuffer.pop();
+				packetBuffer.push(recPack);
+			}catch(int e){
+				perror("Description");
+			}
 		}else{
 			try{
+				printf("3\n");
 				gatewaySocket.rec(recPack);
+				printf("Packet received\n");
 			}catch(int e){
 				printf("ERROR %i\n", e);
+				perror("Nope");
 			}
-
 			printf("Packet received\n");
 			packetBuffer.push(recPack);
 		}
@@ -85,7 +94,6 @@ void *sendPacket(void *parg){
 	while(not timeToQuit){
 		pthread_mutex_lock(&m_packetBuffer);
 		if(packetBuffer.empty()){
-			printf("The value of pin 9 is: %i \n", stopPacket.getChannelValue(AO_9));
 			//ebuMan.sendAnalogCommand(stopPacket, 1);
 			//ebuMan.sendAnalogCommand(stopPacket, 2);
 		}else{
@@ -128,6 +136,8 @@ int main(void)
 	rPack.setRelayValue(R_A11,1);
 	rPack.setRelayValue(R_A12,1);
 	ebuMan.sendRelayCommand(rPack, 1);
+	Packets::CawlPacket temp = Packets::CawlPacket(1,1);
+	gatewaySocket.rec(temp);
 	sleep(1);
 	pthread_t t1;
 	pthread_t t2;

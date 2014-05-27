@@ -35,11 +35,12 @@ class Ground {
 private:
 	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;
 	int pleased;
-	Netapi::Host client;
-	Simulator::Sim* simulator;
+	//Netapi::Host client;
+
 public:
 	Netapi::CawlSocket socketOut;
-	Ground(	);
+	Simulator::Sim* simulator;
+	Ground(Netapi::CawlSocket a_socket);
 	//void handleInput(void);
 	//Packets::CawlPacket createPacket(uint8_t type,uint8_t  pin, uint8_t value,uint8_t ebuNumber);
 	int PacketHandler();

@@ -8,19 +8,10 @@
 #include "Ground.h"
 using namespace std;
 
-Ground::Ground() {
+Ground::Ground(Netapi::CawlSocket gw_socket) {
 	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
 	pleased = 0;
-	try{
-		client =   Netapi::Host((char*)"127.0.0.1", 1235, (char*)"127.0.0.1", false);
-		printf("addr is: %s\n", client.GetBindAddr());
-		socketOut =   Netapi::CawlSocket(client);
-	}catch(int e){
-		printf("error %i\n", e);
-		perror("Description");
-		exit(0);
-	}
-
+	socketOut =  gw_socket;
 	simulator = new Simulator::Sim();
 }
 //used for testing EBU only, does not really handle or send data in correct way.
@@ -165,16 +156,15 @@ int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) 
 	memcpy(thetemp, &pkt, sizeof(pkt));
 	Packets::CawlPacket out = Packets::CawlPacket(prio, streamID);
 	memcpy(out.data, thetemp, sizeof(pkt));
-	printf("datavalues are %i\n", out.streamId);
 	try{
 		printf("sending\n");
 		socketOut.send(out);
 		printf("EBU packet sent with destination EBU: %i and value: %i\n", pkt.getDestination(), pkt.getChannelValue(AO_9));
 	}catch(int e){
-		printf("ERROR %i\n", e);
-		perror("Description: ");
+		printf("ERROR number %i\n", e);
+		perror("Description");
 		printf("Packet not sent\n");
-		exit(0);
+		exit(-1);
 	}
 
 	//free( thetemp);
@@ -230,7 +220,41 @@ void INT_handler(int dummy){
 int main()
 {
 	signal(SIGINT, INT_handler);
-	Ground g = Ground();
+	Netapi::Host client =Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
+	Netapi::CawlSocket clientSocket;
+	try{
+		clientSocket = Netapi::CawlSocket(client);
+		inet_pton(AF_INET, "127.0.0.1", &(clientSocket.addr.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
+		clientSocket.addr.sin_port = htons(5555);
+		Packets::CawlPacket worthless = Packets::CawlPacket(1,1);
+		clientSocket.send(worthless);
+	}
+	catch(int e)
+	{
+		printf("error %i\n", e);
+		perror("Description");
+		exit(0);
+	}
+
+	Ground g = Ground(clientSocket);
+
+	//	Packets::SimPack sp = Packets::SimPack();
+	//	Packets::EBUPacketAnalogOut epao = Packets::EBUPacketAnalogOut();
+	//	sp = g.simulator->recPac();
+	//	g.setEbuOne(&sp, &epao);
+	//	char *thetemp;
+	//	thetemp = (char*) malloc(sizeof(epao));
+	//	memcpy(thetemp, &epao, sizeof(epao));
+	//	Packets::CawlPacket out = Packets::CawlPacket(1, 1);
+	//	memcpy(out.data, thetemp, sizeof(epao));
+	//	try{
+	//		g.socketOut.send(out);
+	//	}catch(int e){
+	//		printf("ernor thrown : %i\n", errno);
+	//		perror("Not Good");
+	//		exit(0);
+	//	}
+	//	sleep(5);
 	while (1){
 		g.PacketHandler();
 	}
