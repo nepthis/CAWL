@@ -138,6 +138,7 @@ int main(void)
 	ebuMan.sendRelayCommand(rPack, 1);
 	Packets::CawlPacket temp = Packets::CawlPacket(1,1);
 	gatewaySocket.rec(temp);
+	printf("wat\n");
 	sleep(1);
 	pthread_t t1;
 	pthread_t t2;

@@ -8,7 +8,7 @@
 #include "Ground.h"
 using namespace std;
 
-Ground::Ground(Netapi::CawlSocket gw_socket) {
+Ground::Ground(Netapi::CawlSocket* gw_socket) {
 	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
 	pleased = 0;
 	socketOut =  gw_socket;
@@ -158,7 +158,7 @@ int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) 
 	memcpy(out.data, thetemp, sizeof(pkt));
 	try{
 		printf("sending\n");
-		socketOut.send(out);
+		socketOut->send(out);
 		printf("EBU packet sent with destination EBU: %i and value: %i\n", pkt.getDestination(), pkt.getChannelValue(AO_9));
 	}catch(int e){
 		printf("ERROR number %i\n", e);
@@ -221,13 +221,17 @@ int main()
 {
 	signal(SIGINT, INT_handler);
 	Netapi::Host client =Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
-	Netapi::CawlSocket clientSocket;
+
 	try{
-		clientSocket = Netapi::CawlSocket(client);
-		inet_pton(AF_INET, "127.0.0.1", &(clientSocket.addr.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
-		clientSocket.addr.sin_port = htons(5555);
+		Netapi::CawlSocket* clientSocket = new Netapi::CawlSocket(client);
+		inet_pton(AF_INET, "127.0.0.1", &(clientSocket->addr.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
+		clientSocket->addr.sin_port = htons(5555);
 		Packets::CawlPacket worthless = Packets::CawlPacket(1,1);
-		clientSocket.send(worthless);
+		clientSocket->send(worthless);
+		Ground g = Ground(clientSocket);
+		while (1){
+			g.PacketHandler();
+		}
 	}
 	catch(int e)
 	{
@@ -236,7 +240,7 @@ int main()
 		exit(0);
 	}
 
-	Ground g = Ground(clientSocket);
+
 
 	//	Packets::SimPack sp = Packets::SimPack();
 	//	Packets::EBUPacketAnalogOut epao = Packets::EBUPacketAnalogOut();
@@ -255,9 +259,7 @@ int main()
 	//		exit(0);
 	//	}
 	//	sleep(5);
-	while (1){
-		g.PacketHandler();
-	}
+
 	//	pthread_t t1;
 	//	pthread_create(&t1, NULL, runThread, (void*)g);
 	//	printf("Threads created, awaiting input\n");
