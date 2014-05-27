@@ -10,10 +10,9 @@
  *      			 via SCTP in an easy to use manner.
  *
  */
-#include <cstring>
 
 #include "CawlSocket.h"
-//#include "../Netapi/Host.h"
+
 
 namespace Netapi {
 

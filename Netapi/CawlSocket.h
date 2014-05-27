@@ -23,6 +23,8 @@
 
 #include <syslog.h>
 #include "../Packets/CawlPacket.h"
+#include <cstring>
+
 
 #define RECVBUFSIZE	512
 #define PPID 1234
@@ -44,6 +46,7 @@ private:
 	bool isServer;
 
 public:
+	CawlSocket();
 	CawlSocket(Host& h);
 	void send(Packets::CawlPacket& packet);
 	void rec(Packets::CawlPacket& packet);
