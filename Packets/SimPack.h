@@ -14,7 +14,7 @@ typedef struct commandPacket {
 	uint32_t packetId;
 	uint32_t packetSize;
 	float analog[9];
-	uint32_t digital;
+	uint32_t digital; //	<-- the integers decimal value represents a binary array. to read simply convert into binary representation, 24 bits
 	struct timespec timeSent;
 }commandPacket;
 namespace Packets {

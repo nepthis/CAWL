@@ -10,7 +10,7 @@ using namespace Packets;
 
 EBUPacketAnalogOut::EBUPacketAnalogOut() {
 	// TODO Auto-generated constructor stub
-	toEBU.channel[24] = { };
+	toEBU.channel[24] = ((uint16_t)0);
 	destination = 0;
 
 }

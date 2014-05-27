@@ -38,7 +38,7 @@
 namespace Packets{
 
 typedef struct ebuAnOut{
-	uint16_t channel[];
+	uint16_t channel[24];
 }ebuAnOut;
 
 class EBUPacketAnalogOut {

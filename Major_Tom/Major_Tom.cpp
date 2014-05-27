@@ -78,7 +78,10 @@ void *sendPacket(void *parg){
 		}else{
 			sendPack = packetBuffer.front();
 			packetBuffer.pop();
-			memcpy(&analogOut, sendPack.data, sizeof(analogOut));
+			char *tempbuff;
+			tempbuff = (char*) malloc(sizeof(analogOut));
+			memcpy(tempbuff, sendPack.data, sizeof(analogOut));
+			memcpy(&analogOut, tempbuff, sizeof(analogOut));
 			ebuMan.sendAnalogCommand(analogOut, analogOut.getDestination());
 		}
 		pthread_mutex_unlock(&m_packetBuffer);

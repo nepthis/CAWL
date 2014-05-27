@@ -151,9 +151,11 @@ char Ground::getch() {
 }
 
 int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) {
-	char temp[sizeof(pkt)];
-	memcpy(&temp, &pkt, sizeof(&pkt));
-	Packets::CawlPacket out = Packets::CawlPacket(prio, streamID, temp);
+	char *thetemp;
+	thetemp = (char*) malloc(sizeof(pkt));
+	memcpy(thetemp, &pkt, sizeof(pkt));
+	Packets::CawlPacket out = Packets::CawlPacket(prio, streamID);
+	memcpy(out.data, thetemp, sizeof(pkt));
 	socketOut->send(out);
 	return 1;
 }
@@ -177,15 +179,15 @@ int Ground::PacketHandler() {
 	Packets::EBUPacketAnalogOut epao = Packets::EBUPacketAnalogOut();
 	int toggle = 0;
 	while(not pleased){
-		if (toggle){
-			epao.setChannelValue(0,AO_9);
-			epao.setChannelValue(5,AO_10);
-		}else{
-			epao.setChannelValue(5,AO_9);
-			epao.setChannelValue(1,AO_10);
-		}
-		//sp = simulator.recPac();
-		//setEbuOne(sp, epao);
+		//		if (toggle){
+		//			epao.setChannelValue(0,AO_9);
+		//			epao.setChannelValue(5,AO_10);
+		//		}else{
+		//			epao.setChannelValue(5,AO_9);
+		//			epao.setChannelValue(1,AO_10);
+		//		}
+		sp = simulator.recPac();
+		setEbuOne(sp, &epao);
 		sendPacket(1, 1, epao);
 	}
 	return 1;
