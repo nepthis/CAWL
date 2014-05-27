@@ -111,6 +111,7 @@ void CawlSocket::send(Packets::CawlPacket& p) {
 			sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
 		throw 4;
 	}
+	free(&p);
 }
 
 //Recieve data from endpoint and store data in Cawlpacket
