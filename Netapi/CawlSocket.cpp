@@ -28,7 +28,7 @@ CawlSocket::CawlSocket() {
 	sctp_event_subscribe event = {0};
 	sctp_initmsg initmsg = {0};
 	pRecvBuffer[RECVBUFSIZE + 1] = (0);
-	isServer = h.isServer;
+	isServer = false;
 
 	//server addr params
 	saddr.sin_family = AF_INET;
