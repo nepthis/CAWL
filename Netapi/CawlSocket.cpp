@@ -65,6 +65,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 
 	// Number of streams
 	initmsg.sinit_num_ostreams = 1;
+	initmsg.sinit_max_instreams = 1;
 
 	// Depending on the socket being server or not SCTP is initialized different
 	// First setup socket, if succeded setup SCTP-options for socket then bind to addr
@@ -107,7 +108,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 
 void CawlSocket::send(Packets::CawlPacket& p) {
 	p.SetSnd();
-	if (sctp_sendmsg(SctpScocket, /*(const void *)p.data*/(char*)&p, sizeof(p), (struct
+	if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), (struct
 			sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
 		throw 4;
 	}
