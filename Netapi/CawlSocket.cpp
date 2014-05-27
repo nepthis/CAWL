@@ -21,6 +21,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	n=0;
 	flags=0;
 	from_len = 0;
+	metrics = false;
 
 	sockaddr_in addr = {0};
 	sockaddr_in saddr = {0};

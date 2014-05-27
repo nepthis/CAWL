@@ -18,19 +18,6 @@
 
 
 namespace Packets {
-/*
-class CawlPacket {
-
-public:
-	uint8_t prio, streamId;
-	char * data;
-	CawlPacket(uint8_t prio = 0,uint8_t stream_id = 0, char* data =(char *)"");
-
-	virtual ~CawlPacket();
-
-};
-
-*/
 
 typedef struct CawlPacket{
 	uint8_t prio, streamId, data_size;
@@ -42,9 +29,17 @@ typedef struct CawlPacket{
 	void SetData(char* data);
 	char* GetData();
 
+	void SetPrio(int Prio){prio=Prio;}
+	uint8_t GetPrio(){return prio;}
+
+	void SetId(int StreamId){streamId = StreamId;}
+	int GetId(){return streamId;}
+
 	void SetSnd();
 	void SetRcv();
-
+	time_t GetSnd(){return time_snd;}
+	time_t GetRcv(){return time_arr;}
+	time_t GetDelay();
 	virtual ~CawlPacket();
 }CawlPacket;
 

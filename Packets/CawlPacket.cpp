@@ -21,7 +21,6 @@ CawlPacket::CawlPacket(uint8_t p ,uint8_t s,char* d) {
 void CawlPacket::SetData(char* d) {
 	memset(data,'\0',sizeof(data));
 	memcpy(data,d,sizeof(data));
-
 }
 
 char* CawlPacket::GetData() {
@@ -38,6 +37,14 @@ void CawlPacket::SetRcv() {
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
 	time_arr = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+}
+
+time_t CawlPacket::GetDelay() {
+	if(time_arr >= time_snd) {
+		return time_arr - time_snd;
+	}else{
+		return 0;
+	}
 }
 
 CawlPacket::~CawlPacket() {

@@ -5,8 +5,10 @@
  *      Author: cawl-mobile
  */
 
-#include "Host.h"
+#ifndef CAWLSOCKET_H_
+#define CAWLSOCKET_H_
 
+#include "Host.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -22,10 +24,6 @@
 #include <syslog.h>
 #include "../Packets/CawlPacket.h"
 
-
-#ifndef CAWLSOCKET_H_
-#define CAWLSOCKET_H_
-
 #define RECVBUFSIZE	512
 #define PPID 1234
 
@@ -35,6 +33,7 @@ class CawlSocket {
 private:
 	int SctpScocket, n, flags;
 	socklen_t from_len;
+	bool metrics;
 
 	struct sockaddr_in addr;
 	struct sockaddr_in saddr;
@@ -48,6 +47,7 @@ public:
 	CawlSocket(Host& h);
 	void send(Packets::CawlPacket& packet);
 	void rec(Packets::CawlPacket& packet);
+	void setmetrics(bool SetMeasure){metrics = SetMeasure;}
 	virtual ~CawlSocket();
 };
 }

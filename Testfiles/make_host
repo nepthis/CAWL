@@ -1,0 +1,3 @@
+all:
+	c++ TestHost.cpp ../Netapi/Host.cpp -o HostTest
+
