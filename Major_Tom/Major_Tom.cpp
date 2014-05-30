@@ -13,6 +13,14 @@ void INT_handler(int dummy){
 	timeToQuit = 1;
 	exit(EXIT_SUCCESS);
 }
+/*
+ * Resets all relays to 0 meaning that everything should stop
+ */
+void resetRelays(void){
+	rPack = Packets::EBURelayPacket();
+	ebuMan.sendRelayCommand(rPack, 1);
+	//ebuMan.sendRelayCommand(rPack, 2);
+}
 
 
 /*
@@ -57,68 +65,80 @@ void INT_handler(int dummy){
 //	}
 //	pthread_exit(NULL);
 //}
+bool compPack(Packets::EBUPacketAnalogOut p1){
+	bool out = false;
+	if(p1.getChannelValue(AO_9) == buff.getChannelValue(AO_9)){
+		out = true;
+	}else{
+		out = false;
+	}
+	if(p1.getChannelValue(AO_10) == buff.getChannelValue(AO_10)){
+		out = true;
+	}else{
+		out = false;
+	}
+	if(p1.getChannelValue(AO_11) == buff.getChannelValue(AO_11)){
+		out = true;
+	}else{
+		out = false;
+	}
+	if(p1.getChannelValue(AO_12) == buff.getChannelValue(AO_12)){
+		out = true;
+	}else{
+		out = false;
+	}
+	return out;
+}
 void *recPacket(void *parg){
-	Packets::CawlPacket recPack = Packets::CawlPacket(0);
+	Packets::CawlPacket recPack =  Packets::CawlPacket(0);
+	Packets::EBUPacketAnalogOut analogOut =  Packets::EBUPacketAnalogOut();
 	while(not timeToQuit){
-		printf("1s\n");
-		pthread_mutex_lock(&m_packetBuffer);
-		if(packetBuffer.size() > 100){
-			try{
-				printf("2\n");
-				gatewaySocket.rec(recPack);
-				packetBuffer.pop();
-				packetBuffer.push(recPack);
-			}catch(int e){
-				perror("Description");
-			}
-		}else{
-			try{
-				printf("3\n");
-				gatewaySocket.rec(recPack);
-				printf("Packet received\n");
-			}catch(int e){
-				printf("ERROR %i\n", e);
-				perror("Nope");
-			}
-			printf("Packet received\n");
-			packetBuffer.push(recPack);
+		try{
+			gatewaySocket.rec(recPack);
+		}catch(int e){
+			printf("ERROR %i\n", e);
+			resetRelays();
+			perror("Nope");
 		}
+		pthread_mutex_lock(&m_packetBuffer);
 
+		char *tempbuff;
+		tempbuff = (char*) malloc(sizeof(analogOut));
+		memcpy(tempbuff, recPack.data, sizeof(analogOut));
+		memcpy(&analogOut, tempbuff, sizeof(analogOut));
+		buff = analogOut;
+		//		if(compPack(analogOut)){
+		//			buff = analogOut;
+		//		}
 		pthread_mutex_unlock(&m_packetBuffer);
+
 	}
 	pthread_exit(NULL);
 }
+
+
 void *sendPacket(void *parg){
-	Packets::EBUPacketAnalogOut analogOut = Packets::EBUPacketAnalogOut();
-	Packets::CawlPacket sendPack = Packets::CawlPacket(0);
+
 	while(not timeToQuit){
+		usleep(100000);
 		pthread_mutex_lock(&m_packetBuffer);
-		if(packetBuffer.empty()){
-			//ebuMan.sendAnalogCommand(stopPacket, 1);
-			//ebuMan.sendAnalogCommand(stopPacket, 2);
-		}else{
-			sendPack = packetBuffer.front();
-			packetBuffer.pop();
-			char *tempbuff;
-			tempbuff = (char*) malloc(sizeof(analogOut));
-			memcpy(tempbuff, sendPack.data, sizeof(analogOut));
-			memcpy(&analogOut, tempbuff, sizeof(analogOut));
-			//ebuMan.sendAnalogCommand(analogOut, analogOut.getDestination());
-			printf("The value of pin 9 is: %i \n", analogOut.getChannelValue(AO_9));
-		}
+		//		if(packetBuffer.empty()){
+		//			continue;
+		//			//ebuMan.sendAnalogCommand(stopPacket, 1);
+		//			//ebuMan.sendAnalogCommand(stopPacket, 2);
+		//		}else{
+		//sendPack = packetBuffer.front();
+		//packetBuffer.pop();
+		//printf("Values in the analog packet to be sent;\n%i, %i, %i, %i\n", buff.getChannelValue(AO_9),buff.getChannelValue(AO_10),buff.getChannelValue(AO_11),buff.getChannelValue(AO_12));
+		ebuMan.sendAnalogCommand(buff, buff.getDestination());
+		//printf("Packet sent to ebu1\n");
+		//}
 		pthread_mutex_unlock(&m_packetBuffer);
 	}
 	pthread_exit(NULL);
 }
 
-/*
- * Resets all relays to 0 meaning that everything should stop
- */
-void resetRelays(void){
-	rPack = Packets::EBURelayPacket();
-	ebuMan.sendRelayCommand(rPack, 1);
-	//ebuMan.sendRelayCommand(rPack, 2);
-}
+
 /*
  * One thread for receiving through the CawlSocket and pushing packets into a
  * buffer.
@@ -138,8 +158,6 @@ int main(void)
 	ebuMan.sendRelayCommand(rPack, 1);
 	Packets::CawlPacket temp = Packets::CawlPacket(1,1);
 	gatewaySocket.rec(temp);
-	printf("wat\n");
-	sleep(1);
 	pthread_t t1;
 	pthread_t t2;
 	pthread_create(&t1, NULL, sendPacket, NULL);
@@ -147,6 +165,7 @@ int main(void)
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
 	printf("Threads finished");
+	resetRelays();
 	return 0;
 }
 

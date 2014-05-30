@@ -29,7 +29,7 @@
 
 //For threads and mutex
 #include <pthread.h>
-#include <queue>
+//#include <queue>
 
 #include "../Netapi/CawlSocket.h"
 #include"../EBU/EBUManager.h"
@@ -176,6 +176,7 @@
 #define R_res6 	110
 #define R_res7 	111
 
+
 using namespace std;
 
 int timeToQuit = 0;
@@ -189,7 +190,10 @@ EBU::EBUManager ebuMan = EBU::EBUManager();
 Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", true);
 Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
-queue<Packets::CawlPacket> packetBuffer = std::queue<Packets::CawlPacket>();
+//queue<Packets::CawlPacket> packetBuffer = std::queue<Packets::CawlPacket>();
+Packets::EBUPacketAnalogOut buff = Packets::EBUPacketAnalogOut();
+Packets::EBUPacketAnalogOut buff2 = Packets::EBUPacketAnalogOut();
+
 
 pthread_mutex_t m_packetBuffer = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t m_ebuMan = PTHREAD_MUTEX_INITIALIZER;
