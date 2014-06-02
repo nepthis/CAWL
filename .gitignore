@@ -1,2 +1,4 @@
 .settings/
 .buildpath
+.cproject
+.project
