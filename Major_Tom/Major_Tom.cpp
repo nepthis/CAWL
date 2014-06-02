@@ -120,7 +120,7 @@ void *recPacket(void *parg){
 void *sendPacket(void *parg){
 
 	while(not timeToQuit){
-		usleep(100000);
+		usleep(200000);
 		pthread_mutex_lock(&m_packetBuffer);
 		//		if(packetBuffer.empty()){
 		//			continue;
