@@ -49,11 +49,11 @@ void mysqlconnector::insertWorker(){
 	//remove  from queue and insert into db
 
 	while(true){
+		std::unique_lock<std::mutex> lk(mutex);
 		cond.wait(lk);
 		// sleep until condition
 		while(ready){
 			// Insert into DB or notify that queue is empty
-			std::unique_lock<std::mutex> lk(mutex);
 
 			if(!dbqueue.empty()){
 				dbInsert(dbqueue.front());
