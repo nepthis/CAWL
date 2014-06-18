@@ -15,7 +15,7 @@ typedef struct measurementData{
 	std::string timeStamp;
 	std::string type;
 	std::string value;
-};
+}measurementData;
 
 
 #endif /* MEASUREMENTDATA_H_ */

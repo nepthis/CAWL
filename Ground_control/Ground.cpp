@@ -14,121 +14,6 @@ Ground::Ground(Netapi::CawlSocket* gw_socket) {
 	socketOut =  gw_socket;
 	simulator = new Simulator::Sim();
 }
-//used for testing EBU only, does not really handle or send data in correct way.
-//void Ground::handleInput() {
-//	int c;
-//	while((c = getch()) != EOF){
-//		c = tolower(c);
-//		switch(c){
-//		case 'w':
-//			putchar(c);
-//			countBoomDown = 0;
-//			boomDown(countBoomDown);
-//			if (countBoomUp < 5)
-//			{
-//				countBoomUp++;
-//				printf("\nBoom level: %d\n", countBoomUp);
-//				boomUp(countBoomUp);
-//			}
-//			else
-//			{
-//				printf("\nBoom at max level\n");
-//				boomUp(countBoomUp);
-//			}
-//			break;
-//
-//		case 's':
-//			putchar(c);
-//			countBoomUp = 0;
-//			boomUp(0);
-//			if(countBoomDown > -5)
-//			{
-//				countBoomDown--;
-//				printf("\nBoom level: %d\n", countBoomDown);
-//				boomDown((countBoomDown*-1));
-//			}
-//			else
-//			{
-//				printf("\nBoom at min level\n");
-//				boomDown((countBoomDown*-1));
-//			}
-//			break;
-//		case 'q':
-//			putchar(c);
-//			countBuckDown = 0;
-//			bucketDown(countBuckDown);
-//			if(countBuckUp < 5)
-//			{
-//				countBuckUp++;
-//				printf("\nBucket level: %d\n", countBuckUp);
-//				bucketUp(countBuckUp);
-//			}
-//			else
-//			{
-//				printf("\nBucket at max level\n");
-//				bucketUp(countBuckUp);
-//			}
-//			break;
-//
-//		case 'e':
-//			putchar(c);
-//			countBuckUp = 0;
-//			bucketUp(countBuckUp);
-//			if(countBuckDown > -5)
-//			{
-//				countBuckDown--;
-//				printf("\nBucket level: %d\n", countBuckDown);
-//				bucketDown(countBuckDown);
-//			}
-//			else
-//			{
-//				printf("\nBucket at min level\n");
-//				bucketDown((countBuckDown*-1));
-//			}
-//			break;
-//
-//
-//		default:
-//			printf("\nUnrecognized input\n");
-//			break;
-//		}
-//	}
-//	pthread_exit(NULL);
-//}
-
-
-////type, 1 = analog
-//int Ground::boomUp(uint8_t voltage) {
-//	uint8_t type =1;
-//	uint8_t pin = AO_9;
-//	uint8_t ebuNum = 1;
-//	sendPacket(createPacket(type, pin, voltage, ebuNum));
-//	return 1;
-//}
-//
-//int Ground::boomDown(uint8_t voltage) {
-//	uint8_t type =1;
-//	uint8_t pin = AO_10;
-//	uint8_t ebuNum = 1;
-//	sendPacket(createPacket(type, pin, voltage, ebuNum));
-//	return 1;
-//}
-//
-//int Ground::bucketUp(uint8_t voltage) {
-//	uint8_t type =1;
-//	uint8_t pin = AO_11;
-//	uint8_t ebuNum = 1;
-//	sendPacket(createPacket(type, pin, voltage, ebuNum));
-//	return 1;
-//}
-//
-//int Ground::bucketDown(uint8_t voltage) {
-//	uint8_t type =1;
-//	uint8_t pin = AO_12;
-//	uint8_t ebuNum = 1;
-//	sendPacket(createPacket(type, pin, voltage, ebuNum));
-//	return 1;
-//}
 
 char Ground::getch() {
 	char buf = 0;
@@ -175,6 +60,7 @@ int Ground::receivePacket(Packets::EBUPacketAnalogOut* incoming){
 	Packets::CawlPacket recPack =  Packets::CawlPacket(0);
 	try{
 		socketOut->rec(recPack);
+		//printf("PACKET RECEIVED :D\n");
 	}catch(int e){
 		printf("ERROR %i\n", e);
 		perror("Nope");
@@ -210,7 +96,6 @@ int Ground::PacketHandler() {
 	setEbuOne(&sp, &epao);
 	printf("Packet to send, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
 	sendPacket(1, 1, epao);
-
 	return 1;
 }
 

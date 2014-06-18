@@ -36,7 +36,7 @@ CawlSocket::CawlSocket() {
 	saddr.sin_addr.s_addr = inet_addr("0.0.0.0");
 	SctpScocket = 0;
 
-	gm = new GatherMetrics();
+	gm = GatherMetrics();
 	gm.setOption("DELAY", true);
 	//gm.setOption("CHKSUMERR",false);
 
@@ -48,10 +48,10 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	from_len = 0;
 	metrics = false;
 
-	gm = new GatherMetrics();
+	gm = GatherMetrics();
 	//Options can be set "on the go" as well.
 	gm.setOption("DELAY", true);
-	//gm.setOption("CHKSUMERR",true);
+
 
 	sockaddr_in addr = {0};
 	sockaddr_in saddr = {0};
@@ -164,7 +164,13 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			break;
 		}
 		if(metrics){
-			gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
+			try{
+				gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
+			}catch(std::logic_error&e){
+				perror("NOPE");
+				exit(1);
+			}
+
 		}
 	}
 }

@@ -10,8 +10,6 @@
 namespace Netapi {
 
 GatherMetrics::GatherMetrics() {
-	options = measureOpt{false,false};
-
 }
 
 
@@ -26,9 +24,8 @@ void GatherMetrics::setOption(std::string measurement, bool value) {
 	}
 }
 
-std::vector GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
+void GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 		int testID, std::string testName) {
-	//std::vector<std::vector<std::pair<std::string,std::string>(5)> multiVector;
 	time_t rawtime;
 	struct tm * now;
 	time(&rawtime);
@@ -38,7 +35,7 @@ std::vector GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 	}else{
 		if(options.DELAY){
 			//id (type of test), name (for this test), timestamp, type (RTT, BER, etc), data (value for the type)
-			measurementData delayData =  {std::to_string(testID), testName, asctime(now),"DELAY", std::to_string(cawlPacket.GetDelay())};
+			measurementData delayData = measurementData{std::to_string(testID), testName, asctime(now),"DELAY", std::to_string(cawlPacket.GetDelay())};
 			//database object insert RTT vector.
 
 		}
@@ -54,7 +51,9 @@ std::vector GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 			}else{
 				line = "0";
 			}
-			measurementData chksumerrData =  {std::to_string(testID), testName, asctime(now),"CHKSUMERR", line};
+			std::string chkID = std::to_string(testID);
+			//std::string chkName = testName;
+			measurementData chksumerrData = measurementData{chkID, testName, asctime(now),"CHKSUMERR", line};
 			//database object insert RTT vector.
 		}
 	}

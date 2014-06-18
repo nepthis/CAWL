@@ -14,20 +14,22 @@
 #include <string> 	//used for ID and tags
 #include <fstream>	//used for opening/reading error files from sctp
 #include <stdexcept> //used for exceptions
+#include <iostream> //for printing
 #include "../Packets/CawlPacket.h" //for accessing the delay
 #include "MeasurementData.h"
 
-namespace Netapi {
 typedef struct measureOpt{
 	bool DELAY;
 	bool CHKSUMERR;
-};
+}measureOpt;
+namespace Netapi {
+
 class GatherMetrics {
-	measureOpt options;
+	measureOpt options{false,false};
 	//database object
 public:
 	GatherMetrics();
-	std::vector  measuredata(Packets::CawlPacket, int testID, std::string name);
+	void  measuredata(Packets::CawlPacket, int testID, std::string name);
 	void setOption(std::string measurement, bool value);
 	virtual ~GatherMetrics();
 };

@@ -55,16 +55,15 @@ void recPacket(){
 	Packets::EBUPacketAnalogOut analogOut =  Packets::EBUPacketAnalogOut();
 	while(not timeToQuit){
 		if(m_cs.try_lock()){
-			//pthread_mutex_lock(&m_packetBuffer);
 			try{
 				gatewaySocket.rec(recPack);
+				m_cs.unlock();
 			}catch(int e){
 				printf("ERROR %i\n", e);
 				resetRelays();
 				m_cs.unlock();
 				perror("Nope");
 			}
-			m_cs.unlock();
 
 			m_pb.lock();
 			char *tempbuff;
@@ -83,15 +82,18 @@ void recPacket(){
 
 void sendBackpacket(){
 	Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
+	sendBackPacket.setChannelValue(5, AO_9);
+	sendBackPacket.setChannelValue(5, AO_10);
+	Packets::CawlPacket ut = Packets::CawlPacket(0, 0);
+	memcpy(&ut.data, &sendBackPacket ,sizeof(sendBackPacket));
+	printf("before loop\n");
 	while (not timeToQuit){
 		if(m_cs.try_lock()){
-			char *t;
-			sendBackPacket.setChannelValue(5, AO_9);
-			sendBackPacket.setChannelValue(5, AO_10);
-			t = (char*) malloc(sizeof(sendBackPacket));
-			memcpy(t, &sendBackPacket, sizeof(sendBackPacket));
-			Packets::CawlPacket ut = Packets::CawlPacket(0, 0);
-			memcpy(ut.data, t, sizeof(sendBackPacket));
+			//printf("lock get-o\n");
+			//char *t;
+			//t = (char*) malloc(sizeof(sendBackPacket));
+			//memcpy(t, &sendBackPacket, sizeof(sendBackPacket));
+
 			try{
 				gatewaySocket.send(ut);
 			}catch(int e){
