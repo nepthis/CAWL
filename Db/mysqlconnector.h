@@ -13,6 +13,13 @@
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+#include "../Netapi/MeasurementData.h"
+
+
 #include <queue>
 
 
@@ -32,7 +39,7 @@ public:
 	mysqlconnector();
 	virtual ~mysqlconnector();
 
-	void mysqlconnector::insert(std::string data[5]);
+	void mysqlconnector::insert(measurementData data);
 
 private:
 	sql::Driver *driver;
@@ -48,9 +55,15 @@ private:
 	std::string cawlId;
 	std::string quer;
 
-	std::queue<std::string[5]> dbqueue;
+	std::queue<measurementData> dbqueue;
 
-	void mysqlconnector::dbInsert(std::string data[5]);
+	std::mutex mutex;
+	std::condition_variable cond;
+	bool ready;
+	//bool processed;
+
+
+	void mysqlconnector::dbInsert(measurementData data);
 
 	void mysqlconnector::insertWorker();
 };
