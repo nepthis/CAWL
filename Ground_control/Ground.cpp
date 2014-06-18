@@ -152,7 +152,6 @@ char Ground::getch() {
 
 int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) {
 	char *thetemp;
-	//printf("Values in the analog packet to be sent;\n%i, %i, %i, %i", pkt.getChannelValue(AO_9),pkt.getChannelValue(AO_10),pkt.getChannelValue(AO_11),pkt.getChannelValue(AO_12));
 	thetemp = (char*) malloc(sizeof(pkt));
 	memcpy(thetemp, &pkt, sizeof(pkt));
 	Packets::CawlPacket out = Packets::CawlPacket(prio, streamID);
@@ -172,6 +171,21 @@ int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) 
 	//delete &out;
 	return 1;
 }
+int Ground::receivePacket(Packets::EBUPacketAnalogOut* incoming){
+	Packets::CawlPacket recPack =  Packets::CawlPacket(0);
+	try{
+		socketOut->rec(recPack);
+	}catch(int e){
+		printf("ERROR %i\n", e);
+		perror("Nope");
+	}
+	char *tempbuff;
+	tempbuff = (char*) malloc(sizeof(incoming));
+	memcpy(tempbuff, recPack.data, sizeof(incoming));
+	memcpy(incoming, tempbuff, sizeof(incoming));
+	return 0;
+}
+
 
 int Ground::setBoom(float value, Packets::EBUPacketAnalogOut* pkt) {
 	float temp = value  * 2 + 2.5;
@@ -190,10 +204,11 @@ int Ground::setBucket(float value, Packets::EBUPacketAnalogOut* pkt) {
 int Ground::PacketHandler() {
 	Packets::SimPack sp =  Packets::SimPack();
 	Packets::EBUPacketAnalogOut epao =  Packets::EBUPacketAnalogOut();
+	receivePacket(&epao);
+	printf("Packet reveiced, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
 	sp = simulator->recPac();
-	//printf("Packet received from simulator with ID %i\n", sp.fromSim.packetId);
 	setEbuOne(&sp, &epao);
-	//printf("epao contains %i %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_10));
+	printf("Packet to send, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
 	sendPacket(1, 1, epao);
 
 	return 1;

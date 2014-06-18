@@ -44,6 +44,7 @@ public:
 	//void handleInput(void);
 	//Packets::CawlPacket createPacket(uint8_t type,uint8_t  pin, uint8_t value,uint8_t ebuNumber);
 	int PacketHandler();
+	int receivePacket(Packets::EBUPacketAnalogOut* incoming);
 	int setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
 	int sendPacket(int prio, int streamID,  Packets::EBUPacketAnalogOut pkt);
 	int setBoom(float value, Packets::EBUPacketAnalogOut* pkt);

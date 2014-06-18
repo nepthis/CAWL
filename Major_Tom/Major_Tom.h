@@ -15,11 +15,11 @@
 
 #ifndef MAJOR_TOM_H_
 #define MAJOR_TOM_H_
-//#include <stdio.h>
+#include <stdio.h>
 //#include <ctype.h>
 //#include <stdlib.h>
 //#include <unistd.h>
-#include <string>
+//#include <string>
 //#include <sys/types.h>
 #include <signal.h>
 #include <stdint.h>
@@ -28,7 +28,10 @@
 #include <netdb.h>
 
 //For threads and mutex
-#include <pthread.h>
+#include <chrono>
+#include <mutex>
+#include <thread>
+//#include <iostream> // std::cout
 //#include <queue>
 
 #include "../Netapi/CawlSocket.h"
@@ -177,7 +180,6 @@
 #define R_res7 	111
 
 
-using namespace std;
 
 int timeToQuit = 0;
 
@@ -185,21 +187,17 @@ int timeToQuit = 0;
 Packets::EBUPacketAnalogOut stopPacket = Packets::EBUPacketAnalogOut();
 Packets::EBURelayPacket rPack = Packets::EBURelayPacket();
 
-
 EBU::EBUManager ebuMan = EBU::EBUManager();
-Netapi::Host h = Netapi::Host((char*)"192.168.2.4", 5555, (char*)"192.168.2.4", true);
+Netapi::Host h = Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", true);
 Netapi::CawlSocket gatewaySocket = Netapi::CawlSocket(h);
 
 //queue<Packets::CawlPacket> packetBuffer = std::queue<Packets::CawlPacket>();
 Packets::EBUPacketAnalogOut buff = Packets::EBUPacketAnalogOut();
-Packets::EBUPacketAnalogOut buff2 = Packets::EBUPacketAnalogOut();
+//Packets::EBUPacketAnalogOut buff2 = Packets::EBUPacketAnalogOut();
 
+std::mutex m_cs;
+std::mutex m_pb;
 
-pthread_mutex_t m_packetBuffer = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_ebuMan = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m_cawlPacket = PTHREAD_MUTEX_INITIALIZER;
-
-pthread_cond_t  quit = PTHREAD_COND_INITIALIZER;
 
 
 
