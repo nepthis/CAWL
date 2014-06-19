@@ -33,7 +33,7 @@ class Sim {
 	int realID; //The paccketID from the simulator is a bit...weird. Use this instead.
 	struct sockaddr_in simAddr;
 	struct sockaddr_in ownAddr;
-	int port;
+	int simPort;
 public:
 	Sim();
 	virtual ~Sim();

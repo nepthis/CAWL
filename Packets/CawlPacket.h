@@ -22,7 +22,7 @@ namespace Packets {
 typedef struct CawlPacket{
 	uint8_t prio, streamId, data_size;
 	char data[256];
-	time_t time_snd, time_arr;
+	time_t time_snd, time_arr,time_sndu,time_arru;
 
 	CawlPacket(uint8_t prio = 0,uint8_t stream_id = 0, char* data =(char *)"");
 

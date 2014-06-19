@@ -10,6 +10,7 @@
 namespace Netapi {
 
 GatherMetrics::GatherMetrics() {
+	database->start(5); //Number of worker threads
 }
 
 
@@ -33,12 +34,6 @@ void GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 	if (not (options.CHKSUMERR or options.DELAY)){
 		throw std::logic_error("No options set");
 	}else{
-		if(options.DELAY){
-			//id (type of test), name (for this test), timestamp, type (RTT, BER, etc), data (value for the type)
-			measurementData delayData = measurementData{std::to_string(testID), testName, asctime(now),"DELAY", std::to_string(cawlPacket.GetDelay())};
-			//database object insert RTT vector.
-
-		}
 		if (options.CHKSUMERR){
 			std::string line;
 			std:: ifstream chksum ("/proc/net/sctp/SctpChecksumErrors");
@@ -52,12 +47,31 @@ void GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 				line = "0";
 			}
 			std::string chkID = std::to_string(testID);
-			//std::string chkName = testName;
 			measurementData chksumerrData = measurementData{chkID, testName, asctime(now),"CHKSUMERR", line};
-			//database object insert RTT vector.
+
+			database->insert(chksumerrData);
 		}
 	}
-	throw std::logic_error("Unable to measure data");
+	//throw std::logic_error("Unable to measure data");
+
+}
+
+void GatherMetrics::measureDelay(Packets::CawlPacket packet, int testID,
+		std::string name) {
+	time_t rawtime;
+	struct tm * now;
+	time(&rawtime);
+	now = localtime(&rawtime); //Tue Jun 17 12:50:43 2014
+	if(options.DELAY){
+		//id (type of test), name (for this test), timestamp, type (RTT, BER, etc), data (value for the type)
+		std::string tempTime = std::to_string(packet.GetDelay());
+		measurementData delayData = measurementData{std::to_string(testID), name, asctime(now),"DELAY", tempTime};
+		database->insert(delayData);
+		std::cout << std::to_string(testID) << name << asctime(now) << "DELAY" <<tempTime<< '\n';
+	}else{
+		throw std::logic_error("Options not set");
+	}
+
 
 }
 

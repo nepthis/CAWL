@@ -58,6 +58,7 @@ int Ground::sendPacket(int prio, int streamID, Packets::EBUPacketAnalogOut pkt) 
 }
 int Ground::receivePacket(Packets::EBUPacketAnalogOut* incoming){
 	Packets::CawlPacket recPack =  Packets::CawlPacket(0);
+	usleep(500000);
 	try{
 		socketOut->rec(recPack);
 		//printf("PACKET RECEIVED :D\n");
@@ -91,10 +92,10 @@ int Ground::PacketHandler() {
 	Packets::SimPack sp =  Packets::SimPack();
 	Packets::EBUPacketAnalogOut epao =  Packets::EBUPacketAnalogOut();
 	receivePacket(&epao);
-	printf("Packet reveiced, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
+	//printf("Packet reveiced, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
 	sp = simulator->recPac();
 	setEbuOne(&sp, &epao);
-	printf("Packet to send, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
+	//printf("Packet to send, data in pin 9 and 10 are: %i, %i\n", epao.getChannelValue(AO_9), epao.getChannelValue(AO_10));
 	sendPacket(1, 1, epao);
 	return 1;
 }
@@ -123,8 +124,10 @@ int main()
 	signal(SIGINT, INT_handler);
 	Netapi::Host client =Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
 
+
 	try{
 		Netapi::CawlSocket* clientSocket = new Netapi::CawlSocket(client);
+		clientSocket->setmetrics(true);
 		inet_pton(AF_INET, "127.0.0.1", &(clientSocket->addr.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
 		clientSocket->addr.sin_port = htons(5555);
 		Packets::CawlPacket worthless = Packets::CawlPacket(1,1);
@@ -140,6 +143,7 @@ int main()
 		perror("Description");
 		exit(0);
 	}
+
 
 
 

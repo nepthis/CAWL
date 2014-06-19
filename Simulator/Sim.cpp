@@ -9,7 +9,7 @@
 using namespace Simulator;
 Sim::Sim() {
 	slen = sizeof(simAddr);
-	port = 65400;
+	simPort = 65400;
 	realID = 1;
 	//Create socket for the simulator
 	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)

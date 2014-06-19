@@ -30,18 +30,23 @@ char* CawlPacket::GetData() {
 void CawlPacket::SetSnd() {
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
-	time_snd = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+	time_snd   = tp.tv_sec;
+	time_sndu = tp.tv_usec;
 }
 
 void CawlPacket::SetRcv() {
-	struct timeval tp;
+	struct timeval tp;;
 	gettimeofday(&tp, NULL);
-	time_arr = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+	time_arr  = tp.tv_sec;
+	time_arru=tp.tv_usec;
 }
 
 time_t CawlPacket::GetDelay() {
 	if(time_arr >= time_snd) {
-		return time_arr - time_snd;
+		//time_t fakeTime;
+		//fakeTime = 5;
+		//return fakeTime;
+		return (((time_arr - time_snd) * 1000) +(time_arru - time_sndu) / 1000)+0.5 ;
 	}else{
 		return 0;
 	}

@@ -11,7 +11,7 @@
 //Används för ctrl+c, stänger av allt på ett bättre sätt. hoppas jag.
 void INT_handler(int dummy){
 	timeToQuit = 1;
-	exit(EXIT_SUCCESS);
+	//exit(EXIT_SUCCESS);
 }
 /*
  * Resets all relays to 0
@@ -84,16 +84,10 @@ void sendBackpacket(){
 	Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
 	sendBackPacket.setChannelValue(5, AO_9);
 	sendBackPacket.setChannelValue(5, AO_10);
-	Packets::CawlPacket ut = Packets::CawlPacket(0, 0);
-	memcpy(&ut.data, &sendBackPacket ,sizeof(sendBackPacket));
-	printf("before loop\n");
 	while (not timeToQuit){
+		Packets::CawlPacket ut = Packets::CawlPacket(0, 0);
+		memcpy(&ut.data, &sendBackPacket ,sizeof(sendBackPacket));
 		if(m_cs.try_lock()){
-			//printf("lock get-o\n");
-			//char *t;
-			//t = (char*) malloc(sizeof(sendBackPacket));
-			//memcpy(t, &sendBackPacket, sizeof(sendBackPacket));
-
 			try{
 				gatewaySocket.send(ut);
 			}catch(int e){
@@ -136,11 +130,11 @@ int main(void)
 	ebuMan.sendRelayCommand(rPack, 1);
 	Packets::CawlPacket temp = Packets::CawlPacket(1,1);
 	gatewaySocket.rec(temp);
-	gatewaySocket.setmetrics(true);
-	std::thread tOne (sendPacket);
+	//gatewaySocket.setmetrics(true);
+	//std::thread tOne (sendPacket);
 	std::thread tTwo(recPacket);
 	std::thread tThree (sendBackpacket);
-	tOne.join();
+	//tOne.join();
 	tTwo.join();
 	tThree.join();
 	printf("Threads finished");

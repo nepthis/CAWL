@@ -20,9 +20,9 @@
 
 #include "../Netapi/MeasurementData.h"
 
-#define mysql_address 	"127.0.0.1"
+#define mysql_address 	"130.240.109.61"
 #define port 			"3306"
-#define user			"root"
+#define user			"cawl"
 #define password		"gurksallad"
 #define db				"cawl"
 #define tbl				"tests"

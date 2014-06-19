@@ -38,7 +38,7 @@ CawlSocket::CawlSocket() {
 
 	gm = GatherMetrics();
 	gm.setOption("DELAY", true);
-	//gm.setOption("CHKSUMERR",false);
+	gm.setOption("CHKSUMERR",false);
 
 }
 
@@ -51,6 +51,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	gm = GatherMetrics();
 	//Options can be set "on the go" as well.
 	gm.setOption("DELAY", true);
+	gm.setOption("CHKSUMERR",true);
 
 
 	sockaddr_in addr = {0};
@@ -63,13 +64,13 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 
 	//server addr params
 	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(h.port);
+	saddr.sin_port = htons(h.GetPort());
 	saddr.sin_addr.s_addr = inet_addr(h.addr2);
 
 	//other endpoint addr info
 	bzero( (void *)&addr, sizeof(addr) );
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(h.port);
+	addr.sin_port = htons(h.GetPort());
 	addr.sin_addr.s_addr = inet_addr( h.addr1 );
 
 	// Number of streams
@@ -150,7 +151,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 		n = sctp_recvmsg(SctpScocket, (void*)pRecvBuffer, RECVBUFSIZE,
 				(struct sockaddr *)&addr, &from_len, &sinfo, &flags);
 		if (-1 == n) {
-			sleep(1);
+			//sleep(1);
 			continue;
 		}
 		if (flags & MSG_NOTIFICATION){
@@ -161,17 +162,20 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			memcpy(&packet,&pRecvBuffer, sizeof(Packets::CawlPacket));
 			packet.SetRcv(); //set arrival time of the packet
 			p = packet;
+			if(metrics){
+				try{
+					gm.measureDelay(p, 1, "testing");
+					//gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
+				}catch(std::logic_error &e){
+					printf("%s\n",e.what());
+					perror("NOPE");
+					exit(0);
+				}
+
+			}
 			break;
 		}
-		if(metrics){
-			try{
-				gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
-			}catch(std::logic_error&e){
-				perror("NOPE");
-				exit(1);
-			}
 
-		}
 	}
 }
 

@@ -17,6 +17,7 @@
 #include <iostream> //for printing
 #include "../Packets/CawlPacket.h" //for accessing the delay
 #include "MeasurementData.h"
+#include "../Db/mysqlconnector.h"
 
 typedef struct measureOpt{
 	bool DELAY;
@@ -26,10 +27,11 @@ namespace Netapi {
 
 class GatherMetrics {
 	measureOpt options{false,false};
-	//database object
+	Db::mysqlconnector *database = new Db::mysqlconnector();
 public:
 	GatherMetrics();
 	void  measuredata(Packets::CawlPacket, int testID, std::string name);
+	void measureDelay(Packets::CawlPacket packet, int testID, std::string name);
 	void setOption(std::string measurement, bool value);
 	virtual ~GatherMetrics();
 };
