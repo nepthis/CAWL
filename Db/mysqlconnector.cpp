@@ -10,33 +10,21 @@
 namespace Db {
 
 mysqlconnector::mysqlconnector() {
+
 	res  		= NULL;
 	stmt 		= NULL;
-	add  		= "tcp://" + mysql_address + ":" + port;
+	add  		= (std::string)("tcp://") + mysql_address + (std::string)(":") + port;
 
+	con = NULL;
+	driver = NULL;
 
 	//Thread specific vars
 
 	ready     	= false;
 	//processed 	= false;
 
-	std::thread worker(insertWorker);
-
-
-	try{
-		// Create a connection
-		driver = get_driver_instance();
-		con = driver->connect(add, user, password);
-
-		// Connect to the cawl database
-		con->setSchema(db);
-
-	} catch (sql::SQLException &e) {
-		// Throw something nice ;)
-	}
-
-	worker.join();
 }
+
 
 mysqlconnector::~mysqlconnector() {
 	delete res;
@@ -51,6 +39,7 @@ void mysqlconnector::insertWorker(){
 	while(true){
 		std::unique_lock<std::mutex> lk(mutex);
 		cond.wait(lk);
+
 		// sleep until condition
 		while(ready){
 			// Insert into DB or notify that queue is empty
@@ -66,6 +55,27 @@ void mysqlconnector::insertWorker(){
 	}
 }
 
+void mysqlconnector::start(int threads){
+	try{
+		// Create a connection
+		driver = get_driver_instance();
+		con = driver->connect(add, user, password);
+
+		// Connect to the cawl database
+		con->setSchema(db);
+
+	} catch (sql::SQLException &e) {
+		// Throw something nice ;)
+	}
+
+	// Maximum workerthreads 3
+	if(threads >=8){threads =8;}
+
+	for(int i=0;i<threads;i++){
+		std::thread worker(&mysqlconnector::insertWorker, this);
+		worker.detach();
+	}
+}
 void mysqlconnector::insert(measurementData data){
 	//insert into queue, add mutex etc
 
@@ -79,29 +89,30 @@ void mysqlconnector::insert(measurementData data){
 }
 
 void mysqlconnector::dbInsert(measurementData data) {
+
 	stmt = con->createStatement();
-	name   =data.name;
-	time   =data.timeStamp;
-	type   =data.type;
-	mdata  =data.value;
-	cawlId =data.id;
+	std::string name   =data.name;
+	std::string dtime  =data.timeStamp;
+	std::string type   =data.type;
+	std::string mdata  =data.value;
+	std::string cawlId =data.id;
 
 	// Form querey
-	quer   ="INSERT INTO `" +
+	std::string quer   =(std::string)("INSERT INTO `") +
 			tbl				+
-			"` (`id`"		+
-			", `name`"		+
-			", `type`"		+
-			", `time`"		+
-			", `data`"		+
-			",`cawlId`"		+
-			") VALUES ("	+
-			"NULL, \'"		+
-			name+"\', \'"  	+
-			time+"\', \'"   +
-			type+"\', \'"   +
-			mdata+"\', \'"  +
-			cawlId+"\')";
+			(std::string)("` (`id`")		+
+			(std::string)(", `name`")		+
+			(std::string)(", `type`")		+
+			(std::string)(", `time`")		+
+			(std::string)(", `data`")		+
+			(std::string)(",`cawlId`")		+
+			(std::string)(") VALUES (")		+
+			(std::string)("NULL, \'")		+
+			name+(std::string)("\', \'")	+
+			dtime+(std::string)("\', \'")   +
+			type+(std::string)("\', \'")    +
+			mdata+(std::string)("\', \'")   +
+			cawlId+(std::string)("\')");
 
 	// Insert into database and catch exception if any is thrown
 	try{
@@ -109,7 +120,6 @@ void mysqlconnector::dbInsert(measurementData data) {
 	} catch (sql::SQLException &e) {
 		// Throw something nice ;)
 	}
-
 }
 
 } /* namespace Db */

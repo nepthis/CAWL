@@ -16,12 +16,9 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
-#include "../Netapi/MeasurementData.h"
-
-
 #include <queue>
 
+#include "../Netapi/MeasurementData.h"
 
 #define mysql_address 	"127.0.0.1"
 #define port 			"3306"
@@ -30,30 +27,23 @@
 #define db				"cawl"
 #define tbl				"tests"
 
-
-
 namespace Db {
 
 class mysqlconnector {
 public:
 	mysqlconnector();
 	virtual ~mysqlconnector();
-
-	void mysqlconnector::insert(measurementData data);
-
+	void insert(measurementData data);
+	void start(int threads);
+	void insertWorker();
+	bool finished(){return dbqueue.empty();}
 private:
+
 	sql::Driver *driver;
 	sql::Connection *con;
 	sql::Statement *stmt;
 	sql::ResultSet *res;
 	sql::SQLString add;
-
-	std::string name;
-	std::string time;
-	std::string type;
-	std::string mdata;
-	std::string cawlId;
-	std::string quer;
 
 	std::queue<measurementData> dbqueue;
 
@@ -62,10 +52,7 @@ private:
 	bool ready;
 	//bool processed;
 
-
-	void mysqlconnector::dbInsert(measurementData data);
-
-	void mysqlconnector::insertWorker();
+	void dbInsert(measurementData data);
 };
 
 } /* namespace Db */
