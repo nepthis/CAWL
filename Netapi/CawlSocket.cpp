@@ -107,6 +107,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 
 		if (connect( SctpScocket, (struct sockaddr *)&addr, sizeof(addr) ) < 0)
 		{
+			errno = EHOSTDOWN;
 			throw 3;
 		}
 	}

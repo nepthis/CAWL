@@ -27,13 +27,13 @@ EBUManager::EBUManager() {
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		throw std::logic_error("error_create_analog_out_socket");
+		throw 1; //TBD
 	}
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		throw std::logic_error("error_create_relay_socket");
+		throw 1;
 
 	}
 	//------------------------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 	}catch(int e){
 		printf("Error number: %i\n",e);
 		perror("Error sending Analog Packet to the EBU\n");
-		throw std::logic_error("error_send_analog_ebu");
+		throw 1; //TBD
 	}
 	return 1; //if success
 }

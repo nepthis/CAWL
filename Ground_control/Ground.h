@@ -37,13 +37,13 @@ private:
 	Packets::CawlPacket *in;
 	char *thetemp;
 	char *state;
+	Netapi::Host h;
+	Netapi::CawlSocket socketOut;
 
 
 public:
-	Netapi::CawlSocket* socketOut;
 	Simulator::Sim* simulator;
-	Ground(Netapi::CawlSocket* a_socket);
-
+	Ground(char* addressOne, char* addressTwo);
 	void startRecieve();
 	void startSend();
 	void receivePacket();

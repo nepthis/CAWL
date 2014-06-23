@@ -62,7 +62,7 @@ void recPacket(){
 				printf("ERROR %i\n", e);
 				resetRelays();
 				m_cs.unlock();
-				perror("Nope");
+				perror("Description: ");
 			}
 
 			m_pb.lock();

@@ -8,18 +8,26 @@
 #include "Ground.h"
 using namespace std;
 
-Ground::Ground(Netapi::CawlSocket* gw_socket) {
+Ground::Ground(char* addressOne, char* addressTwo) {
 	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
-	socketOut =  gw_socket;
-	sp =  Packets::SimPack();
-	epao = Packets::EBUPacketAnalogOut();
+	sp 						=  Packets::SimPack();
+	epao 				= Packets::EBUPacketAnalogOut();
+	thetemp 		= (char*) malloc(sizeof(epao));
+	state 				= (char*) malloc(sizeof(epao));
+	simulator 		= new Simulator::Sim();
+	out 					= new Packets::CawlPacket();
+	in 						= new Packets::CawlPacket();
+	h 							= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
+	try{
+		printf("creating socket\n");
+		socketOut 	=  Netapi::CawlSocket(h);
+		printf("created socket\n");
+	}catch(int e){
+		printf("Error number: %i\n", e);
+		perror("Desc");
+		throw 11;
+	}
 
-	thetemp = (char*) malloc(sizeof(epao));
-	state = (char*) malloc(sizeof(epao));
-
-	simulator = new Simulator::Sim();
-	out = new Packets::CawlPacket();
-	in = new Packets::CawlPacket();
 }
 
 void Ground::sendPacket() {
@@ -41,10 +49,10 @@ void Ground::sendPacket() {
 		//LÅS MUTEX ETC!!!!
 		m_cawlSocket.lock();
 		try{
-			socketOut->send(*out);
+			socketOut.send(*out);
 		}catch(int e){
-			errno = EREMOTEIO;
-			throw 0;
+			errno = ECONNREFUSED;
+			throw 1;
 		}
 		m_cawlSocket.unlock();
 	}
@@ -55,10 +63,10 @@ void Ground::sendPacket() {
 void Ground::receivePacket(){
 	m_cawlSocket.lock();
 	try{
-		socketOut->rec(*out);
+		socketOut.rec(*out);
 	}catch(int e){
 		errno = EREMOTEIO;
-		throw 0;
+		throw 8;
 	}
 	m_cawlSocket.unlock();
 
@@ -88,15 +96,29 @@ void Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) 
 
 void Ground::startRecieve(){
 	while(true){
-		Ground::receivePacket();
+		try{
+			receivePacket();
+		}catch(int e){
+			printf("Error number: &i\n");
+			perror("Desc");
+			throw 6;
+		}
+
 		usleep(100);
 	}
 }
 
 void Ground::startSend(){
 	while(true)
-		Ground::sendPacket();
-		usleep(100);
+		try{
+			sendPacket();
+		}catch(int e){
+			printf("Error number: &i\n");
+			perror("Desc");
+			throw 7;
+		}
+
+	usleep(100);
 }
 
 Ground::~Ground() {

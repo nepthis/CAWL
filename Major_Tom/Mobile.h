@@ -10,9 +10,8 @@
 //For threads and mutex
 #include <chrono>
 #include <mutex>
-#include <thread>
-
 #include <stdint.h> //Who doesn'y like ints?
+#include <string>	//Standard string
 #include <errno.h>	//For a huge list of errors
 
 #include <netinet/in.h> //For UDP
@@ -29,24 +28,24 @@ namespace Major_Tom {
 
 class Mobile {
 public:
-	Mobile();												//Constructor
-	void startUp(bool condition);	//For starting the connection to the other "gateway"
-	void socketReceive(); 					//Receiving data from socket
-	void socketSend(); 						//Sending data back through socket
-	void ebuSend(); 								//Send data to the EBU
-	virtual ~Mobile();							//Destructor
+	bool pleased;
+	Mobile(char* addressOne, char* addressTwo);	//Constructor
+	void startUp();																								//For starting the connection to the other "gateway"
+	void socketReceive(); 																				//Receiving data from socket
+	void socketSend(); 																					//Sending data back through socket
+	void ebuSend(); 																							//Send data to the EBU
+	virtual ~Mobile();																						//Destructor
 
 private:
 	Packets::EBUPacketAnalogOut stopPacket;
 	Packets::EBURelayPacket rPack;
-	Netapi::Host h;
-	Netapi::CawlSocket gatewaySocket;
-	std::queue<Packets::CawlPacket> q_cawlBuffer;
+	Netapi::Host h1;
+	Netapi::Host h2;
+	Netapi::CawlSocket gatewaySocketSend;
+	Netapi::CawlSocket gatewaySocketReceive;
+	std::queue<Packets::EBUPacketAnalogOut> q_cawlBuffer;
 	std::mutex m_Queue;		//Conflicts will occuf if it's possible to insert and remove elements at the same time
 	std::mutex m_Cawl;		//For the Socket in order to be able to send and receive
-	std::condition_variable cond;
-	bool ready;
-	bool pleased;
 	EBU::EBUManager em;
 };
 

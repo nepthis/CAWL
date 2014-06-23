@@ -26,8 +26,7 @@ Sim::Sim() {
 		printf ("Error number is: %s\n",strerror(errno));
 		exit(0);
 	}
-	printf("Connection was successfull\n");
-
+	printf("Connection to simulator socket was successfull\n");
 }
 
 Sim::~Sim() {
