@@ -21,34 +21,31 @@
 #include <netinet/in.h>
 #include <termios.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "../Netapi/CawlSocket.h"
 #include "../Packets/EBUPacketAnalogOut.h"
 #include "../Simulator/Sim.h"
 
-
-
-#define address1 "127.0.0.1"
-#define address2 "121.0.0.1"
-
-
 class Ground {
 private:
 	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;
-	int pleased;
-	std::mutex m_ebuPacket;
-	std::mutex m_simPacket;
 	std::mutex m_cawlSocket;
 	Packets::EBUPacketAnalogOut epao;
 	Packets::SimPack sp;
-	//Netapi::Host client;
+	Packets::CawlPacket *out;
+	Packets::CawlPacket *in;
+	char *thetemp;
+	char *state;
+
+
 public:
 	Netapi::CawlSocket* socketOut;
 	Simulator::Sim* simulator;
 	Ground(Netapi::CawlSocket* a_socket);
-	//void handleInput(void);
-	//Packets::CawlPacket createPacket(uint8_t type,uint8_t  pin, uint8_t value,uint8_t ebuNumber);
-	//int PacketHandler();
+
+	void startRecieve();
+	void startSend();
 	void receivePacket();
 	void setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
 	void sendPacket();
