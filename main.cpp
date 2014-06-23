@@ -42,6 +42,7 @@ int main(int argc, char * args[]){
 			std::thread g1(&Ground::startSend, gc);
 			//std::thread g2(&Major_Tom::Mobile::ebuSend, major);
 			//std::thread g3(&Major_Tom::Mobile::socketSend, major);
+			printf("Main: thread started, joining\n");
 			g1.join();
 			//m2.join();
 			//m3.join();
@@ -80,6 +81,6 @@ int main(int argc, char * args[]){
 
 
 	}
-
+	printf("Main will terminate\n");
 	exit(0);
 }

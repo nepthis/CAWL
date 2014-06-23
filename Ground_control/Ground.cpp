@@ -20,7 +20,7 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	h 							= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
 	try{
 		printf("creating socket\n");
-		socketOut 	=  Netapi::CawlSocket(h);
+		socketOut 	=  new Netapi::CawlSocket(h);
 		printf("created socket\n");
 	}catch(int e){
 		printf("Error number: %i\n", e);
@@ -35,21 +35,21 @@ void Ground::sendPacket() {
 	int streamID = 1;		// <----
 	sp = simulator->recPac();
 	setEbuOne(&sp, &epao);
-	memset(&thetemp,0,sizeof(epao));
-	memcpy(&thetemp, &epao, sizeof(epao));
+	//memset(&thetemp,0,sizeof(epao));
+	memcpy(thetemp, &epao, sizeof(epao));
 
-	if(thetemp != state){
+	if(*thetemp != *state){
 		out->SetPrio(prio);
 		out->SetId(streamID);
-		memset(out->data,0,sizeof(epao));
-		memcpy(out->data, thetemp, sizeof(epao));
-		memset(&state,0,sizeof(epao));
-		memcpy(&state, &thetemp, sizeof(epao));
+		//memset(out->data,0,sizeof(epao));
+		memcpy(&out->data, thetemp, sizeof(epao));
+		//memset(&state,0,sizeof(epao));
+		memcpy(state, thetemp, sizeof(epao));
 
 		//LÅS MUTEX ETC!!!!
 		m_cawlSocket.lock();
 		try{
-			socketOut.send(*out);
+			socketOut->send(*out);
 		}catch(int e){
 			errno = ECONNREFUSED;
 			throw 1;
@@ -63,7 +63,7 @@ void Ground::sendPacket() {
 void Ground::receivePacket(){
 	m_cawlSocket.lock();
 	try{
-		socketOut.rec(*out);
+		socketOut->rec(*out);
 	}catch(int e){
 		errno = EREMOTEIO;
 		throw 8;
@@ -99,26 +99,25 @@ void Ground::startRecieve(){
 		try{
 			receivePacket();
 		}catch(int e){
-			printf("Error number: &i\n");
+			printf("Error number: %i\n", e);
 			perror("Desc");
 			throw 6;
 		}
-
 		usleep(100);
 	}
 }
 
 void Ground::startSend(){
-	while(true)
+	while(true){
 		try{
 			sendPacket();
 		}catch(int e){
-			printf("Error number: &i\n");
+			printf("Error number: %i\n", e);
 			perror("Desc");
 			throw 7;
 		}
-
-	usleep(100);
+		usleep(100);
+	}
 }
 
 Ground::~Ground() {

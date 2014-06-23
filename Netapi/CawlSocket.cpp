@@ -167,8 +167,8 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 				try{
 					gm.measureDelay(p, 1, "testing");
 					//gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
-				}catch(std::logic_error &e){
-					printf("%s\n",e.what());
+				}catch(int e){
+					printf("%i\n",e);
 					perror("NOPE");
 					exit(0);
 				}

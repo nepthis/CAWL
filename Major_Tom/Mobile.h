@@ -41,8 +41,8 @@ private:
 	Packets::EBURelayPacket rPack;
 	Netapi::Host h1;
 	Netapi::Host h2;
-	Netapi::CawlSocket gatewaySocketSend;
-	Netapi::CawlSocket gatewaySocketReceive;
+	Netapi::CawlSocket *gatewaySocketSend;
+	Netapi::CawlSocket *gatewaySocketReceive;
 	std::queue<Packets::EBUPacketAnalogOut> q_cawlBuffer;
 	std::mutex m_Queue;		//Conflicts will occuf if it's possible to insert and remove elements at the same time
 	std::mutex m_Cawl;		//For the Socket in order to be able to send and receive

@@ -35,7 +35,9 @@ Mobile::Mobile(char* addressOne, char* addressTwo) {
 void Mobile::startUp(){
 	//gatewaySocketSend	= Netapi::CawlSocket(h1);
 	try{
-		gatewaySocketReceive = Netapi::CawlSocket(h2);
+		gatewaySocketReceive = new Netapi::CawlSocket(h2);
+		gatewaySocketReceive->setmetrics(true);
+
 	}catch(int e){
 		perror("Desc");
 	}
@@ -50,7 +52,7 @@ void Mobile::socketReceive() {
 		//std::lock(lock1, lock2);
 		lock2.lock();
 		try{
-			gatewaySocketReceive.rec(recPack);
+			gatewaySocketReceive->rec(recPack);
 			char *tempbuff;
 			tempbuff = (char*) malloc(sizeof(analogOut));
 			memcpy(tempbuff, recPack.data, sizeof(analogOut));
@@ -74,7 +76,7 @@ void Mobile::socketSend() {
 			sendBackPacket.setChannelValue(5, AO_9);
 			sendBackPacket.setChannelValue(5, AO_10);
 			memcpy(&ut->data, &sendBackPacket ,sizeof(sendBackPacket));
-			gatewaySocketSend.send(*ut);
+			gatewaySocketSend->send(*ut);
 		}catch(int e){
 			errno = ECOMM;
 			//throw 0;

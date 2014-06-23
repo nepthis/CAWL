@@ -11,6 +11,8 @@
 
 #include <thread>
 #include <mutex>
+#include <chrono>
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -20,7 +22,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <termios.h>
-#include <signal.h>
 #include <errno.h>
 
 #include "../Netapi/CawlSocket.h"
@@ -38,7 +39,7 @@ private:
 	char *thetemp;
 	char *state;
 	Netapi::Host h;
-	Netapi::CawlSocket socketOut;
+	Netapi::CawlSocket *socketOut;
 
 
 public:
