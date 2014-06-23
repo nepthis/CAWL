@@ -68,8 +68,8 @@ void mysqlconnector::start(int threads){
 		// Throw something nice ;)
 	}
 
-	// Maximum workerthreads 3
-	if(threads >=8){threads =8;}
+	// Min 1, Max 8 workerthreads
+	(threads<1) ? threads=1 : (threads<=8) ? threads : threads=8;
 
 	for(int i=0;i<threads;i++){
 		std::thread worker(&mysqlconnector::insertWorker, this);
