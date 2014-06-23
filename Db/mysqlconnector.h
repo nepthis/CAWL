@@ -44,9 +44,7 @@ private:
 	sql::Statement *stmt;
 	sql::ResultSet *res;
 	sql::SQLString add;
-
 	std::queue<measurementData> dbqueue;
-
 	std::mutex mutex;
 	std::condition_variable cond;
 	bool ready;

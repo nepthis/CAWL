@@ -21,11 +21,12 @@
 //#include <unistd.h>
 //#include <string>
 //#include <sys/types.h>
-#include <signal.h>
-#include <stdint.h>
 
-#include <netinet/in.h>
-#include <netdb.h>
+#include <signal.h>
+#include <stdint.h> //Who doesn'y like ints?
+
+#include <netinet/in.h> //For UDP
+#include <netdb.h> // in_addr_t
 
 //For threads and mutex
 #include <chrono>

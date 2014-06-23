@@ -9,7 +9,8 @@
 #ifndef GROUND_H_
 #define GROUND_H_
 
-#include <pthread.h>
+#include <thread>
+#include <mutex>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -35,25 +36,24 @@ class Ground {
 private:
 	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;
 	int pleased;
+	std::mutex m_ebuPacket;
+	std::mutex m_simPacket;
+	std::mutex m_cawlSocket;
+	Packets::EBUPacketAnalogOut epao;
+	Packets::SimPack sp;
 	//Netapi::Host client;
-
 public:
 	Netapi::CawlSocket* socketOut;
 	Simulator::Sim* simulator;
 	Ground(Netapi::CawlSocket* a_socket);
 	//void handleInput(void);
 	//Packets::CawlPacket createPacket(uint8_t type,uint8_t  pin, uint8_t value,uint8_t ebuNumber);
-	int PacketHandler();
-	int receivePacket(Packets::EBUPacketAnalogOut* incoming);
-	int setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
-	int sendPacket(int prio, int streamID,  Packets::EBUPacketAnalogOut pkt);
+	//int PacketHandler();
+	void receivePacket();
+	void setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
+	void sendPacket();
 	int setBoom(float value, Packets::EBUPacketAnalogOut* pkt);
 	int setBucket(float value, Packets::EBUPacketAnalogOut* pkt);
-//	int boomUp(uint8_t voltage);
-//	int boomDown(uint8_t voltage);
-//	int bucketUp(uint8_t voltage);
-//	int bucketDown(uint8_t voltage);
-	char getch();
 	virtual ~Ground();
 };
 

@@ -27,11 +27,13 @@ EBUManager::EBUManager() {
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
+		throw std::logic_error("error_create_analog_out_socket");
 	}
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
+		throw std::logic_error("error_create_relay_socket");
 
 	}
 	//------------------------------------------------------------------------------------------------
@@ -70,11 +72,17 @@ EBUManager::~EBUManager() {
 int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 	Packets::ebuAnOut data = p.getChannel();
 	//destinationPort = 25200;
-	switch(ebuNum){
-	case 1:
-		sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
-//	case 2:
-//		sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+	try{
+		switch(ebuNum){
+		case 1:
+			sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
+			//	case 2:
+			//		sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+		}
+	}catch(int e){
+		printf("Error number: %i\n",e);
+		perror("Error sending Analog Packet to the EBU\n");
+		throw std::logic_error("error_send_analog_ebu");
 	}
 	return 1; //if success
 }

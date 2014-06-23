@@ -81,15 +81,18 @@ void recPacket(){
 }
 
 void sendBackpacket(){
-	Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
-	sendBackPacket.setChannelValue(5, AO_9);
-	sendBackPacket.setChannelValue(5, AO_10);
+	//usleep(10);
 	while (not timeToQuit){
-		Packets::CawlPacket ut = Packets::CawlPacket(0, 0);
-		memcpy(&ut.data, &sendBackPacket ,sizeof(sendBackPacket));
 		if(m_cs.try_lock()){
 			try{
-				gatewaySocket.send(ut);
+				Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
+				sendBackPacket.setChannelValue(5, AO_9);
+				sendBackPacket.setChannelValue(5, AO_10);
+				Packets::CawlPacket *ut = new Packets::CawlPacket(0, 0);
+				memcpy(&ut->data, &sendBackPacket ,sizeof(sendBackPacket));
+				gatewaySocket.send(*ut);
+				printf("packet sent\n");
+				m_cs.unlock();
 			}catch(int e){
 				printf("ERROR number %i\n", e);
 				perror("Description");
@@ -97,9 +100,7 @@ void sendBackpacket(){
 				m_cs.unlock();
 				exit(1);
 			}
-			m_cs.unlock();
-		}else{
-			continue;
+
 		}
 	}
 }
@@ -128,13 +129,13 @@ int main(void)
 	rPack.setRelayValue(R_A11,1);	//11 and 12 are used for bucket
 	rPack.setRelayValue(R_A12,1);
 	ebuMan.sendRelayCommand(rPack, 1);
-	Packets::CawlPacket temp = Packets::CawlPacket(1,1);
-	gatewaySocket.rec(temp);
+	Packets::CawlPacket *temp = new Packets::CawlPacket(1,1);
+	gatewaySocket.rec(*temp);
 	//gatewaySocket.setmetrics(true);
-	//std::thread tOne (sendPacket);
+	std::thread tOne (sendPacket);
 	std::thread tTwo(recPacket);
 	std::thread tThree (sendBackpacket);
-	//tOne.join();
+	tOne.join();
 	tTwo.join();
 	tThree.join();
 	printf("Threads finished");
