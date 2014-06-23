@@ -1,0 +1,2 @@
+all:
+	c++ DbTest.cpp  ../Db/mysqlconnector.cpp -pthread -std=c++11 -lmysqlcppconn -o dbtest 
