@@ -34,7 +34,7 @@ public:
 	mysqlconnector();
 	virtual ~mysqlconnector();
 	void insert(measurementData data);
-	void start(int threads);
+	void start(int threads = 1);
 	void insertWorker();
 	bool finished(){return dbqueue.empty();}
 private:
