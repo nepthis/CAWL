@@ -32,7 +32,7 @@ void GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 	time(&rawtime);
 	now = localtime(&rawtime); //Tue Jun 17 12:50:43 2014
 	if (not (options.CHKSUMERR or options.DELAY)){
-		throw std::logic_error("No options set");
+		throw 11;
 	}else{
 		if (options.CHKSUMERR){
 			std::string line;
@@ -57,7 +57,7 @@ void GatherMetrics::measuredata(Packets::CawlPacket cawlPacket,
 }
 
 void GatherMetrics::measureDelay(Packets::CawlPacket packet, int testID,
-		std::string name) {
+	std::string name) {
 	time_t rawtime;
 	struct tm * now;
 	time(&rawtime);
@@ -67,9 +67,9 @@ void GatherMetrics::measureDelay(Packets::CawlPacket packet, int testID,
 		std::string tempTime = std::to_string(packet.GetDelay());
 		measurementData delayData = measurementData{std::to_string(testID), name, asctime(now),"DELAY", tempTime};
 		database->insert(delayData);
-		std::cout << std::to_string(testID) << name << asctime(now) << "DELAY" <<tempTime<< '\n';
+		//std::cout << std::to_string(testID) << name << asctime(now) << "DELAY" <<tempTime<< '\n';
 	}else{
-		throw std::logic_error("Options not set");
+		throw 12;
 	}
 
 

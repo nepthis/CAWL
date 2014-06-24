@@ -10,23 +10,19 @@ using namespace std;
 
 Ground::Ground(char* addressOne, char* addressTwo) {
 	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
-	sp 						=  Packets::SimPack();
-	epao 				= Packets::EBUPacketAnalogOut();
+	sp 				=  Packets::SimPack();
+	epao 			= Packets::EBUPacketAnalogOut();
 	thetemp 		= (char*) malloc(sizeof(epao));
-	state 				= (char*) malloc(sizeof(epao));
+	state 			= (char*) malloc(sizeof(epao));
 	simulator 		= new Simulator::Sim();
-	out 					= new Packets::CawlPacket();
-	in 						= new Packets::CawlPacket();
-	h 							= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
-	tempValue	= 1.0;
+	out 			= new Packets::CawlPacket();
+	in 				= new Packets::CawlPacket();
+	h 				= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
+	tempValue		= 1.0;
 	try{
-		printf("creating socket\n");
 		socketOut 	=  new Netapi::CawlSocket(h);
-		printf("created socket\n");
 	}catch(int e){
-		printf("Error number: %i\n", e);
-		perror("Desc");
-		throw 11;
+		throw e;
 	}
 
 }
@@ -35,6 +31,9 @@ void Ground::sendPacket() {
 	int prio = 1;			// <---- borde sättas beroende av paket
 	int streamID = 1;		// <----
 	sp = simulator->recPac();
+
+	// Testdata
+	/*
 	if(tempValue == 1.0){
 		tempValue = 0.0;
 		sp.fromSim.analog[3] = tempValue;
@@ -44,12 +43,14 @@ void Ground::sendPacket() {
 		sp.fromSim.analog[3] = tempValue;
 		sp.fromSim.analog[2] = tempValue;
 	}
+	*/
+
 	setEbuOne(&sp, &epao);
-	printf("Values from the sim in the analog packet: %i, %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_11));
+	//printf("Values from the sim in the analog packet: %i, %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_11));
 	//memset(&thetemp,0,sizeof(epao));
 	memcpy(thetemp, &epao, sizeof(epao));
 
-	if(*thetemp != *state){
+	if(memcmp(thetemp,state,sizeof(epao))){
 		out->SetPrio(prio);
 		out->SetId(streamID);
 		//memset(out->data,0,sizeof(epao));
@@ -62,22 +63,18 @@ void Ground::sendPacket() {
 		try{
 			socketOut->send(*out);
 		}catch(int e){
-			errno = ECONNREFUSED;
-			throw 1;
+			throw e;
 		}
 		m_cawlSocket.unlock();
 	}
 }
-
-
 
 void Ground::receivePacket(){
 	m_cawlSocket.lock();
 	try{
 		socketOut->rec(*out);
 	}catch(int e){
-		errno = EREMOTEIO;
-		throw 8;
+		throw e;
 	}
 	m_cawlSocket.unlock();
 
@@ -107,27 +104,14 @@ void Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) 
 
 void Ground::startRecieve(){
 	while(true){
-		try{
-			receivePacket();
-		}catch(int e){
-			printf("Error number: %i\n", e);
-			perror("Desc");
-			throw 6;
-		}
-		usleep(100);
+		receivePacket();
 	}
 }
 
 void Ground::startSend(){
 	while(true){
-		try{
-			sendPacket();
-		}catch(int e){
-			printf("Error number: %i\n", e);
-			perror("Desc");
-			throw 7;
-		}
-		usleep(100);
+		sendPacket();
+		usleep(5000);
 	}
 }
 

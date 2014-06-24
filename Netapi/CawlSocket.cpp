@@ -88,27 +88,29 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 			throw 1;
 		}
 		if (setsockopt(SctpScocket, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
-			throw 1;
+			throw 2;
 		}
 		if (bind(SctpScocket, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in)) < 0){
-			throw 2;
+			throw 3;
 		}
 		if (listen(SctpScocket, 1) < 0) {
-			throw 2;
+			throw 4;
 		}
 	}else{
 		if ((SctpScocket = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
-			throw 1;
+			throw 5;
 		}
-		if (setsockopt( SctpScocket, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg))<0 )
+		long value = 1;
+		if ((setsockopt( SctpScocket, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg))||
+			 setsockopt( SctpScocket, IPPROTO_SCTP, SCTP_NODELAY, &value,sizeof(value)))<0 )
 		{
-			throw 1;
+			throw 6;
 		}
 
 		if (connect( SctpScocket, (struct sockaddr *)&addr, sizeof(addr) ) < 0)
 		{
 			errno = EHOSTDOWN;
-			throw 3;
+			throw 7;
 		}
 	}
 }
@@ -122,14 +124,14 @@ void CawlSocket::send(Packets::CawlPacket& p) {
 	if (isServer){
 		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), (struct
 				sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
-			throw 4;
+			throw 8;
 		}
 
 	}else{
 		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), NULL, 0,
 				htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0)
 		{
-			throw 4;
+			throw 9;
 		}
 	}
 	/* FUTURE WORK:
@@ -156,7 +158,7 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 			continue;
 		}
 		if (flags & MSG_NOTIFICATION){
-			throw 5;
+			throw 10;
 
 		} else {
 			Packets::CawlPacket packet;
@@ -168,15 +170,11 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 					gm.measureDelay(p, 1, "testing");
 					//gm.measuredata(p, 1, "test"); //change the "test" into the use of a variable that can be set with a function
 				}catch(int e){
-					printf("%i\n",e);
-					perror("NOPE");
-					exit(0);
+					throw e;
 				}
-
 			}
 			break;
 		}
-
 	}
 }
 
@@ -186,4 +184,3 @@ CawlSocket::~CawlSocket() {
 	}
 }
 }
-

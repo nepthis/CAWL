@@ -17,7 +17,7 @@
 #define RETRIES 5 		//Amount of tries for Mobile to start connection to server
 #define TIMEOUT 5	//Amount of seconds to wait before retrying
 void INT_handler(int dummy){
-	printf("Shutting Down...\n");
+	//printf("Shutting Down...\n");
 	exit(EXIT_SUCCESS);
 }
 using namespace std;
@@ -51,6 +51,7 @@ int main(int argc, char * args[]){
 		}catch(int e){
 			printf("Error number: %i\n", e);
 			perror("Description: ");
+			exit(0);
 		}
 
 
@@ -74,6 +75,7 @@ int main(int argc, char * args[]){
 				major->pleased = true;
 				printf("Error number: %i\n", e);
 				perror("Description: ");
+				exit(0);
 			}
 			sleep(TIMEOUT);
 		}

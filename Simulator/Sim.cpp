@@ -15,17 +15,14 @@ Sim::Sim() {
 	//Create socket for the simulator
 	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
-		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
+		throw 13;
 	}
 	memset((char *)&simAddr, 0, slen);
 	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
 	simAddr.sin_port = htons(65400);
 
 	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {
-		perror("error with bind");
-		printf ("Error number is: %s\n",strerror(errno));
-		exit(0);
+		throw 14;
 	}
 	printf("Connection to simulator socket was successfull\n");
 }

@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <termios.h>
 #include <errno.h>
+#include <cstring>
 
 #include "../Netapi/CawlSocket.h"
 #include "../Packets/EBUPacketAnalogOut.h"
