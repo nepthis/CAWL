@@ -11,8 +11,8 @@ namespace Major_Tom {
 
 Mobile::Mobile(char* addressOne, char* addressTwo) {
 	//Variable setup
+	pleased = false;
 	try{
-		pleased = false;
 		stopPacket 			= Packets::EBUPacketAnalogOut();
 		rPack						= Packets::EBURelayPacket();
 		//h1								= Netapi::Host((char*)addressOne, 5555, (char*)addressTwo, false);
@@ -40,6 +40,7 @@ void Mobile::startUp(){
 
 	}catch(int e){
 		perror("Desc");
+		throw e;
 	}
 
 }

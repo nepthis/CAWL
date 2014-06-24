@@ -18,6 +18,7 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	out 					= new Packets::CawlPacket();
 	in 						= new Packets::CawlPacket();
 	h 							= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
+	tempValue	= 1.0;
 	try{
 		printf("creating socket\n");
 		socketOut 	=  new Netapi::CawlSocket(h);
@@ -34,7 +35,17 @@ void Ground::sendPacket() {
 	int prio = 1;			// <---- borde sättas beroende av paket
 	int streamID = 1;		// <----
 	sp = simulator->recPac();
+	if(tempValue == 1.0){
+		tempValue = 0.0;
+		sp.fromSim.analog[3] = tempValue;
+		sp.fromSim.analog[2] = tempValue;
+	}else{
+		tempValue = 1.0;
+		sp.fromSim.analog[3] = tempValue;
+		sp.fromSim.analog[2] = tempValue;
+	}
 	setEbuOne(&sp, &epao);
+	printf("Values from the sim in the analog packet: %i, %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_11));
 	//memset(&thetemp,0,sizeof(epao));
 	memcpy(thetemp, &epao, sizeof(epao));
 

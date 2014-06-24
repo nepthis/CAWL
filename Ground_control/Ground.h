@@ -40,6 +40,7 @@ private:
 	char *state;
 	Netapi::Host h;
 	Netapi::CawlSocket *socketOut;
+	float tempValue;
 
 
 public:

@@ -49,7 +49,6 @@ int main(int argc, char * args[]){
 			printf("Finished.\n");
 			exit(1);
 		}catch(int e){
-			//major->pleased = true;
 			printf("Error number: %i\n", e);
 			perror("Description: ");
 		}

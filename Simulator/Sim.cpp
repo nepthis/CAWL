@@ -7,6 +7,7 @@
 
 #include "Sim.h"
 using namespace Simulator;
+
 Sim::Sim() {
 	slen = sizeof(simAddr);
 	simPort = 65400;
@@ -29,6 +30,7 @@ Sim::Sim() {
 	printf("Connection to simulator socket was successfull\n");
 }
 
+
 Sim::~Sim() {
 	// TODO Auto-generated destructor stub
 }
@@ -45,6 +47,8 @@ Packets::SimPack Sim::recPac(void) {
 	realID++;
 	return simpack;
 }
-
+/* TODO: Simple sendmsg with UDP to the motion control rig
+ *  See report for more information.
+ */
 void Sim::sendPac() {
 }
