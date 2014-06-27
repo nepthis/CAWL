@@ -22,6 +22,11 @@ EBUPacketAnalogOut::~EBUPacketAnalogOut() {
 ebuAnOut EBUPacketAnalogOut::getChannel() {
 	return toEBU;
 }
+/*	If the value is too high or too low maximum/minimum values will be set.
+ * 	The volt should range between 0-5 and will be translated into a value for a 16bit
+ * 	integer where lowest value 0V will equal 0 and the highest value of 5V will equal
+ * 	65535.
+ */
 int EBUPacketAnalogOut::setChannelValue(int volt,int  pin) {
 	uint16_t data;
 	if(volt > 5){

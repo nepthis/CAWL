@@ -12,6 +12,10 @@
 
 
 namespace Packets {
+/*	Container class for data received from the simulator
+ * 	Setters and getters for the data exist to abastract away
+ * 	the array and variables.
+ */
 typedef struct commandPacket {
 	uint32_t packetId;
 	uint32_t packetSize;

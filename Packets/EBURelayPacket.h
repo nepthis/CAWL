@@ -10,7 +10,7 @@
 
 #ifndef EBURELAYPACKET_H_
 #define EBURELAYPACKET_H_
-
+//The following defines makes it easier to set the right relay
 #define R_S19 	0
 #define R_S20 	1
 #define R_P15 	2
@@ -154,11 +154,13 @@
 #include <stdint.h>
 
 namespace Packets{
-
+//The struct that contains the data for the relays to the EBU
 typedef struct EBUrelays{
 	uint8_t channel[14];
 }EBUrelays ;
-
+/*	EBURelayPackets is a container class with methods that abstract away the
+ * 	array containing the data to the EBU.
+ */
 class EBURelayPacket {
 public:
 	EBUrelays er;

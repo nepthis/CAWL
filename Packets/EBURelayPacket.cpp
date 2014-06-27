@@ -20,7 +20,10 @@ EBURelayPacket::~EBURelayPacket() {
 EBUrelays EBURelayPacket::getRelays(void) {
 	return er;
 }
-
+/*	setRelayVAlue sets a relay to on or off, two relays are stored per byte.
+ * 	The defines in the header makes it easier to know which position to set
+ * 	on or off.
+ */
 void EBURelayPacket::setRelayValue(int relay, int value) {
 	int byte = relay / 8;
 	int offset = relay % 8;
@@ -28,7 +31,7 @@ void EBURelayPacket::setRelayValue(int relay, int value) {
 	er.channel[byte] = (value)?(er.channel[byte] | mask):(er.channel[byte] & ~mask);
 }
 
-
+//	Same as the setRelayValue except this one only reads the value
 uint8_t EBURelayPacket::getRelayValue( int relay) {
 	int byte = relay / 8;
 	int offset = relay % 8;

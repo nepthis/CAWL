@@ -8,6 +8,7 @@
 
 #ifndef EBUPACKETANALOGOUT_H_
 #define EBUPACKETANALOGOUT_H_
+//The defines are pin indices for the array
 #define AO_1	0
 #define AO_2	1
 #define AO_3	2
@@ -36,11 +37,15 @@
 #include <stdint.h>
 
 namespace Packets{
-
+//	This struct stores the actual data for the EBU
 typedef struct ebuAnOut{
 	uint16_t channel[24];
 }ebuAnOut;
 
+/*	This class contains the struct for the pins on the EBU
+ *	The methods are simple setters and getters abstracting away the array
+ *	that contains the data.
+ */
 class EBUPacketAnalogOut {
 	int destination;
 	ebuAnOut toEBU;

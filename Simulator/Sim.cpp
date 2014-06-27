@@ -10,7 +10,6 @@ using namespace Simulator;
 
 /*	The constructor sets up the socket to the simulator and binds it, if an error occurs it will throw
  * 	an int with a number for that occasion
- *
  */
 Sim::Sim() {
 	slen = sizeof(simAddr);
@@ -41,11 +40,8 @@ Sim::~Sim() {
 Packets::SimPack Sim::recPac(void) {
 	char recbuf[255];
 	Packets::SimPack simpack = Packets::SimPack();
-	//simpack.fromSim.analog[3] = 1.0;
-	//simpack.fromSim.analog[2] = 0.5;
 	recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen);
 	memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-	//printf("data in simPack: %f, %f\n", simpack.fromSim.analog[3],simpack.fromSim.analog[2]  );
 	simpack.setID(realID);
 	realID++;
 	return simpack;
