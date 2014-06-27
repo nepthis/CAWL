@@ -20,12 +20,14 @@
 
 #include "../Netapi/MeasurementData.h"
 
-#define mysql_address 	"192.168.2.5"
-#define port 			"3306"
-#define user			"cawl"
-#define password		"gurksallad"
-#define db				"cawl"
-#define tbl				"tests"
+
+// Database credentials etc.
+#define mysql_address   "192.168.2.5"
+#define port            "3306"
+#define user            "cawl"
+#define password        "gurksallad"
+#define db              "cawl"
+#define tbl             "tests"
 
 namespace Db {
 

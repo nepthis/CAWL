@@ -42,6 +42,7 @@ CawlSocket::CawlSocket() {
 
 }
 
+
 CawlSocket::CawlSocket(Netapi::Host& h) {
 	n=0;
 	flags=0;
@@ -49,6 +50,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	metrics = false;
 
 	gm = GatherMetrics();
+
 	//Options can be set "on the go" as well.
 	gm.setOption("DELAY", true);
 	gm.setOption("CHKSUMERR",true);
@@ -84,22 +86,28 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 	// Add nr of streams and handling
 
 	if (isServer) {
+		//create a sctp socket
 		if ((SctpScocket = socket(AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP)) < 0){
 			throw 1;
 		}
+		//specific sctp socket options is set with setsockopt. tells socket to use sctp_event_subscribe
 		if (setsockopt(SctpScocket, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
 			throw 2;
 		}
+		// bind the socket to specific interface should use bindx in future to use multiple interfaces
 		if (bind(SctpScocket, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in)) < 0){
 			throw 3;
 		}
+		// listen for connecting sockets from client side
 		if (listen(SctpScocket, 1) < 0) {
 			throw 4;
 		}
 	}else{
+		//create a sctp socket
 		if ((SctpScocket = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
 			throw 5;
 		}
+		// Used to setup SCTP_NODELAY, tells Sctp socket to not use Nagles algorithm (produces delay)
 		long value = 1;
 		if ((setsockopt( SctpScocket, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg))||
 			 setsockopt( SctpScocket, IPPROTO_SCTP, SCTP_NODELAY, &value,sizeof(value)))<0 )
@@ -107,6 +115,7 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 			throw 6;
 		}
 
+		//try to connect to listening socket on server side
 		if (connect( SctpScocket, (struct sockaddr *)&addr, sizeof(addr) ) < 0)
 		{
 			errno = EHOSTDOWN;
@@ -120,13 +129,13 @@ CawlSocket::CawlSocket(Netapi::Host& h) {
 // TODO add stream param etc.
 
 void CawlSocket::send(Packets::CawlPacket& p) {
+	// sets timestamp on packet for delay measurement. Should instead use RTT measurement, NTP is not accurate enough
 	p.SetSnd();
 	if (isServer){
 		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), (struct
 				sockaddr *)&addr, from_len, htonl(PPID), 0, 0 /*stream 0*/ , 0, 0) < 0){
 			throw 8;
 		}
-
 	}else{
 		if (sctp_sendmsg(SctpScocket, (char*)&p, sizeof(p), NULL, 0,
 				htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0)
@@ -144,7 +153,7 @@ void CawlSocket::send(Packets::CawlPacket& p) {
 void CawlSocket::rec(Packets::CawlPacket& p) {
 	while(true)
 	{
-		//each time erase the stuff
+		// erase the placeholders
 		flags = 0;
 		memset((void *)&addr, 0, sizeof(struct sockaddr_in));
 		from_len = (socklen_t)sizeof(struct sockaddr_in);
@@ -154,7 +163,6 @@ void CawlSocket::rec(Packets::CawlPacket& p) {
 		n = sctp_recvmsg(SctpScocket, (void*)pRecvBuffer, RECVBUFSIZE,
 				(struct sockaddr *)&addr, &from_len, &sinfo, &flags);
 		if (-1 == n) {
-			//sleep(1);
 			continue;
 		}
 		if (flags & MSG_NOTIFICATION){

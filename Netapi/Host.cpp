@@ -18,6 +18,7 @@ Host::Host() {
 	isServer = false;
 }
 
+
 Host::Host(char* a1, int p, char* a2, bool s) {
 	addr1 = a1;
 	addr2 = a2;
@@ -25,12 +26,16 @@ Host::Host(char* a1, int p, char* a2, bool s) {
 	isServer = s;
 }
 
+
 void Host::SetServerAddr(char * server_addr){
 	addr1 = server_addr;
 }
+
+
 void Host::SetBindAddr(char * bind_addr){
 	addr2 = bind_addr;
 }
+
 
 Host::~Host() {
 }

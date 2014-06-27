@@ -11,17 +11,17 @@ namespace Db {
 
 mysqlconnector::mysqlconnector() {
 
-	res  		= NULL;
-	stmt 		= NULL;
-	add  		= (std::string)("tcp://") + mysql_address + (std::string)(":") + port;
+	res         = NULL;
+	stmt        = NULL;
+	add         = (std::string)("tcp://") + mysql_address + (std::string)(":") + port;
 
-	con = NULL;
-	driver = NULL;
+	con         = NULL;
+	driver      = NULL;
+
 
 	//Thread specific vars
-
-	ready     	= false;
-	//processed 	= false;
+	ready       = false;
+	//processed   = false;
 
 }
 
@@ -55,6 +55,7 @@ void mysqlconnector::insertWorker(){
 	}
 }
 
+
 void mysqlconnector::start(int threads){
 	try{
 		// Create a connection
@@ -76,9 +77,10 @@ void mysqlconnector::start(int threads){
 		worker.detach();
 	}
 }
+
+
 void mysqlconnector::insert(measurementData data){
 	//insert into queue, add mutex etc
-
 	{
 		std::unique_lock<std::mutex> lk(mutex);
 		ready = false;
@@ -87,6 +89,7 @@ void mysqlconnector::insert(measurementData data){
 		ready = true;
 	}
 }
+
 
 void mysqlconnector::dbInsert(measurementData data) {
 
@@ -99,7 +102,7 @@ void mysqlconnector::dbInsert(measurementData data) {
 
 	// Form querey
 	std::string quer   =(std::string)("INSERT INTO `") +
-			tbl				+
+			tbl								+
 			(std::string)("` (`id`")		+
 			(std::string)(", `name`")		+
 			(std::string)(", `type`")		+
@@ -118,7 +121,7 @@ void mysqlconnector::dbInsert(measurementData data) {
 	try{
 		stmt->execute(quer);
 	} catch (sql::SQLException &e) {
-		// Throw something nice ;)
+		throw 20;
 	}
 }
 
