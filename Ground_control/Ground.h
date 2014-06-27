@@ -2,19 +2,19 @@
  * Ground.h
  *
  *  Created on: May 19, 2014
- *      Author: cawl-server
+ *      Author: Robin Bond
  */
 
 
 #ifndef GROUND_H_
 #define GROUND_H_
 
-#include <thread>
-#include <mutex>
+#include <thread>	//for std::thread
+#include <mutex>	//std mutex and unique locks
 #include <chrono>
 
-#include <stdio.h>
-#include <string.h>
+#include <stdio.h>	//for printf
+#include <string.h>	//std::string
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -22,13 +22,21 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <termios.h>
-#include <errno.h>
+#include <errno.h>	//For raising errors
 #include <cstring>
-
+//Own classes are included here
 #include "../Netapi/CawlSocket.h"
 #include "../Packets/EBUPacketAnalogOut.h"
 #include "../Simulator/Sim.h"
 
+
+/*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
+ * 	and to translate packages from the simulator into packets for the EBU and then to send
+ * 	them to the Mobile gateway using a CawlSocket.
+ * 	The methods startReceive and startSend are started are made for being started in threads
+ * 	and will keep on receiving packages from the simulator and sending them over the cawlsocket.
+ * 	TODO: Use a state + a compare function to see if sending a new packet is necessary.
+ */
 class Ground {
 private:
 	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;

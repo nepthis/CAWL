@@ -11,37 +11,33 @@
 #include "EBUManager.h"
 
 using namespace EBU;
-
+/*	In the Constructor the connection is set up towards the EBUs, currently just no. 1.
+ * 	It's a regular setup for sending UDP Packages, the different ports are in the
+ * 	comments inside the constructor.
+ */
 EBUManager::EBUManager() {
-	// Constructor
-	destinationPort = 0;
 	slen = sizeof(struct sockaddr_in);
-	//Not going to read data from the EBU. Yet.
-	//	if ((oneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	//	{
-	//		perror("socket error");
-	//
-	//	}
 	//----------------------------------Sockets------------------------------------------------
 	if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		throw 1; //TBD
+		throw oneAnalogOut; //TBD
 	}
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		throw 1;
+		throw oneRelay;
 
 	}
 	//------------------------------------------------------------------------------------------------
 	//-----------------------------------------ADRESSES-------------------------------------
 	//--------------------------------EBUAnalogOut for ebu1------------------------
 	memset((char *)&addrOneAnalogOut, 0, sizeof(addrOneAnalogOut));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr)); //Lättare att använda, sköter network byte order åt dig.
+	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr));
 	addrOneAnalogOut.sin_port = htons(25200);
+	//set-up for digital signals will be needed as well in order to control gears
 
 	//--------------------------------Relays for ebu1--------------------------------------
 	memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
@@ -68,8 +64,11 @@ EBUManager::~EBUManager() {
 	// TODO Auto-generated destructor stub
 }
 
-
-int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
+/*	Sends an the data-struct inside the analogPacket to the EBU. A switch statements will send the packet either
+ * 	to EBU no. 1 or EBU no. 2. The destination EBU is set when creating the packet. Other than that it's a
+ * 	regular sendto with UDP
+ */
+void EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 	Packets::ebuAnOut data = p.getChannel();
 	//destinationPort = 25200;
 	try{
@@ -84,21 +83,15 @@ int EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 		perror("Error sending Analog Packet to the EBU\n");
 		throw 1; //TBD
 	}
-	return 1; //if success
 }
-
-int EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
+/*	The sendRelayCommand works similiar to the sendAnalogCommand function, the difference is that
+ * 	the data it sends is a bit different and is used to activate/deactivate relays on the EBU
+ */
+void EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 	Packets::EBUrelays data = rPack.getRelays();
-	//destinationPort = 25200;
 	switch(ebuNum){
 	case 1:
 		sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
 	}
-	return 1; //if success
 }
-/*
-int EBUManager::readData(uint16_t pin, uint32_t value){
 
-	return 1; //if success
-}
- */

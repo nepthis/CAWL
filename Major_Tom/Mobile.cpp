@@ -8,7 +8,11 @@
 #include "Mobile.h"
 
 namespace Major_Tom {
-
+/*	The contructor for the Mobile gateway initializes almost everything
+ * 	and also sends the relay information to the EBU enabling the needed relays.
+ * 	For now sending data back over the CawlSocket is not performed but when it
+ * 	is a separate socket for sending the data will be used.
+ */
 Mobile::Mobile(char* addressOne, char* addressTwo) {
 	//Variable setup
 	pleased = false;
@@ -33,6 +37,9 @@ Mobile::Mobile(char* addressOne, char* addressTwo) {
 	//-------------------------------------------------------------------------
 
 }
+/*This method is used to initialize the CawlSockets, for now only one receicing socket is used.
+ *
+ */
 void Mobile::startUp(){
 	//gatewaySocketSend	= Netapi::CawlSocket(h1);
 	try{
@@ -43,14 +50,19 @@ void Mobile::startUp(){
 	}
 
 }
+/*	The method socketReceive is used to receive packets from the CawlSocket and then
+ * 	take the data field from the cawlpacket and put it into an EBUPacketAnalogOut
+ * 	which will be pushed into a packetbuffer. As this method will be started as a thread
+ * 	mutexes for shared variables are needed, for now there is only one used for the
+ * 	packetbuffer.
+ *
+ */
 void Mobile::socketReceive() {
 	Packets::CawlPacket recPack = Packets::CawlPacket();
 	while(not pleased){
-		//std::unique_lock<std::mutex> lock1(m_Cawl, std::defer_lock);
-		std::unique_lock<std::mutex> lock2(m_Queue, std::defer_lock);
+		std::unique_lock<std::mutex> lockQ(m_Queue, std::defer_lock);
 		Packets::EBUPacketAnalogOut analogOut =  Packets::EBUPacketAnalogOut();
-		//std::lock(lock1, lock2);
-		lock2.lock();
+		lockQ.lock();
 		try{
 			gatewaySocketReceive->rec(recPack);
 			char *tempbuff;
@@ -64,12 +76,11 @@ void Mobile::socketReceive() {
 
 	}
 }
-
+/*	SocketSend, not in use for now, will send data back over the CawlSocket to the Ground Gateway.
+ * 	Data that should be sent back could be data for the video stream or audio feedback etc
+ */
 void Mobile::socketSend() {
 	while(not pleased){
-		sleep(1);
-		std::unique_lock<std::mutex> lock1(m_Cawl, std::defer_lock);
-		lock1.lock();
 		Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
 		Packets::CawlPacket *ut = new Packets::CawlPacket(0, 0);
 		try{
@@ -83,7 +94,10 @@ void Mobile::socketSend() {
 	}
 
 }
-
+/*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
+ * 	the ebuManager. This method is designed to be started as a thread.
+ * 	For now there is a sleep of 200000 microseconds in order to not crash the EBU.
+ */
 void Mobile::ebuSend() {
 	while(not pleased){
 		usleep(200000); 		//The usleep prevents the EBU from crashing...

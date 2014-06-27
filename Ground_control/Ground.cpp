@@ -2,22 +2,26 @@
  * Ground.cpp
  *
  *  Created on: May 19, 2014
- *      Author: cawl-server
+ *      Author: Robin Bond
  */
 
 #include "Ground.h"
 using namespace std;
-
+/*	In the constructor objects for the simulator and the CawlSocket are set up together with
+ * 	variables used to copy the data into. The analogpacket is copied into a char* with same size
+ * 	and that char* is then copied into the CawlPackets data field.
+ * 	TODO: Use a state + a compare function to see if sending a new packet is necessary.
+ */
 Ground::Ground(char* addressOne, char* addressTwo) {
-	countBoomUp = countBuckUp = countBoomDown = countBuckDown = 0;
 	sp 				=  Packets::SimPack();
 	epao 			= Packets::EBUPacketAnalogOut();
 	thetemp 		= (char*) malloc(sizeof(epao));
-	state 			= (char*) malloc(sizeof(epao));
+	//state 			= (char*) malloc(sizeof(epao));
 	simulator 		= new Simulator::Sim();
 	out 			= new Packets::CawlPacket();
 	in 				= new Packets::CawlPacket();
 	h 				= Netapi::Host(addressOne, 5555, addressTwo, false);
+	//tempValue is used for testing purposes only
 	tempValue		= 1.0;
 	try{
 		socketOut 	=  new Netapi::CawlSocket(h);
@@ -26,7 +30,15 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	}
 
 }
-
+/*	Written by Robin Bond and modified by Håkan Therén
+ * The sendPacket method receives a packet from the simulator containing data
+ * 	on how the current position on controls are. This packet is then translated
+ * 	into an EBUPacketAnalogOut with the method setEBUOne, needless to say another
+ * 	function for the second ebu is also needed.
+ * 	The analogOut Packet is then copied into a char array which will be put into
+ * 	the datafield of the cawlpacket that will be sent through the cawlsocket.
+ * 	As this will be done with theads a mutex for the cawlsocket is needed.
+ */
 void Ground::sendPacket() {
 	int prio = 1;			// <---- borde sÃ¤ttas beroende av paket
 	int streamID = 1;		// <----
@@ -44,20 +56,13 @@ void Ground::sendPacket() {
 		sp.fromSim.analog[2] = tempValue;
 	}
 	*/
-
 	setEbuOne(&sp, &epao);
-	//printf("Values from the sim in the analog packet: %i, %i\n", epao.getChannelValue(AO_9),epao.getChannelValue(AO_11));
-	//memset(&thetemp,0,sizeof(epao));
 	memcpy(thetemp, &epao, sizeof(epao));
-
 	if(memcmp(thetemp,state,sizeof(epao))){
 		out->SetPrio(prio);
 		out->SetId(streamID);
-		//memset(out->data,0,sizeof(epao));
 		memcpy(&out->data, thetemp, sizeof(epao));
-		//memset(&state,0,sizeof(epao));
-		memcpy(state, thetemp, sizeof(epao));
-
+		//memcpy(state, thetemp, sizeof(epao));
 		//LÃ…S MUTEX ETC!!!!
 		m_cawlSocket.lock();
 		try{
@@ -69,6 +74,9 @@ void Ground::sendPacket() {
 	}
 }
 
+/* Written by Håkan Therén
+ * Does nothing with the data atm.
+ */
 void Ground::receivePacket(){
 	m_cawlSocket.lock();
 	try{
@@ -101,13 +109,17 @@ void Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) 
 	setBoom((float)simData.analog[2], epao);
 	setBucket((float)simData.analog[3], epao);
 }
-
+/* Written by Håkan Therén
+ * Used in the threads that will run
+ */
 void Ground::startRecieve(){
 	while(true){
 		receivePacket();
 	}
 }
-
+/* Written by Håkan Therén
+ * Used in the threads that will run
+ */
 void Ground::startSend(){
 	while(true){
 		sendPacket();

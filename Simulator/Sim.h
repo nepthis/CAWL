@@ -24,9 +24,14 @@
 
 #include "../Packets/SimPack.h"
 
-#define ownIP "192.168.2.100"
-#define simIP "192.168.2.97"
+#define ownIP "192.168.2.100"	//This is the IP address that the Ground Gateway must have on the network for the simulator
+#define simIP "192.168.2.97"	//The Simulators IP address, movement packages does not go here.
+
 namespace Simulator{
+/*	The Simulator class Sim is responsible for the communication from (to the motion server later) the simulator.
+ * 	Packages from the simulator are received with UDP and will be put into a SimPacket which contains the struct
+ * 	for the data received.
+ */
 class Sim {
 	socklen_t slen;
 	int simulatorSocket;

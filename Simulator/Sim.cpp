@@ -8,6 +8,10 @@
 #include "Sim.h"
 using namespace Simulator;
 
+/*	The constructor sets up the socket to the simulator and binds it, if an error occurs it will throw
+ * 	an int with a number for that occasion
+ *
+ */
 Sim::Sim() {
 	slen = sizeof(simAddr);
 	simPort = 65400;
@@ -24,14 +28,16 @@ Sim::Sim() {
 	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {
 		throw 14;
 	}
-	printf("Connection to simulator socket was successfull\n");
 }
 
 
 Sim::~Sim() {
 	// TODO Auto-generated destructor stub
 }
-
+/*	The method recPac reveices a UDP packet from the simulator and
+ * 	inserts the data into a SimPack with a memcpy. The SimPack will
+ * 	get a new ID because the simulator returns the same one.
+ */
 Packets::SimPack Sim::recPac(void) {
 	char recbuf[255];
 	Packets::SimPack simpack = Packets::SimPack();
