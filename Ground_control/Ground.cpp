@@ -17,7 +17,7 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	simulator 		= new Simulator::Sim();
 	out 			= new Packets::CawlPacket();
 	in 				= new Packets::CawlPacket();
-	h 				= Netapi::Host((char*)"127.0.0.1", 5555, (char*)"127.0.0.1", false);
+	h 				= Netapi::Host(addressOne, 5555, addressTwo, false);
 	tempValue		= 1.0;
 	try{
 		socketOut 	=  new Netapi::CawlSocket(h);

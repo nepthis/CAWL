@@ -38,7 +38,7 @@ int main(int argc, char * args[]){
 	}
 	if((std::string)args[1] == "ground"){
 		try{
-			Ground* gc =  new  Ground((char*)"127.0.0.1",(char*) "127.0.0.1");
+			Ground* gc =  new  Ground((char*)"192.168.2.5",(char*) "192.168.2.100");
 			std::thread g1(&Ground::startSend, gc);
 			//std::thread g2(&Major_Tom::Mobile::ebuSend, major);
 			//std::thread g3(&Major_Tom::Mobile::socketSend, major);
