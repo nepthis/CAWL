@@ -1,0 +1,2 @@
+all:
+	c++ CawlPacketTest.cpp ../Packets/CawlPacket.cpp -std=c++11 -o pktTest
