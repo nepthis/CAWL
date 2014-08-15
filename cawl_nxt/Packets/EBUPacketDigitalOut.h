@@ -63,14 +63,14 @@
 #define DO19_EA27	47
 
 #define DO12_EA34	48
-#define DO9_EA37	49
+#define DO9_EA37	49		//Aktivering F/R spakställ
 #define DO16_EA30	50
 #define DO13_EA33	51
 
 #define DO14_EA32	52
 #define DO15_EA31	53
-#define DO10_EA36	54
-#define DO11_EA35	55
+#define DO10_EA36	54	//Forward gear = 1
+#define DO11_EA35	55	//Reverse gear = 1, Neutral F and R = 0.
 
 #define DO4_EA12	56
 #define DO1_HA9		57
