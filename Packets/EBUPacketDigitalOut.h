@@ -1,9 +1,5 @@
 #include <stdint.h>
 
-typedef struct EBUdigitalOut{
-	uint8_t channel[8];
-} EBUdigitalOut;
-
 #define newEBUdigitalOut() {0, 0, 0, 0, 0, 0, 0, 0}
 
 #define SO17_HB66	0
@@ -86,5 +82,16 @@ typedef struct EBUdigitalOut{
 #define DO2_EA14	62
 #define DO3_EA13	63
 
-void setDigitalOut(EBUdigitalOut *packet, int channel, int value);
-uint8_t getDigitalOut(EBUdigitalOut *packet, int channel);
+typedef struct EBUdigitalOut{
+	uint8_t channel[8];
+} EBUdigitalOut;
+
+
+class EBUPacketDigitalOut{
+    private:
+        EBUdigitalOut = {0, 0, 0, 0, 0, 0, 0, 0}
+    public:
+        void setDigitalOut(EBUdigitalOut *packet, int channel, int value);
+        uint8_t getDigitalOut(EBUdigitalOut *packet, int channel);
+    
+}
