@@ -30,6 +30,7 @@ Mobile::Mobile(char* addressOne, char* addressTwo) {
 		rPack.setRelayValue(R_A11,1);	//11 and 12 are used for bucket
 		rPack.setRelayValue(R_A12,1);
 		em.sendRelayCommand(rPack, 1);
+		em.sendRelayCommand(rPack, 2);
 	}catch(int e){
 		throw e;
 	}

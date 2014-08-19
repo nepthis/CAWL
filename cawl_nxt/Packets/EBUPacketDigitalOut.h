@@ -73,25 +73,31 @@
 #define DO11_EA35	55	//Reverse gear = 1, Neutral F and R = 0.
 
 #define DO4_EA12	56
-#define DO1_HA9		57
-#define DO8_EA8		58
+#define DO1_HA9	57
+#define DO8_EA8	58
 #define DO5_EA11	59
 
 #define DO6_EA10	60
-#define DO7_EA9		61
+#define DO7_EA9	61
 #define DO2_EA14	62
 #define DO3_EA13	63
+
+namespace Packets{
 
 typedef struct EBUdigitalOut{
 	uint8_t channel[8];
 } EBUdigitalOut;
 
-
 class EBUPacketDigitalOut{
-    private:
-        EBUdigitalOut = {0, 0, 0, 0, 0, 0, 0, 0}
-    public:
-        void setDigitalOut(EBUdigitalOut *packet, int channel, int value);
-        uint8_t getDigitalOut(EBUdigitalOut *packet, int channel);
-    
+private:
+	int destination;
+	EBUdigitalOut toEBU;
+public:
+	EBUPacketDigitalOut();
+	void setDigitalOut(int channel, int value);
+	uint8_t getDigitalOut(int channel);
+	void setDestination(int destination);
+	int getDestination();
+	virtual ~EBUPacketDigitalOut();
+}
 }

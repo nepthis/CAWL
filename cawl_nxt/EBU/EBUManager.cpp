@@ -18,11 +18,18 @@ using namespace EBU;
 EBUManager::EBUManager() {
 	slen = sizeof(struct sockaddr_in);
 	//----------------------------------Sockets------------------------------------------------
+	//-------------------------------------EBU1--------------------------------------------------
 	if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
 		throw oneAnalogOut; //TBD
+	}
+	if ((oneDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw oneDigitalOut; //TBD
 	}
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
@@ -31,6 +38,27 @@ EBUManager::EBUManager() {
 		throw oneRelay;
 
 	}
+	//-------------------------------------EBU2--------------------------------------------------
+	if ((twoAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw twoAnalogOut; //TBD
+	}
+	if ((twoDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw twoDigitalOut; //TBD
+	}
+	if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw twoRelay;
+
+	}
+
 	//------------------------------------------------------------------------------------------------
 	//-----------------------------------------ADRESSES-------------------------------------
 	//--------------------------------EBUAnalogOut for ebu1------------------------
@@ -43,6 +71,17 @@ EBUManager::EBUManager() {
 	memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
 	inet_pton(AF_INET, "10.0.0.2", &(addrOneRelay.sin_addr)); //Lättare att använda
 	addrOneRelay.sin_port = htons(25400); //port for relay data is 25400
+
+	//--------------------------------EBUAnalogOut for ebu2------------------------
+	memset((char *)&addrTwoAnalogOut, 0, sizeof(addrTwoAnalogOut));
+	inet_pton(AF_INET, "10.0.0.3", &(addrTwoAnalogOut.sin_addr));
+	addrTwoAnalogOut.sin_port = htons(25200);
+	//set-up for digital signals will be needed as well in order to control gears
+
+	//--------------------------------Relays for ebu2--------------------------------------
+	memset((char *)&addrTwoRelay, 0, sizeof(addrTwoRelay));
+	inet_pton(AF_INET, "10.0.0.3", &(addrTwoRelay.sin_addr)); //Lättare att använda
+	addrTwoRelay.sin_port = htons(25400); //port for relay data is 25400
 
 	//------------------------------Bind for recv socket ------------------------------------
 	/*
@@ -75,13 +114,13 @@ void EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
 		switch(ebuNum){
 		case 1:
 			sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
-			//	case 2:
-			//		sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+		case 2:
+			sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);
 		perror("Error sending Analog Packet to the EBU\n");
-		throw 1; //TBD
+		throw e; //TBD
 	}
 }
 /*	The sendRelayCommand works similiar to the sendAnalogCommand function, the difference is that
@@ -92,6 +131,8 @@ void EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 	switch(ebuNum){
 	case 1:
 		sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
+	case 2:
+		sendto(twoRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoRelay, slen);
 	}
 }
 

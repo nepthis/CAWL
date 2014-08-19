@@ -23,7 +23,7 @@
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
 
-namespace EBU{¨
+namespace EBU{
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
  *	More functions should be added when they will be implemented, mostly functions for
  *	reading packages from the EBU and sending digital packages.
@@ -33,13 +33,24 @@ namespace EBU{¨
  */
 
 class EBUManager {
-	socklen_t slen;
+	socklen_t slen;			//For future use
 	int oneAnalogOut;	//Socket for the AnalogOut Packages TO the EBU
+	int twoAnalogOut;
+	int oneDigitalOut;	//Socket for the DigitalOut Packages TO the EBU
+	int twoDigitalOut;
 	int oneRelay;		//Socket for sending relay Packages to the EBU
+	int twoRelay;
 	Packets::EBURelayPacket relayPack;
 	//struct sockaddr_out addrOneAnalogIn; Port 25101, Analog data FROM the EBU
-	struct sockaddr_in addrOneAnalogOut;//Port 25200, data TO the EBU
-	struct sockaddr_in addrOneRelay; //Port 25400, send relay data here
+
+	struct sockaddr_in addrOneAnalogOut;	//Port 25200, data TO the EBU
+	struct sockaddr_in addrTwoAnalogOut;
+
+	struct sockaddr_in addrOneDigitalOut;	//Port 25300, data TO the EBU
+	struct sockaddr_in addrTwoDigitalOut;
+
+	struct sockaddr_in addrOneRelay; 				//Port 25400, send relay data here
+	struct sockaddr_in addrTwoRelay;
 
 public:
 	EBUManager();
@@ -48,6 +59,6 @@ public:
 	void sendAnalogCommand(Packets::EBUPacketAnalogOut, int ebuNum);
 	void sendRelayCommand(Packets::EBURelayPacket, int ebuNum);
 
-};
-}
+}; //class
+} //usepackage
 #endif /* EBUMANAGER_H_ */
