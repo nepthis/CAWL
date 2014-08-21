@@ -30,7 +30,7 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	}
 
 }
-/*	Written by Robin Bond and modified by Håkan Therén
+/*	Written by Robin Bond and modified by Hï¿½kan Therï¿½n
  * The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then translated
  * 	into an EBUPacketAnalogOut with the method setEBUOne, needless to say another
@@ -74,7 +74,7 @@ void Ground::sendPacket() {
 	}
 }
 
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Does nothing with the data atm.
  */
 void Ground::receivePacket(){
@@ -109,7 +109,7 @@ void Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) 
 	setBoom((float)simData.analog[2], epao);
 	setBucket((float)simData.analog[3], epao);
 }
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Used in the threads that will run
  */
 void Ground::startRecieve(){
@@ -117,7 +117,7 @@ void Ground::startRecieve(){
 		receivePacket();
 	}
 }
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Used in the threads that will run
  */
 void Ground::startSend(){
