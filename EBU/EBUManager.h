@@ -23,7 +23,7 @@
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
 
-namespace EBU{¨
+namespace EBU{
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
  *	More functions should be added when they will be implemented, mostly functions for
  *	reading packages from the EBU and sending digital packages.
@@ -45,7 +45,7 @@ public:
 	EBUManager();
 	virtual ~EBUManager();
 	//ebuNum (1 = ebu one, 2 = ebutwo)
-	void sendAnalogCommand(Packets::EBUPacketAnalogOut, int ebuNum);
+	void sendAnalogCommand(Packets::ebuAnOut data, int ebuNum);
 	void sendRelayCommand(Packets::EBURelayPacket, int ebuNum);
 
 };

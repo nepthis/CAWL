@@ -68,8 +68,8 @@ EBUManager::~EBUManager() {
  * 	to EBU no. 1 or EBU no. 2. The destination EBU is set when creating the packet. Other than that it's a
  * 	regular sendto with UDP
  */
-void EBUManager::sendAnalogCommand(Packets::EBUPacketAnalogOut p, int ebuNum){
-	Packets::ebuAnOut data = p.getChannel();
+void EBUManager::sendAnalogCommand(Packets::ebuAnOut data, int ebuNum){
+	//Packets::ebuAnOut data = p.getChannel();
 	//destinationPort = 25200;
 	try{
 		switch(ebuNum){

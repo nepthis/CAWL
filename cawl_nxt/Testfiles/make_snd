@@ -1,2 +1,0 @@
-all:
-	c++ CawlSendTest.cpp ../Netapi/Host.cpp ../Packets/CawlPacket.cpp ../Netapi/CawlSocket.cpp -L/usr/local/lib -lsctp -o SndTest

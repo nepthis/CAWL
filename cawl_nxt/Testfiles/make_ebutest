@@ -1,3 +1,0 @@
-all:
-	c++ EBUTest.cpp ../Packets/EBUPacketAnalogOut.cpp ../Packets/EBURelayPacket.cpp ../EBU/EBUManager.cpp -std=c++11
-
