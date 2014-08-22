@@ -1,0 +1,2 @@
+all:
+	c++ main.cpp ../EBU/EBUManager.cpp ../Packets/EBUPacketAnalogOut.cpp ../Packets/EBURelayPacket.cpp -o test -lncurses -std=c++11
