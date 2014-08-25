@@ -3,10 +3,37 @@
 #include <sstream>
 #include <math.h>
 #include <unistd.h>
+#include <thread>
+#include <mutex>
 
 #include "../EBU/EBUManager.h"
 #include "../Packets/EBUPacketAnalogOut.h"
 #include "../Packets/EBURelayPacket.h"
+
+#define OFF 0
+#define ON 1
+
+std::mutex ml;
+
+void ebuSend(Packets::EBUPacketAnalogOut* epao){
+	EBU::EBUManager em = EBU::EBUManager();
+	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
+
+	rp.setRelayValue(R_A7, ON);
+	rp.setRelayValue(R_A17, ON);
+	rp.setRelayValue(R_A18, ON);
+	rp.setRelayValue(R_A19, ON);
+	rp.setRelayValue(R_A20, ON);
+	em.sendRelayCommand(rp, 1);
+
+	while(1){
+		ml.lock();
+		em.sendAnalogCommand(epao->getChannel(),1);
+		ml.unlock();
+		usleep(200000);
+		}
+
+}
 
 const char* instructions(){
 	std::string tmp;
@@ -118,41 +145,43 @@ const char* gui(double vdir, double spd, double brks, int gear){
 	}
 	return tmp.c_str();
 }
+
+
+//Fixa värden
 void setGas(float value, Packets::EBUPacketAnalogOut* pkt) {
-	pkt->setChannelValue(value, AO_19);
-	pkt->setChannelValue(value, AO_20);
+	pkt->setChannelValue((int)(value+0.5), AO_19);
+	pkt->setChannelValue((int)(value+0.5), AO_20);
 }
 void setSteer(float value, Packets::EBUPacketAnalogOut* pkt) {
 	float temp = 5.0 - value ;
-	pkt->setChannelValue(value, AO_17);
-	pkt->setChannelValue(temp, AO_18);
+	pkt->setChannelValue((int)(value+0.5), AO_17);
+	pkt->setChannelValue((int)(temp+0.5), AO_18);
 }
 void setBrake(float value, Packets::EBUPacketAnalogOut* pkt) {
-	pkt->setChannelValue(value, AO_7);
+	pkt->setChannelValue((int)(value+0.5), AO_7);
 }
 int main()
 {
-	EBU::EBUManager em = EBU::EBUManager();
-	Packets::EBUPacketAnalogOut epao =  Packets::EBUPacketAnalogOut();
-	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
-	int off =0;
-	int on = 1;
-	rp.setRelayValue(R_A7, on);
-	rp.setRelayValue(R_A17, on);
-	rp.setRelayValue(R_A18, on);
-	rp.setRelayValue(R_A19, on);
-	rp.setRelayValue(R_A20, on);
-	epao.setDestination(1);
+
+	Packets::EBUPacketAnalogOut* epao =  new Packets::EBUPacketAnalogOut();
+	epao->setDestination(1);
+
 	double str = 2.5;
 	double brk = 4.0;
 	double gas = 0.0;
 	int gear   = 0;
-	em.sendRelayCommand(rp, 1);
-	setGas((float)gas, &epao);
-	setSteer((float)str,& epao);
-	setBrake((float)brk, &epao);
-	em.sendAnalogCommand(epao.getChannel(), 1);
 	int tmp;
+
+
+	ml.lock();
+	setGas((float)gas, epao);
+	setSteer((float)str,epao);
+	setBrake((float)brk, epao);
+	ml.unlock();
+
+	//ebuSend(epao);
+	std::thread worker(ebuSend, epao);
+	worker.detach();
 
 	initscr();
 	(void)noecho();
@@ -165,8 +194,9 @@ int main()
 	addstr( gui(str,gas,brk,gear));
 	addstr( txt(str,gas,brk,gear));
 	refresh();
+
 	while(1){
-		usleep(20000);
+
 		tmp = getch();
 		if(tmp == 104){
 			clear();
@@ -183,12 +213,14 @@ int main()
 			clear();
 			addstr( gui(str,gas,brk,gear));
 			addstr( txt(str,gas,brk,gear));
-			setGas((float)gas, &epao);
-			setSteer((float)str, &epao);
-			setBrake((float)brk,& epao);
-			em.sendAnalogCommand(epao.getChannel(), 1);
-			printf("package sent with values %f, %f, %f\n", gas, str, brk);
 			refresh();
+
+			ml.lock();
+			setGas((float)gas, epao);
+			setSteer((float)str, epao);
+			setBrake((float)brk, epao);
+			ml.unlock();
+
 		}
 
 	}
