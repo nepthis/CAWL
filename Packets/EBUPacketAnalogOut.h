@@ -39,7 +39,7 @@
 namespace Packets{
 //	This struct stores the actual data for the EBU
 typedef struct ebuAnOut{
-	uint16_t channel[24];
+	uint16_t channel;
 }ebuAnOut;
 
 /*	This class contains the struct for the pins on the EBU

@@ -43,7 +43,8 @@ public:
 
 private:
 	Packets::EBUPacketAnalogOut stopPacket;
-	Packets::EBURelayPacket rPack;
+	Packets::EBURelayPacket rPackOne;
+	Packets::EBURelayPacket rPackTwo;
 	Netapi::Host h1;
 	Netapi::Host h2;
 	Netapi::CawlSocket *gatewaySocketSend;

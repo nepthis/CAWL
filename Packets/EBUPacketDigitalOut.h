@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-#define newEBUdigitalOut() {0, 0, 0, 0, 0, 0, 0, 0}
-
 #define SO17_HB66	0
 #define SO18_HB67	1
 #define SO19_HB68	2
@@ -73,25 +71,32 @@
 #define DO11_EA35	55
 
 #define DO4_EA12	56
-#define DO1_HA9		57
-#define DO8_EA8		58
+#define DO1_HA9	57
+#define DO8_EA8	58
 #define DO5_EA11	59
 
 #define DO6_EA10	60
-#define DO7_EA9		61
+#define DO7_EA9	61
 #define DO2_EA14	62
 #define DO3_EA13	63
-
+namespace Packets{
 typedef struct EBUdigitalOut{
-	uint8_t channel[8];
+	uint8_t channel;
 } EBUdigitalOut;
 
 
 class EBUPacketDigitalOut{
-    private:
-        EBUdigitalOut = {0, 0, 0, 0, 0, 0, 0, 0}
-    public:
-        void setDigitalOut(EBUdigitalOut *packet, int channel, int value);
-        uint8_t getDigitalOut(EBUdigitalOut *packet, int channel);
-    
+private:
+	int destination;
+	EBUdigitalOut edo;
+public:
+	EBUPacketDigitalOut();
+	void setDigitalOut(int channel, int value);
+	uint8_t getDigitalOut( int channel);
+	EBUdigitalOut getChannel();
+	void setDestination(int dest);
+	int getDestination();
+	virtual ~EBUPacketDigitalOut();
+};
+
 }

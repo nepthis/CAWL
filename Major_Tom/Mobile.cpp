@@ -17,19 +17,25 @@ Mobile::Mobile(char* addressOne, char* addressTwo) {
 	//Variable setup
 	pleased = false;
 	gatewaySocketReceive 	= NULL;
-	gatewaySocketSend 		= NULL;
+	gatewaySocketSend 			= NULL;
+	stopPacket 							= Packets::EBUPacketAnalogOut();
+	rPackOne									= Packets::EBURelayPacket();
+	rPackTwo									= Packets::EBURelayPacket();
 	try{
-		stopPacket 				= Packets::EBUPacketAnalogOut();
-		rPack					= Packets::EBURelayPacket();
 		//h1					= Netapi::Host((char*)addressOne, 5555, (char*)addressTwo, false);
-		h2						= Netapi::Host((char*)"127.0.0.2", 5555, (char*)"127.0.0.1", true);
-		q_cawlBuffer 			= std::queue<Packets::EBUPacketAnalogOut>();
-		em 						= EBU::EBUManager();
-		rPack.setRelayValue(R_A9,1);  		//9 and 10 are used for
-		rPack.setRelayValue(R_A10,1);	// boom
-		rPack.setRelayValue(R_A11,1);	//11 and 12 are used for bucket
-		rPack.setRelayValue(R_A12,1);
-		em.sendRelayCommand(rPack, 1);
+		h2												= Netapi::Host((char*)"127.0.0.2", 5555, (char*)"127.0.0.1", true);
+		q_cawlBuffer 						= std::queue<Packets::EBUPacketAnalogOut>();
+		em 											= EBU::EBUManager();
+		rPackOne.setRelayValue(R_A9,1);  		//9 and 10 are used for
+		rPackOne.setRelayValue(R_A10,1);		// boom
+		rPackOne.setRelayValue(R_A11,1);		//11 and 12 are used for bucket
+		rPackOne.setRelayValue(R_A12,1);
+		rPackOne.setRelayValue(R_D9,1); 			//digital 9, 10 and 11 are
+		rPackOne.setRelayValue(R_D10,1);		//used for gears
+		rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
+		rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
+		em.sendRelayCommand(rPackOne, 1);
+		em.sendRelayCommand(rPackTwo, 2);
 	}catch(int e){
 		throw e;
 	}
@@ -107,7 +113,7 @@ void Mobile::ebuSend() {
 		try{
 			sendToEBU = q_cawlBuffer.front();
 			q_cawlBuffer.pop();
-			em.sendAnalogCommand(sendToEBU,sendToEBU.getDestination());
+			em.sendAnalogCommand(sendToEBU.getChannel(),sendToEBU.getDestination());
 		}catch(int e){
 			errno = ECOMM;
 			throw 0;
@@ -116,9 +122,11 @@ void Mobile::ebuSend() {
 }
 
 Mobile::~Mobile() {
-	em.sendAnalogCommand(stopPacket, 1);
-	rPack = Packets::EBURelayPacket();
-	em.sendRelayCommand(rPack, 1);
+	em.sendAnalogCommand(stopPacket.getChannel(), 1);
+	rPackOne = Packets::EBURelayPacket();
+	rPackTwo = Packets::EBURelayPacket();
+	em.sendRelayCommand(rPackOne, 1);
+	em.sendRelayCommand(rPackTwo, 2);
 	delete gatewaySocketSend;
 	delete gatewaySocketReceive;
 }
