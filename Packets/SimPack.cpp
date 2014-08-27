@@ -12,7 +12,7 @@ namespace Packets {
 SimPack::SimPack() {
 	fromSim.packetId = 0;
 	fromSim.packetSize = 0;
-	fromSim.analog[9]= ((float)0);
+	fromSim.analog[8]= ((float)0);
 	fromSim.digital = 0;
 }
 
@@ -30,6 +30,26 @@ void Packets::SimPack::setID(uint32_t id) {
 uint32_t Packets::SimPack::getPacketSize(void) {
 	return fromSim.packetSize;
 }
- Packets::commandPacket Packets::SimPack::getData(void) {
-	return fromSim;
+
+int Packets::SimPack::getDigital(int i) {
+	return fromSim.digital & (1 << i)?1:0;
 }
+
+float Packets::SimPack::getAnalog(int i) {
+	return fromSim.analog[i];
+}
+
+bool Packets::SimPack::operator ==(const SimPack& s) {
+	return (fromSim.digital == s.fromSim.digital)
+	& fromSim.analog[0] == s.fromSim.analog[0]
+	& fromSim.analog[1] == s.fromSim.analog[1]
+	& fromSim.analog[2] == s.fromSim.analog[2]
+	& fromSim.analog[3] == s.fromSim.analog[3]
+	& fromSim.analog[4] == s.fromSim.analog[4]
+	& fromSim.analog[5] == s.fromSim.analog[5]
+	& fromSim.analog[6] == s.fromSim.analog[6]
+	& fromSim.analog[7] == s.fromSim.analog[7];
+}
+/*Packets::commandPacket Packets::SimPack::getData(void) {
+ * 	return fromSim;
+}*/
