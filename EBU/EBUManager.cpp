@@ -26,6 +26,13 @@ EBUManager::EBUManager() {
 		throw oneAnalogOut; //TBD
 	}
 	//------------------------------------EBU 1--------------------------------------------------
+	if ((oneDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw oneAnalogOut; //TBD
+	}
+	//------------------------------------EBU 1--------------------------------------------------
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
 		perror("socket error");
@@ -44,7 +51,7 @@ EBUManager::EBUManager() {
 	{
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		throw twoAnalogOut; //TBD
+		throw twoDigitalOut; //TBD
 	}
 	//------------------------------------EBU 2--------------------------------------------------
 	if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
@@ -70,17 +77,17 @@ EBUManager::EBUManager() {
 	addrOneRelay.sin_port = htons(25400);
 
 	//--------------------------------EBUAnalogOut for EBU 2------------------------
-	memset((char *)&addrTwoAnalogOut, 0, sizeof(addrOneAnalogOut));
-	inet_pton(AF_INET, "10.0.0.3", &(addrOneAnalogOut.sin_addr));
-	addrOneAnalogOut.sin_port = htons(25200);
+	memset((char *)&addrTwoAnalogOut, 0, sizeof(addrTwoAnalogOut));
+	inet_pton(AF_INET, "10.0.0.3", &(addrTwoAnalogOut.sin_addr));
+	addrTwoAnalogOut.sin_port = htons(25200);
 	//--------------------------------EBUDigitalOut for EBU 2-----------------------
 	memset((char *)&addrTwoDigitalOut, 0, sizeof(addrTwoDigitalOut));
 	inet_pton(AF_INET, "10.0.0.3", &(addrTwoDigitalOut.sin_addr));
 	addrTwoDigitalOut.sin_port = htons(25300);
 	//-------------------------------Relays for EBU 2--------------------------------------
-	memset((char *)&addrTwoRelay, 0, sizeof(addrOneRelay));
-	inet_pton(AF_INET, "10.0.0.3", &(addrOneRelay.sin_addr));
-	addrOneRelay.sin_port = htons(25400);
+	memset((char *)&addrTwoRelay, 0, sizeof(addrTwoRelay));
+	inet_pton(AF_INET, "10.0.0.3", &(addrTwoRelay.sin_addr));
+	addrTwoRelay.sin_port = htons(25400);
 
 
 	//------------------------------Bind for recv socket ------------------------------------
@@ -129,7 +136,7 @@ void EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 		case 1:
 			sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
 		case 2:
-			sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
+			sendto(twoRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoRelay, slen);
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);

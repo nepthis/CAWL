@@ -39,7 +39,7 @@
 namespace Packets{
 //	This struct stores the actual data for the EBU
 typedef struct ebuAnOut{
-	uint16_t channel;
+	uint16_t channel[24];
 }ebuAnOut;
 
 /*	This class contains the struct for the pins on the EBU
@@ -56,7 +56,7 @@ public:
 	//Returns the value at a given pin that you want to read.
 	uint16_t getChannelValue(int);
 	//Set the value of a specific channel/pin to the EBU. if too high, max will be set, if too low lowest will be set
-	int setChannelValue(int volt, int pin);
+	int setChannelValue(float volt, int pin);
 	virtual ~EBUPacketAnalogOut();
 	int getDestination(void);
 	void setDestination(int dest);

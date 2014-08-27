@@ -27,19 +27,19 @@ ebuAnOut EBUPacketAnalogOut::getChannel() {
  * 	integer where lowest value 0V will equal 0 and the highest value of 5V will equal
  * 	65535.
  */
-int EBUPacketAnalogOut::setChannelValue(int volt,int  pin) {
+int EBUPacketAnalogOut::setChannelValue(float volt,int  pin) {
 	uint16_t data;
-	if(volt > 5){
+	if(volt > 5.0){
 		data = 65535;
 		toEBU.channel[pin] = data;
 		return 0;
-	} else if(volt < 0){
+	} else if(volt < 0.0){
 		data = 0;
 		toEBU.channel[pin] = data;
 		return 0;
 	}
-	data = ((float(volt)/5) * 65535 +0.5); //the 0.5 is here because conversion from float-int from simulator
-	toEBU.channel[pin] = data;
+	data = ((volt/5) * 65535 +0.5); //the 0.5 is here because conversion from float-int
+	toEBU.channel[pin] = (uint16_t)data;
 	return 0;
 
 }

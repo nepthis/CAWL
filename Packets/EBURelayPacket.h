@@ -158,11 +158,13 @@ namespace Packets{
 typedef struct EBUrelays{
 	uint8_t channel[14];
 }EBUrelays ;
+
 /*	EBURelayPackets is a container class with methods that abstract away the
  * 	array containing the data to the EBU.
  */
 class EBURelayPacket {
 public:
+	int destination;
 	EBUrelays er;
 	EBURelayPacket();
 	virtual ~EBURelayPacket();

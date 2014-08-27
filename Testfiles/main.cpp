@@ -7,28 +7,30 @@
 #include <mutex>
 
 #include "../EBU/EBUManager.h"
-#include "../Packets/EBUPacketAnalogOut.h"
-#include "../Packets/EBURelayPacket.h"
 
 #define OFF 0
 #define ON 1
 
 std::mutex ml;
 
-void ebuSend(Packets::EBUPacketAnalogOut* epao){
+void ebuSend(Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo){
 	EBU::EBUManager em = EBU::EBUManager();
 	Packets::EBURelayPacket rp = Packets::EBURelayPacket();
-
+	rp.destination = 1;
 	rp.setRelayValue(R_A7, ON);
 	rp.setRelayValue(R_A17, ON);
 	rp.setRelayValue(R_A18, ON);
 	rp.setRelayValue(R_A19, ON);
 	rp.setRelayValue(R_A20, ON);
+	rp.setRelayValue(R_D10, ON);
+	rp.setRelayValue(R_D11, ON);
 	em.sendRelayCommand(rp, 1);
 
 	while(1){
 		ml.lock();
 		em.sendAnalogCommand(epao->getChannel(),1);
+		usleep(20000);
+		em.sendDigitalCommand(epdo->getChannel(), 1);
 		ml.unlock();
 		usleep(200000);
 		}
@@ -149,21 +151,37 @@ const char* gui(double vdir, double spd, double brks, int gear){
 
 //Fixa värden
 void setGas(float value, Packets::EBUPacketAnalogOut* pkt) {
-	pkt->setChannelValue((int)(value+0.5), AO_19);
-	pkt->setChannelValue((int)(value+0.5), AO_20);
+	pkt->setChannelValue(value, AO_19);
+	pkt->setChannelValue(value, AO_20);
 }
 void setSteer(float value, Packets::EBUPacketAnalogOut* pkt) {
 	float temp = 5.0 - value ;
-	pkt->setChannelValue((int)(value+0.5), AO_17);
-	pkt->setChannelValue((int)(temp+0.5), AO_18);
+	pkt->setChannelValue(value, AO_17);
+	pkt->setChannelValue(temp, AO_18);
 }
 void setBrake(float value, Packets::EBUPacketAnalogOut* pkt) {
-	pkt->setChannelValue((int)(value+0.5), AO_7);
+	pkt->setChannelValue(value, AO_7);
+}
+void setGear(int g, Packets::EBUPacketDigitalOut* pkt){
+	switch(g){
+	case 0:
+		pkt->setDigitalOut(DO10_EA36, 0);
+		pkt->setDigitalOut(DO11_EA35, 0);
+		break;
+	case 1:
+		pkt->setDigitalOut(DO10_EA36, 1);
+		pkt->setDigitalOut(DO11_EA35, 0);
+		break;
+	case 2:
+		pkt->setDigitalOut(DO10_EA36, 0);
+		pkt->setDigitalOut(DO11_EA35, 1);
+	}
 }
 int main()
 {
 
 	Packets::EBUPacketAnalogOut* epao =  new Packets::EBUPacketAnalogOut();
+	Packets::EBUPacketDigitalOut* epdo =  new Packets::EBUPacketDigitalOut();
 	epao->setDestination(1);
 
 	double str = 2.5;
@@ -180,7 +198,7 @@ int main()
 	ml.unlock();
 
 	//ebuSend(epao);
-	std::thread worker(ebuSend, epao);
+	std::thread worker(ebuSend, epao, epdo);
 	worker.detach();
 
 	initscr();
@@ -219,6 +237,7 @@ int main()
 			setGas((float)gas, epao);
 			setSteer((float)str, epao);
 			setBrake((float)brk, epao);
+			setGear(gear, epdo);
 			ml.unlock();
 
 		}

@@ -81,7 +81,7 @@
 #define DO3_EA13	63
 namespace Packets{
 typedef struct EBUdigitalOut{
-	uint8_t channel;
+	uint8_t channel[8];
 } EBUdigitalOut;
 
 

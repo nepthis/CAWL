@@ -10,7 +10,7 @@
 //For threads and mutex
 #include <chrono>
 #include <mutex>	//std::mutex
-#include <stdint.h> //Who doesn'y like ints?
+#include <stdint.h> //Who doesn't like ints?
 #include <string>	//Standard string
 #include <errno.h>	//For a huge list of errors
 
@@ -20,8 +20,9 @@
 #include "../Netapi/CawlSocket.h" 			//For communication between "gateways"
 #include"../EBU/EBUManager.h"				//For communication to EBU
 #include "../Packets/CawlPacket.h"			//Struct/class for packets between "gateways"
+#include "../Simulator/Sim.h"
 #include "../Packets/EBUPacketAnalogOut.h"	//Class/struct for information to the EBU, also contains defines for indexing
-#include "../Packets/EBUPacketAnalogOut.h"	//In order to set which relays easier, it contains all defines.
+#include "../Packets/EBUPacketDigitalOut.h"	//In order to set which relays easier, it contains all defines.
 
 
 namespace Major_Tom {
@@ -36,12 +37,21 @@ public:
 	bool pleased;
 	Mobile(char* addressOne, char* addressTwo);	//Constructor
 	void startUp();								//For starting the connection to the other "gateway"
-	void socketReceive(); 						//Receiving data from socket
-	void socketSend(); 							//Sending data back through socket
+	void socketReceive(); 				//Receiving data from socket
+	void socketSend(); 					//Sending data back through socket
 	void ebuSend(); 							//Send data to the EBU
+	void setBoom(float value, Packets::EBUPacketAnalogOut* pkt);
+	void setBucket(float value, Packets::EBUPacketAnalogOut* pkt);
+	void setGas(float value, Packets::EBUPacketAnalogOut* pkt);
+	void setBrake(float value, Packets::EBUPacketAnalogOut* pkt);
+	void setSteer(float value, Packets::EBUPacketAnalogOut* pkt);
+	void setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt);
+	void setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo);
+	void setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo);
 	virtual ~Mobile();							//Destructor
 
 private:
+	int socketIn;
 	Packets::EBUPacketAnalogOut stopPacket;
 	Packets::EBURelayPacket rPackOne;
 	Packets::EBURelayPacket rPackTwo;
@@ -49,8 +59,8 @@ private:
 	Netapi::Host h2;
 	Netapi::CawlSocket *gatewaySocketSend;
 	Netapi::CawlSocket *gatewaySocketReceive;
-	std::queue<Packets::EBUPacketAnalogOut> q_cawlBuffer;
-	std::mutex m_Queue;		//Conflicts will occuf if it's possible to insert and remove elements at the same time
+	std::queue<Packets::SimPack> q_cawlBuffer;
+	std::mutex m_Queue;		//to prevent conflicts of two threads accessning the same object.
 	EBU::EBUManager em;
 };
 

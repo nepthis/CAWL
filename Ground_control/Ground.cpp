@@ -14,9 +14,8 @@ using namespace std;
  */
 Ground::Ground(char* addressOne, char* addressTwo) {
 	sp 				=  Packets::SimPack();
-	epao 			= Packets::EBUPacketAnalogOut();
-	thetemp 		= (char*) malloc(sizeof(epao));
-	//state 			= (char*) malloc(sizeof(epao));
+	//epao 			= Packets::EBUPacketAnalogOut();
+	thetemp 		= (char*) malloc(sizeof(sp));
 	simulator 		= new Simulator::Sim();
 	out 			= new Packets::CawlPacket();
 	in 				= new Packets::CawlPacket();
@@ -30,7 +29,7 @@ Ground::Ground(char* addressOne, char* addressTwo) {
 	}
 
 }
-/*	Written by Robin Bond and modified by Håkan Therén
+/*	Written by Robin Bond and modified by Hï¿½kan Therï¿½n
  * The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then translated
  * 	into an EBUPacketAnalogOut with the method setEBUOne, needless to say another
@@ -43,38 +42,21 @@ void Ground::sendPacket() {
 	int prio = 1;			// <---- borde sÃ¤ttas beroende av paket
 	int streamID = 1;		// <----
 	sp = simulator->recPac();
-
-	// Testdata
-	/*
-	if(tempValue == 1.0){
-		tempValue = 0.0;
-		sp.fromSim.analog[3] = tempValue;
-		sp.fromSim.analog[2] = tempValue;
-	}else{
-		tempValue = 1.0;
-		sp.fromSim.analog[3] = tempValue;
-		sp.fromSim.analog[2] = tempValue;
+	memcpy(thetemp, &sp, sizeof(sp));
+	out->SetPrio(prio);
+	out->SetId(streamID);
+	memcpy(&out->data, thetemp, sizeof(sp));
+	m_cawlSocket.lock();
+	try{
+		socketOut->send(*out);
+	}catch(int e){
+		throw e;
 	}
-	*/
-	setEbuOne(&sp, &epao);
-	memcpy(thetemp, &epao, sizeof(epao));
-	if(memcmp(thetemp,state,sizeof(epao))){
-		out->SetPrio(prio);
-		out->SetId(streamID);
-		memcpy(&out->data, thetemp, sizeof(epao));
-		//memcpy(state, thetemp, sizeof(epao));
-		//LÃ…S MUTEX ETC!!!!
-		m_cawlSocket.lock();
-		try{
-			socketOut->send(*out);
-		}catch(int e){
-			throw e;
-		}
-		m_cawlSocket.unlock();
-	}
+	m_cawlSocket.unlock();
+}
 }
 
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Does nothing with the data atm.
  */
 void Ground::receivePacket(){
@@ -109,7 +91,7 @@ void Ground::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao) 
 	setBoom((float)simData.analog[2], epao);
 	setBucket((float)simData.analog[3], epao);
 }
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Used in the threads that will run
  */
 void Ground::startRecieve(){
@@ -117,7 +99,7 @@ void Ground::startRecieve(){
 		receivePacket();
 	}
 }
-/* Written by Håkan Therén
+/* Written by Hï¿½kan Therï¿½n
  * Used in the threads that will run
  */
 void Ground::startSend(){

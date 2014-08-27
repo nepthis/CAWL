@@ -67,15 +67,15 @@ void Mobile::socketReceive() {
 	Packets::CawlPacket recPack = Packets::CawlPacket();
 	while(not pleased){
 		std::unique_lock<std::mutex> lockQ(m_Queue, std::defer_lock);
-		Packets::EBUPacketAnalogOut analogOut =  Packets::EBUPacketAnalogOut();
+		Packets::SimPack simp =  Packets::SimPack();
 		lockQ.lock();
 		try{
 			gatewaySocketReceive->rec(recPack);
 			char *tempbuff;
-			tempbuff = (char*) malloc(sizeof(analogOut));
-			memcpy(tempbuff, recPack.data, sizeof(analogOut));
-			memcpy(&analogOut, tempbuff, sizeof(analogOut));
-			q_cawlBuffer.push(analogOut);
+			tempbuff = (char*) malloc(sizeof(simp));
+			memcpy(tempbuff, recPack.data, sizeof(simp));
+			memcpy(&simp, tempbuff, sizeof(simp));
+			q_cawlBuffer.push(simp);
 		}catch(int e){
 			throw e;
 		}
@@ -109,10 +109,13 @@ void Mobile::ebuSend() {
 		usleep(200000); 		//The usleep prevents the EBU from crashing...
 		std::unique_lock<std::mutex> lock1(m_Queue, std::defer_lock);
 		lock1.lock();
-		Packets::EBUPacketAnalogOut sendToEBU;
+		Packets::SimPack sendToEBU;
+		Packets::EBUPacketAnalogOut analog;
+		Packets::EBUPacketDigitalOut digital;
 		try{
 			sendToEBU = q_cawlBuffer.front();
 			q_cawlBuffer.pop();
+			//setEbuOne and setEbuTwo here
 			em.sendAnalogCommand(sendToEBU.getChannel(),sendToEBU.getDestination());
 		}catch(int e){
 			errno = ECOMM;
@@ -120,6 +123,50 @@ void Mobile::ebuSend() {
 		}
 	}
 }
+void Mobile::setBoom(float value, Packets::EBUPacketAnalogOut* pkt) {
+	float temp = value  * 2.0 + 2.5;
+	pkt->setChannelValue(5.0-temp, AO_9);
+	pkt->setChannelValue(temp, AO_10);
+}
+
+void Mobile::setBucket(float value, Packets::EBUPacketAnalogOut* pkt) {
+	float temp = value * 2.0 + 2.5;
+	pkt->setChannelValue(5-temp, AO_11);
+	pkt->setChannelValue(temp, AO_12);
+}
+void Mobile::setGas(float value, Packets::EBUPacketAnalogOut* pkt) {
+	pkt->setChannelValue((value*5.0), AO_19);
+	pkt->setChannelValue((value*5.0), AO_20);
+}
+void Mobile::setSteer(float value, Packets::EBUPacketAnalogOut* pkt) {
+	float temp = value  * 2.0 + 2.5;
+	pkt->setChannelValue(5.0-temp, AO_17);
+	pkt->setChannelValue(temp, AO_18);
+}
+void Mobile::setBrake(float value, Packets::EBUPacketAnalogOut* pkt) {
+	float temp = value*4.5;
+	pkt->setChannelValue(temp, AO_7);
+}
+void Mobile::setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt){
+	pkt->setDigitalOut(DO9_EA37, p1);
+	pkt->setDigitalOut(DO10_EA36, p2);
+	pkt->setDigitalOut(DO11_EA35, p3);
+
+}
+
+void Mobile::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
+	epao->setDestination(1);
+	Packets::commandPacket simData = sp->getData();
+	setBoom((float)simData.analog[2], epao);
+	setBucket((float)simData.analog[3], epao);
+	setGear(sp.getDigital(), sp.getDigital(), sp.getDigital(), epao);
+}
+void Mobile::setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
+	epao->setDestination(2);
+	Packets::commandPacket simData = sp->getData();
+
+}
+
 
 Mobile::~Mobile() {
 	em.sendAnalogCommand(stopPacket.getChannel(), 1);
