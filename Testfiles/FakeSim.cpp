@@ -18,7 +18,7 @@
 #define MIN 0.5
 #define FREQ 10
 #define PORT 65400
-#define ADDR "192.168.2.100"
+#define ADDR "10.0.0.1"
 
 
 #define OFF 0
@@ -235,17 +235,13 @@ int main()
 			endwin();
 			exit(0);
 		}else{
+			ml.lock();
 			update(tmp,str,brk,gas,forward,reverse,parking,*spack);
+			ml.unlock();
 			clear();
 			addstr( gui(str,gas,brk,forward,reverse));
 			addstr( txt(str,gas,brk,forward,reverse,parking));
 			refresh();
-
-			ml.lock();
-			//setGas((float)gas, epao);
-			//setSteer((float)str, epao);
-			//setBrake((float)brk, epao);
-			ml.unlock();
 
 		}
 

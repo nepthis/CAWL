@@ -78,10 +78,10 @@ float Packets::SimPack::fiveToOneNeg(float value){
 	return (value-2.5)/2.5;
 }
 float Packets::SimPack::oneToFive(float value){
-	return value*4.5;
+	return (value*4.0)+0.5;
 }
 float Packets::SimPack::oneToFiveNeg(float value){
-	return (value+1)*2.25;
+	return (value*2.5)+2.5;
 }
 Packets::commandPacket Packets::SimPack::getData(void) {
  	return fromSim;
