@@ -72,12 +72,23 @@ public:
 	SimPack();
 	void setID(uint32_t id);
 	uint32_t getPacketSize(void);
+
 	int getDigital(int);
+	int setDigital(int,int);
+
 	float getAnalog(int);
+	int setAnalog(int, float);
+
+	float fiveToOne(float);
+	float fiveToOneNeg(float);
+
+	float oneToFive(float);
+	float oneToFiveNeg(float);
+
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
 
-	//commandPacket getData(void);
+	commandPacket getData(void);
 };
 
 } /* namespace Packets */

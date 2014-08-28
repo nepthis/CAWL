@@ -21,7 +21,6 @@ SimPack::~SimPack() {
 	//delete &fromSim;
 }
 
-} /* namespace Packets */
 
 void Packets::SimPack::setID(uint32_t id) {
 	fromSim.packetId = id;
@@ -50,6 +49,41 @@ bool Packets::SimPack::operator ==(const SimPack& s) {
 	& fromSim.analog[6] == s.fromSim.analog[6]
 	& fromSim.analog[7] == s.fromSim.analog[7];
 }
-/*Packets::commandPacket Packets::SimPack::getData(void) {
- * 	return fromSim;
-}*/
+
+int Packets::SimPack::setDigital(int i, int value) {
+	if(i < 32 && value == 1){
+		fromSim.digital |= 1 << i;
+		return 1;
+	}else if(i < 32 && value == 0){
+		fromSim.digital &= ~(1 << i);
+		return 1;
+	}else{
+		return -1;
+	}
+}
+
+int Packets::SimPack::setAnalog(int i, float value) {
+	if(i < 8){
+		fromSim.analog[i] = value;
+		return 1;
+	}else{
+		return -1;
+	}
+}
+
+float Packets::SimPack::fiveToOne(float value){
+	return (value-0.5)/4.0;
+}
+float Packets::SimPack::fiveToOneNeg(float value){
+	return (value-2.5)/2.5;
+}
+float Packets::SimPack::oneToFive(float value){
+	return value*4.5;
+}
+float Packets::SimPack::oneToFiveNeg(float value){
+	return (value+1)*2.25;
+}
+Packets::commandPacket Packets::SimPack::getData(void) {
+ 	return fromSim;
+}
+} /* namespace Packets */

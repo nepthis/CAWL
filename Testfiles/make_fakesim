@@ -1,0 +1,2 @@
+all:
+	c++ FakeSim.cpp ../Packets/SimPack.cpp -o fake_sim -lncurses -std=c++11 -pthread
