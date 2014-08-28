@@ -35,7 +35,7 @@ namespace Simulator{
 class Sim {
 	socklen_t slen;
 	int simulatorSocket;
-	int realID; //The paccketID from the simulator is a bit...weird. Use this instead.
+	int realID; //The packetID from the simulator is a bit...weird. Use this instead.
 	struct sockaddr_in simAddr;
 	struct sockaddr_in ownAddr;
 	int simPort;

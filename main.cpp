@@ -38,14 +38,10 @@ int main(int argc, char * args[]){
 	}
 	if((std::string)args[1] == "ground"){
 		try{
-			Ground* gc =  new  Ground((char*)"192.168.2.5",(char*) "192.168.2.100");
+			Ground* gc =  new  Ground(); //(char*)"192.168.2.5",(char*) "192.168.2.100"
 			std::thread g1(&Ground::startSend, gc);
-			//std::thread g2(&Major_Tom::Mobile::ebuSend, major);
-			//std::thread g3(&Major_Tom::Mobile::socketSend, major);
 			printf("Main: thread started, joining\n");
 			g1.join();
-			//m2.join();
-			//m3.join();
 			printf("Finished.\n");
 			exit(1);
 		}catch(int e){
@@ -57,18 +53,14 @@ int main(int argc, char * args[]){
 
 	}
 	else if((std::string)args[1] =="mobile"){
-		Major_Tom::Mobile *major = new Major_Tom::Mobile((char*)"127.0.0.1", (char*)"127.0.0.1"); //make into input args later
+		Major_Tom::Mobile *major = new Major_Tom::Mobile(); //make into input args later
 		while(rt){
 			try{
-				major->startUp();
-				//printf("Connection to Ground successful.\n");
 				printf("Starting threads.\n");
 				std::thread m1(&Major_Tom::Mobile::socketReceive, major);
-				//std::thread m2(&Major_Tom::Mobile::ebuSend, major);
-				//std::thread m3(&Major_Tom::Mobile::socketSend, major);
+				std::thread m2(&Major_Tom::Mobile::ebuSend, major);
 				m1.join();
-				//m2.join();
-				//m3.join();
+				m2.join();
 				printf("Finished.\n");
 				exit(1);
 			}catch(int e){

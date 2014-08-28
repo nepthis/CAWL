@@ -9,6 +9,9 @@
 #ifndef GROUND_H_
 #define GROUND_H_
 
+#define SND_PORT 56565
+#define SND_ADDR "10.0.0.1"
+
 #include <thread>	//for std::thread
 #include <mutex>	//std mutex and unique locks
 #include <chrono>
@@ -25,8 +28,6 @@
 #include <errno.h>	//For raising errors
 #include <cstring>
 //Own classes are included here
-#include "../Netapi/CawlSocket.h"
-#include "../Packets/EBUPacketAnalogOut.h"
 #include "../Simulator/Sim.h"
 
 
@@ -35,33 +36,22 @@
  * 	them to the Mobile gateway using a CawlSocket.
  * 	The methods startReceive and startSend are started are made for being started in threads
  * 	and will keep on receiving packages from the simulator and sending them over the cawlsocket.
- * 	TODO: Use a state + a compare function to see if sending a new packet is necessary.
  */
 class Ground {
 private:
-	int countBoomUp, countBuckUp, countBoomDown, countBuckDown;
-	std::mutex m_cawlSocket;
-	Packets::EBUPacketAnalogOut epao;
+	int grSocket;
+	socklen_t slen;
+	struct sockaddr_in grAddr;
 	Packets::SimPack sp;
-	Packets::CawlPacket *out;
-	Packets::CawlPacket *in;
+	Packets::SimPack state;
 	char *thetemp;
-	char *state;
-	Netapi::Host h;
-	Netapi::CawlSocket *socketOut;
-	float tempValue;
-
-
 public:
 	Simulator::Sim* simulator;
-	Ground(char* addressOne, char* addressTwo);
+	Ground();
 	void startRecieve();
 	void startSend();
 	void receivePacket();
-	void setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao);
 	void sendPacket();
-	int setBoom(float value, Packets::EBUPacketAnalogOut* pkt);
-	int setBucket(float value, Packets::EBUPacketAnalogOut* pkt);
 	virtual ~Ground();
 };
 

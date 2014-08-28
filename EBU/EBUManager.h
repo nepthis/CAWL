@@ -7,6 +7,8 @@
  * This class will be responsible for taking a command and sending it to the right
  * EBU with the values in the right format.
  */
+#ifndef EBUMANAGER_H_
+#define EBUMANAGER_H_
 #include <string.h> //Allows the usage of std::strings
 #include <stdint.h> //To access all types of ints
 #include <stdlib.h>
@@ -20,10 +22,6 @@
 #include "../Packets/EBUPacketAnalogOut.h"	//Packet for sending data TO the EBU
 #include "../Packets/EBUPacketDigitalOut.h"
 #include "../Packets/EBURelayPacket.h"		//Packet for sending information on which relays to be open
-
-#ifndef EBUMANAGER_H_
-#define EBUMANAGER_H_
-
 namespace EBU{
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
  *	More functions should be added when they will be implemented, mostly functions for

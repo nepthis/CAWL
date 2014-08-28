@@ -4,7 +4,6 @@
  *  Created on: Jun 23, 2014
  *      Author: Robin Bond
  */
-
 #include "Mobile.h"
 
 namespace Major_Tom {
@@ -13,18 +12,29 @@ namespace Major_Tom {
  * 	For now sending data back over the CawlSocket is not performed but when it
  * 	is a separate socket for sending the data will be used.
  */
-Mobile::Mobile(char* addressOne, char* addressTwo) {
+Mobile::Mobile() {
 	//Variable setup
+	//-------------------------------------------------------------------------------------------------------------------------------------------------------
+	slen = sizeof(mobAddr);
+	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		throw 13;
+	}
+	memset((char *)&mobAddr, 0, slen);
+	inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr));
+	mobAddr.sin_port = htons(REC_PORT);
+
+	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {
+		throw 14;
+	}
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
-	gatewaySocketReceive 	= NULL;
-	gatewaySocketSend 			= NULL;
 	stopPacket 							= Packets::EBUPacketAnalogOut();
 	rPackOne									= Packets::EBURelayPacket();
 	rPackTwo									= Packets::EBURelayPacket();
 	try{
-		//h1					= Netapi::Host((char*)addressOne, 5555, (char*)addressTwo, false);
-		h2												= Netapi::Host((char*)"127.0.0.2", 5555, (char*)"127.0.0.1", true);
-		q_cawlBuffer 						= std::queue<Packets::EBUPacketAnalogOut>();
+		q_cawlBuffer 						= std::queue<Packets::SimPack>();
+		state = Packets::SimPack();
 		em 											= EBU::EBUManager();
 		rPackOne.setRelayValue(R_A9,1);  		//9 and 10 are used for
 		rPackOne.setRelayValue(R_A10,1);		// boom
@@ -40,60 +50,40 @@ Mobile::Mobile(char* addressOne, char* addressTwo) {
 		throw e;
 	}
 
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 
 }
-/*This method is used to initialize the CawlSockets, for now only one receicing socket is used.
- *
- */
-void Mobile::startUp(){
-	//gatewaySocketSend	= Netapi::CawlSocket(h1);
-	try{
-		gatewaySocketReceive = new Netapi::CawlSocket(h2);
-		gatewaySocketReceive->setmetrics(true);
-	}catch(int e){
-		throw e;
-	}
 
-}
-/*	The method socketReceive is used to receive packets from the CawlSocket and then
- * 	take the data field from the cawlpacket and put it into an EBUPacketAnalogOut
- * 	which will be pushed into a packetbuffer. As this method will be started as a thread
- * 	mutexes for shared variables are needed, for now there is only one used for the
- * 	packetbuffer.
- *
- */
+//This function receives UDP packets and puts them in a buffer
 void Mobile::socketReceive() {
-	Packets::CawlPacket recPack = Packets::CawlPacket();
 	while(not pleased){
+		usleep(200000);
 		std::unique_lock<std::mutex> lockQ(m_Queue, std::defer_lock);
-		Packets::SimPack simp =  Packets::SimPack();
-		lockQ.lock();
 		try{
-			gatewaySocketReceive->rec(recPack);
-			char *tempbuff;
-			tempbuff = (char*) malloc(sizeof(simp));
-			memcpy(tempbuff, recPack.data, sizeof(simp));
-			memcpy(&simp, tempbuff, sizeof(simp));
-			q_cawlBuffer.push(simp);
+			char recbuf[255];
+			Packets::SimPack simpack = Packets::SimPack();
+			recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen);
+			memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
+			printf("Packet received has value %f\n", simpack.getAnalog(BRAKEPEDAL));
+			lockQ.lock();
+			if ((not (state == simpack))){
+				state = simpack;
+				printf("state updated\n");
+			}
+			lockQ.unlock();
 		}catch(int e){
 			throw e;
 		}
-
 	}
+	printf("socketRec done\n");
 }
 /*	SocketSend, not in use for now, will send data back over the CawlSocket to the Ground Gateway.
  * 	Data that should be sent back could be data for the video stream or audio feedback etc
  */
 void Mobile::socketSend() {
 	while(not pleased){
-		Packets::EBUPacketAnalogOut sendBackPacket = Packets::EBUPacketAnalogOut();
-		Packets::CawlPacket *ut = new Packets::CawlPacket(0, 0);
 		try{
-			sendBackPacket.setChannelValue(5, AO_9);
-			sendBackPacket.setChannelValue(5, AO_10);
-			memcpy(&ut->data, &sendBackPacket ,sizeof(sendBackPacket));
-			gatewaySocketSend->send(*ut);
+			//To the other gateway running "ground"
 		}catch(int e){
 			throw e;
 		}
@@ -106,21 +96,24 @@ void Mobile::socketSend() {
  */
 void Mobile::ebuSend() {
 	while(not pleased){
-		usleep(200000); 		//The usleep prevents the EBU from crashing...
 		std::unique_lock<std::mutex> lock1(m_Queue, std::defer_lock);
 		lock1.lock();
-		Packets::SimPack sendToEBU;
-		Packets::EBUPacketAnalogOut analog;
-		Packets::EBUPacketDigitalOut digital;
-		try{
-			sendToEBU = q_cawlBuffer.front();
-			q_cawlBuffer.pop();
-			//setEbuOne and setEbuTwo here
-			em.sendAnalogCommand(sendToEBU.getChannel(),sendToEBU.getDestination());
+		Packets::EBUPacketAnalogOut analogOne;
+		Packets::EBUPacketAnalogOut analogTwo;
+		Packets::EBUPacketDigitalOut digitalOne;
+		Packets::EBUPacketDigitalOut digitalTwo;	//Not really used for now
+		try{;
+			setEbuOne(&state, &analogOne, &digitalOne);
+			setEbuTwo(&state, &analogTwo, &digitalTwo);
+			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+			lock1.unlock();
 		}catch(int e){
 			errno = ECOMM;
 			throw 0;
 		}
+		usleep(200000); 		//The usleep prevents the EBU from crashing...
 	}
 }
 void Mobile::setBoom(float value, Packets::EBUPacketAnalogOut* pkt) {
@@ -128,7 +121,6 @@ void Mobile::setBoom(float value, Packets::EBUPacketAnalogOut* pkt) {
 	pkt->setChannelValue(5.0-temp, AO_9);
 	pkt->setChannelValue(temp, AO_10);
 }
-
 void Mobile::setBucket(float value, Packets::EBUPacketAnalogOut* pkt) {
 	float temp = value * 2.0 + 2.5;
 	pkt->setChannelValue(5-temp, AO_11);
@@ -144,7 +136,7 @@ void Mobile::setSteer(float value, Packets::EBUPacketAnalogOut* pkt) {
 	pkt->setChannelValue(temp, AO_18);
 }
 void Mobile::setBrake(float value, Packets::EBUPacketAnalogOut* pkt) {
-	float temp = value*4.5;
+	float temp = value*4+0.5;
 	pkt->setChannelValue(temp, AO_7);
 }
 void Mobile::setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt){
@@ -153,17 +145,21 @@ void Mobile::setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt){
 	pkt->setDigitalOut(DO11_EA35, p3);
 
 }
-
+//Uses above functions with values from the simulator
 void Mobile::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
 	epao->setDestination(1);
-	Packets::commandPacket simData = sp->getData();
-	setBoom((float)simData.analog[2], epao);
-	setBucket((float)simData.analog[3], epao);
-	setGear(sp.getDigital(), sp.getDigital(), sp.getDigital(), epao);
+	epdo->setDestination(1);
+	setBoom(sp->getAnalog(LIFTSTICK), epao);
+	setBucket(sp->getAnalog(TILTSTICK), epao);
+	setGear(sp->getDigital(ACTIVATIONCLC), sp->getDigital(GEARCLCFORWARD), sp->getDigital(GEARCLCREVERSE), epdo);
 }
+//Uses above functions with values from the simulator
 void Mobile::setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
 	epao->setDestination(2);
-	Packets::commandPacket simData = sp->getData();
+	epdo->setDestination(2);
+	setBrake(sp->getAnalog(BRAKEPEDAL), epao);
+	setGas(sp->getAnalog(GASPEDAL), epao);
+	setSteer(sp->getAnalog(JOYSTICK),epao);
 
 }
 
@@ -174,8 +170,7 @@ Mobile::~Mobile() {
 	rPackTwo = Packets::EBURelayPacket();
 	em.sendRelayCommand(rPackOne, 1);
 	em.sendRelayCommand(rPackTwo, 2);
-	delete gatewaySocketSend;
-	delete gatewaySocketReceive;
 }
 
 } //namespace Major_Tom
+

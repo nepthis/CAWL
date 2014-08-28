@@ -1,3 +1,6 @@
+#ifndef EBUPACKETDIGITALOUT_H
+#define EBUPACKETDIGITALOUT_H
+
 #include <stdint.h>
 
 #define SO17_HB66	0
@@ -80,6 +83,7 @@
 #define DO2_EA14	62
 #define DO3_EA13	63
 namespace Packets{
+
 typedef struct EBUdigitalOut{
 	uint8_t channel[8];
 } EBUdigitalOut;
@@ -100,3 +104,4 @@ public:
 };
 
 }
+#endif /* EBUPACKETDIGITALOUT_H*/

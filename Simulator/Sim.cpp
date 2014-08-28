@@ -4,7 +4,6 @@
  *  Created on: Apr 16, 2014
  *      Author: Robin Bond
  */
-
 #include "Sim.h"
 using namespace Simulator;
 
@@ -29,9 +28,7 @@ Sim::Sim() {
 	}
 }
 
-
 Sim::~Sim() {
-	// TODO Auto-generated destructor stub
 }
 /*	The method recPac reveices a UDP packet from the simulator and
  * 	inserts the data into a SimPack with a memcpy. The SimPack will
@@ -47,7 +44,7 @@ Packets::SimPack Sim::recPac(void) {
 	return simpack;
 }
 /* TODO: Simple sendmsg with UDP to the motion control rig
- *  See report for more information.
+ * Accelerometer data XYZ followed by gyroscope pitch
  */
 void Sim::sendPac() {
 }
