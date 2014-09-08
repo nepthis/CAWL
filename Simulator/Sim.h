@@ -12,6 +12,9 @@
 
 #ifndef SIM_H_
 #define SIM_H_
+
+#define connected true
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,6 +45,7 @@ class Sim {
 public:
 	Sim();
 	virtual ~Sim();
+	bool connectToSim();
 	Packets::SimPack recPac(void);
 	void sendPac();
 };

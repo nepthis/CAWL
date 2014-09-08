@@ -12,6 +12,8 @@
 #define SND_PORT 56565
 #define SND_ADDR "10.0.0.1"
 
+
+
 #include <thread>	//for std::thread
 #include <mutex>	//std mutex and unique locks
 #include <chrono>
@@ -40,8 +42,10 @@
 class Ground {
 private:
 	int grSocket;
+	int recImuSocket;
 	socklen_t slen;
 	struct sockaddr_in grAddr;
+	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
 	char *thetemp;

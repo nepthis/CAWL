@@ -14,7 +14,7 @@ namespace Major_Tom {
  */
 Mobile::Mobile() {
 	//Variable setup
-	//-------------------------------------------------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
 	slen = sizeof(mobAddr);
 	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
@@ -27,6 +27,16 @@ Mobile::Mobile() {
 	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {
 		throw 14;
 	}
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------
+	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
+	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		throw sndImuSocket; //TBD
+	}
+	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
+	inet_pton(AF_INET, GND_ADDR, &(sndImuAddr.sin_addr));
+	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
 	stopPacket 							= Packets::EBUPacketAnalogOut();
@@ -64,31 +74,35 @@ void Mobile::socketReceive() {
 			Packets::SimPack simpack = Packets::SimPack();
 			recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen);
 			memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-			printf("Packet received has value %f\n", simpack.getAnalog(BRAKEPEDAL));
 			lockQ.lock();
 			if ((not (state == simpack))){
 				state = simpack;
-				printf("state updated\n");
 			}
 			lockQ.unlock();
 		}catch(int e){
 			throw e;
 		}
 	}
-	printf("socketRec done\n");
 }
-/*	SocketSend, not in use for now, will send data back over the CawlSocket to the Ground Gateway.
- * 	Data that should be sent back could be data for the video stream or audio feedback etc
+/*	SocketSend, not in use for now, will send data back over to the Ground Gateway.
+ * 	The data being sent back is not really important right now and will just be the standard AnalogIn data.
  */
 void Mobile::socketSend() {
 	while(not pleased){
 		try{
-			//To the other gateway running "ground"
+			em.recAnalogIn(1);
+			em.recAnalogIn(2);
+
 		}catch(int e){
 			throw e;
 		}
 	}
 
+}
+/*	This function is responsible for receiving data from the IMU and to send it to Ground over UDP
+ * 	Written by Robin
+ */
+void Mobile::imuSend() {
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
  * 	the ebuManager. This method is designed to be started as a thread.
@@ -102,7 +116,7 @@ void Mobile::ebuSend() {
 		Packets::EBUPacketAnalogOut analogTwo;
 		Packets::EBUPacketDigitalOut digitalOne;
 		Packets::EBUPacketDigitalOut digitalTwo;	//Not really used for now
-		try{;
+		try{
 			setEbuOne(&state, &analogOne, &digitalOne);
 			setEbuTwo(&state, &analogTwo, &digitalTwo);
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
@@ -160,7 +174,6 @@ void Mobile::setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, 
 	setBrake(sp->getAnalog(BRAKEPEDAL), epao);
 	setGas(sp->getAnalog(GASPEDAL), epao);
 	setSteer(sp->getAnalog(JOYSTICK),epao);
-
 }
 
 
@@ -173,4 +186,5 @@ Mobile::~Mobile() {
 }
 
 } //namespace Major_Tom
+
 

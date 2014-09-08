@@ -22,6 +22,7 @@ Ground::Ground() {
 	memset((char *)&grAddr, 0, sizeof(grAddr));
 	inet_pton(AF_INET, SND_ADDR, &(grAddr.sin_addr));
 	grAddr.sin_port = htons(SND_PORT);
+
 }
 
 /*	Written by Robin Bond and modified by H�kan Ther�n

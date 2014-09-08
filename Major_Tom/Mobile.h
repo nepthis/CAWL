@@ -9,7 +9,9 @@
 #define MOBILE_H_
 
 #define REC_PORT 56565
+#define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
+#define GND_ADDR "192.168.2.100"
 //For threads and mutex
 #include <chrono>
 #include <mutex>	//std::mutex
@@ -29,10 +31,10 @@
 
 namespace Major_Tom {
 /*	This class is responsible for the communication between the wheel loader's EBUs and the to the Ground running
- * 	with the simulator. This class will receive data over the cawlsocket and then use an EBUManager to send the
- * 	EBUPacketAnalogOut that lies within the data field in the CawlPacket. The analogPacket is put inside a buffer
- * 	by the socketReceive method and emptied and sent to the EBU with the ebuSend method.
- *
+ * 	with the simulator. In this iteration of the project we simply use UDP Sockets so that WebRTC can handle the connection
+ * 	over internet from macbook - macbook.
+ *		The IMU will be connected to the gateway running this mode of the application and the IMU data will be sent from here to
+ *		Ground.
  */
 class Mobile {
 public:
@@ -41,6 +43,7 @@ public:
 	void socketReceive(); 				//Receiving data from an UDP socket, port 65656
 	void socketSend(); 					//Sending data back through socket
 	void ebuSend(); 							//Send data to the EBU
+	void imuSend();
 	void setBoom(float value, Packets::EBUPacketAnalogOut* pkt);
 	void setBucket(float value, Packets::EBUPacketAnalogOut* pkt);
 	void setGas(float value, Packets::EBUPacketAnalogOut* pkt);
@@ -50,18 +53,19 @@ public:
 	void setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo);
 	void setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo);
 	virtual ~Mobile();							//Destructor
-
+	EBU::EBUManager em;
 private:
 	socklen_t slen;
-	int mobSocket;	//Socket for mobile client, will listen for packages on port 65656
+	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565
+	int sndImuSocket;	//Socket for mobile client, will send packets on port 45454
 	struct sockaddr_in mobAddr;
+	struct sockaddr_in sndImuAddr;
 	Packets::EBUPacketAnalogOut stopPacket;
 	Packets::EBURelayPacket rPackOne;
 	Packets::EBURelayPacket rPackTwo;
 	Packets::SimPack state;
 	std::queue<Packets::SimPack> q_cawlBuffer;
-	std::mutex m_Queue;		//to prevent conflicts of two threads accessning the same object.
-	EBU::EBUManager em;
+	std::mutex m_Queue;		//to prevent conflicts of two threads accessing the same queue.
 };
 
 } /* namespace Major_Tom */

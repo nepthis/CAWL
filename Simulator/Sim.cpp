@@ -14,18 +14,6 @@ Sim::Sim() {
 	slen = sizeof(simAddr);
 	simPort = 65400;
 	realID = 1;
-	//Create socket for the simulator
-	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{
-		throw 13;
-	}
-	memset((char *)&simAddr, 0, slen);
-	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
-	simAddr.sin_port = htons(65400);
-
-	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {
-		throw 14;
-	}
 }
 
 Sim::~Sim() {
@@ -44,7 +32,24 @@ Packets::SimPack Sim::recPac(void) {
 	return simpack;
 }
 /* TODO: Simple sendmsg with UDP to the motion control rig
- * Accelerometer data XYZ followed by gyroscope pitch
+ * Accelerometer data XYZ followed by gyroscoperotation XYZ
  */
 void Sim::sendPac() {
+
+}
+
+bool Simulator::Sim::connectToSim() {
+	//Create socket for the simulator
+	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{
+		return false;
+	}
+	memset((char *)&simAddr, 0, slen);
+	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
+	simAddr.sin_port = htons(65400);
+
+	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {
+		return false;
+	}
+	return true;
 }
