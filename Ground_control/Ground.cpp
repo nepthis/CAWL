@@ -47,7 +47,12 @@ void Ground::sendPacket() {
  * Does nothing with the data atm.
  */
 void Ground::receivePacket(){
+	char buffer[255];
 	try{
+		//create imupacket
+		recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen);
+		//copy buffer into packet
+		//memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
 	}catch(int e){
 		throw e;
 	}

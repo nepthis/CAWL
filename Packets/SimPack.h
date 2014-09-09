@@ -8,7 +8,8 @@
 #ifndef SIMPACK_H_
 #define SIMPACK_H_
 #include <stdint.h>
-#include <time.h>
+#include <chrono>
+
 
 //Analog signals floats
 #define GASPEDAL 0			//0.0 - 1.0
@@ -64,30 +65,27 @@ typedef struct commandPacket {
 	uint32_t packetId;
 	uint32_t packetSize;
 	float analog[8];
-	uint32_t digital; //	<-- the integers decimal value represents a binary array. to read simply convert into binary representation, 24 bits
+	uint32_t digital;
+	std::chrono::system_clock::time_point timeStamp;
 }commandPacket;
+
 class SimPack {
 public:
 	commandPacket fromSim;
 	SimPack();
 	void setID(uint32_t id);
 	uint32_t getPacketSize(void);
-
 	int getDigital(int);
 	int setDigital(int,int);
-
 	float getAnalog(int);
 	int setAnalog(int, float);
-
 	float fiveToOne(float);
 	float fiveToOneNeg(float);
-
 	float oneToFive(float);
 	float oneToFiveNeg(float);
-
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
-
+	void stampTime();
 	commandPacket getData(void);
 };
 

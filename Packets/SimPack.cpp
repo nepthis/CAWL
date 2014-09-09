@@ -86,4 +86,9 @@ float Packets::SimPack::oneToFiveNeg(float value){
 Packets::commandPacket Packets::SimPack::getData(void) {
  	return fromSim;
 }
+
+void SimPack::stampTime() {
+	fromSim.timeStamp = std::chrono::high_resolution_clock::now();
+}
+
 } /* namespace Packets */

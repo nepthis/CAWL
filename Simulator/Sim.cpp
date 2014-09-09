@@ -12,7 +12,6 @@ using namespace Simulator;
  */
 Sim::Sim() {
 	slen = sizeof(simAddr);
-	simPort = 65400;
 	realID = 1;
 }
 
@@ -27,14 +26,17 @@ Packets::SimPack Sim::recPac(void) {
 	Packets::SimPack simpack = Packets::SimPack();
 	recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen);
 	memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
+	simpack.stampTime();
 	simpack.setID(realID);
 	realID++;
 	return simpack;
 }
 /* TODO: Simple sendmsg with UDP to the motion control rig
  * Accelerometer data XYZ followed by gyroscoperotation XYZ
+ * input should be imuPack from the "state"
  */
 void Sim::sendPac() {
+	//Packets going out must have packe ID field of 2001
 
 }
 
@@ -44,6 +46,7 @@ bool Simulator::Sim::connectToSim() {
 	{
 		return false;
 	}
+	//might change the address into the one of the simulator later
 	memset((char *)&simAddr, 0, slen);
 	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
 	simAddr.sin_port = htons(65400);
