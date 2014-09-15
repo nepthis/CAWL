@@ -29,33 +29,32 @@ Mobile::Mobile() {
 	}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
-	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
-		throw sndImuSocket; //TBD
-	}
-	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
-	inet_pton(AF_INET, GND_ADDR, &(sndImuAddr.sin_addr));
-	sndImuAddr.sin_port = htons(IMU_PORT);
+//	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+//		perror("socket error");
+//		printf ("Error number is: %s\n",strerror(errno));
+//		throw sndImuSocket; //TBD
+//	}
+//	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
+//	inet_pton(AF_INET, GND_ADDR, &(sndImuAddr.sin_addr));
+//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
 	stopPacket 							= Packets::EBUPacketAnalogOut();
-	rPackOne									= Packets::EBURelayPacket();
-	rPackTwo									= Packets::EBURelayPacket();
 	try{
-		q_cawlBuffer 						= std::queue<Packets::SimPack>();
-		state = Packets::SimPack();
+		//q_cawlBuffer 						= std::queue<Packets::SimPack>();
 		em 											= EBU::EBUManager();
-		rPackOne.setRelayValue(R_A9,1);  		//9 and 10 are used for
-		rPackOne.setRelayValue(R_A10,1);		// boom
-		rPackOne.setRelayValue(R_A11,1);		//11 and 12 are used for bucket
-		rPackOne.setRelayValue(R_A12,1);
-		rPackOne.setRelayValue(R_D9,1); 			//digital 9, 10 and 11 are
-		rPackOne.setRelayValue(R_D10,1);		//used for gears
-		rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
-		rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
-		em.sendRelayCommand(rPackOne, 1);
-		em.sendRelayCommand(rPackTwo, 2);
+//		rPackTwo.setRelayValue(R_A9,1);  		//9 and 10 are used for
+//		rPackTwo.setRelayValue(R_A10,1);		// boom
+//		rPackTwo.setRelayValue(R_A11,1);		//11 and 12 are used for bucket
+//		rPackTwo.setRelayValue(R_A12,1);
+//		rPackOne.setRelayValue(R_D9,1); 			//digital 9, 10 and 11 are
+//		rPackOne.setRelayValue(R_D10,1);		//used for gears
+//		rPackOne.setRelayValue(R_D11,1);
+		//rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
+	//	rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
+		//rPackTwo.setRelayValue(R_A19, 1);		//Gas
+		//rPackTwo.setRelayValue(R_A20, 1);		//Gas
+		rPackTwo.setRelayValue(R_A7, 1);		//broms
 	}catch(int e){
 		throw e;
 	}
@@ -67,11 +66,10 @@ Mobile::Mobile() {
 //This function receives UDP packets and puts them in a buffer
 void Mobile::socketReceive() {
 	while(not pleased){
-		usleep(200000);
+		Packets::SimPack simpack;
 		std::unique_lock<std::mutex> lockQ(m_Queue, std::defer_lock);
 		try{
 			char recbuf[255];
-			Packets::SimPack simpack = Packets::SimPack();
 			recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen);
 			memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
 			lockQ.lock();
@@ -80,6 +78,7 @@ void Mobile::socketReceive() {
 			}
 			lockQ.unlock();
 		}catch(int e){
+			lockQ.unlock();
 			throw e;
 		}
 	}
@@ -92,12 +91,10 @@ void Mobile::socketSend() {
 		try{
 			em.recAnalogIn(1);
 			em.recAnalogIn(2);
-
 		}catch(int e){
 			throw e;
 		}
 	}
-
 }
 /*	This function is responsible for receiving data from the IMU and to send it to Ground over UDP
  * 	Written by Robin
@@ -110,20 +107,21 @@ void Mobile::imuSend() {
  */
 void Mobile::ebuSend() {
 	while(not pleased){
-		std::unique_lock<std::mutex> lock1(m_Queue, std::defer_lock);
-		lock1.lock();
 		Packets::EBUPacketAnalogOut analogOne;
 		Packets::EBUPacketAnalogOut analogTwo;
 		Packets::EBUPacketDigitalOut digitalOne;
 		Packets::EBUPacketDigitalOut digitalTwo;	//Not really used for now
+		std::unique_lock<std::mutex> lock1(m_Queue, std::defer_lock);
 		try{
+			lock1.lock();
 			setEbuOne(&state, &analogOne, &digitalOne);
 			setEbuTwo(&state, &analogTwo, &digitalTwo);
+			lock1.unlock();
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
-			lock1.unlock();
 		}catch(int e){
+			lock1.unlock();
 			errno = ECOMM;
 			throw 0;
 		}
@@ -141,16 +139,17 @@ void Mobile::setBucket(float value, Packets::EBUPacketAnalogOut* pkt) {
 	pkt->setChannelValue(temp, AO_12);
 }
 void Mobile::setGas(float value, Packets::EBUPacketAnalogOut* pkt) {
-	pkt->setChannelValue((value*5.0), AO_19);
-	pkt->setChannelValue((value*5.0), AO_20);
+	float temp = value*4.0+0.5;
+	pkt->setChannelValue(5.0-temp, AO_19);
+	pkt->setChannelValue((temp), AO_20);
 }
 void Mobile::setSteer(float value, Packets::EBUPacketAnalogOut* pkt) {
 	float temp = value  * 2.0 + 2.5;
-	pkt->setChannelValue(5.0-temp, AO_17);
-	pkt->setChannelValue(temp, AO_18);
+	pkt->setChannelValue(temp, AO_17);
+	pkt->setChannelValue(5.0-temp, AO_18);
 }
 void Mobile::setBrake(float value, Packets::EBUPacketAnalogOut* pkt) {
-	float temp = value*4+0.5;
+	float temp = value*3.75;
 	pkt->setChannelValue(temp, AO_7);
 }
 void Mobile::setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt){
@@ -163,14 +162,14 @@ void Mobile::setGear(int p1,int  p2, int p3, Packets::EBUPacketDigitalOut* pkt){
 void Mobile::setEbuOne(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
 	epao->setDestination(1);
 	epdo->setDestination(1);
-	setBoom(sp->getAnalog(LIFTSTICK), epao);
-	setBucket(sp->getAnalog(TILTSTICK), epao);
 	setGear(sp->getDigital(ACTIVATIONCLC), sp->getDigital(GEARCLCFORWARD), sp->getDigital(GEARCLCREVERSE), epdo);
 }
 //Uses above functions with values from the simulator
 void Mobile::setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo) {
 	epao->setDestination(2);
 	epdo->setDestination(2);
+	setBoom(sp->getAnalog(LIFTSTICK), epao);
+	setBucket(sp->getAnalog(TILTSTICK), epao);
 	setBrake(sp->getAnalog(BRAKEPEDAL), epao);
 	setGas(sp->getAnalog(GASPEDAL), epao);
 	setSteer(sp->getAnalog(JOYSTICK),epao);

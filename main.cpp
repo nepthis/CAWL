@@ -42,14 +42,17 @@ int main(int argc, char * args[]){
 		Ground* gc =  new  Ground(); //(char*)"192.168.2.5",(char*) "192.168.2.100"
 		while(rtGround){
 			if (gc->simulator->connectToSim() != connected){
-				printf("Connecting to sim failed, retrying in %i seconds\n", TIMEOUT);
+				printf("Socket for simulator failed, retrying in %i seconds\n", TIMEOUT);
 				rtGround--;
 				sleep(TIMEOUT);
 			}else{
 				try{
-					std::thread g1(&Ground::startSend, gc);
+					//needs more threads...
+					std::thread g1(&Ground::startSend, gc);	//For simulator data to Mobile
+					std::thread g2(&Ground::startRecieve, gc);	//For receiving data from simulator
 					printf("Main: thread started, joining\n");
 					g1.join();
+					g2.join();
 					printf("Finished.\n");
 					exit(0);
 				}catch(int e){
@@ -69,6 +72,8 @@ int main(int argc, char * args[]){
 				sleep(TIMEOUT);
 			}else{
 				try{
+					major->em.sendRelayCommand(major->rPackOne, 1);
+					major->em.sendRelayCommand(major->rPackTwo, 2);
 					printf("Starting threads.\n");
 					std::thread m1(&Major_Tom::Mobile::socketReceive, major);
 					std::thread m2(&Major_Tom::Mobile::ebuSend, major);

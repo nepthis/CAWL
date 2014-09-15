@@ -23,10 +23,10 @@ Sim::~Sim() {
  */
 Packets::SimPack Sim::recPac(void) {
 	char recbuf[255];
-	Packets::SimPack simpack = Packets::SimPack();
+	Packets::SimPack simpack;
 	recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen);
 	memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-	simpack.stampTime();
+	//simpack.stampTime();
 	simpack.setID(realID);
 	realID++;
 	return simpack;
@@ -46,7 +46,6 @@ bool Simulator::Sim::connectToSim() {
 	{
 		return false;
 	}
-	//might change the address into the one of the simulator later
 	memset((char *)&simAddr, 0, slen);
 	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
 	simAddr.sin_port = htons(65400);

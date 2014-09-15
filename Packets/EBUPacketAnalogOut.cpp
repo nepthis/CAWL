@@ -38,8 +38,8 @@ int EBUPacketAnalogOut::setChannelValue(float volt,int  pin) {
 		toEBU.channel[pin] = data;
 		return 0;
 	}
-	data = ((volt/5) * 65535 +0.5); //the 0.5 is here because conversion from float-int
-	toEBU.channel[pin] = (uint16_t)data;
+	data =(uint16_t) ((volt/5) * 65535 +0.5); //the 0.5 is here because conversion from float-int
+	toEBU.channel[pin] = data;
 	return 0;
 
 }

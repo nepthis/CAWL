@@ -18,20 +18,6 @@ using namespace EBU;
 
 EBUManager::EBUManager() {
 	slen = sizeof(struct sockaddr_in);
-	//------------------------------Bind for recv socket ------------------------------------
-	/*
-	 * only needed for the receiving EBUPacketAnalogIn and digitalin, not done yet.
-	if (bind(oneRelay, (struct sockaddr *)&addrOneRelay, sizeof(addrOneRelay)) < 0) {
-		perror("error with bind");
-		printf ("Error number is: %s\n",strerror(errno));
-	}
-	 */
-	/*
-	if (bind(oneAnalogOut, (struct sockaddr *)&addrOneAnalogOut, sizeof(addrOneAnalogOut)) < 0) {
-		perror("error with bind");
-		printf ("Error number is: %s\n",strerror(errno));
-	}
-	 */
 }
 
 EBUManager::~EBUManager() {
@@ -44,9 +30,19 @@ void EBUManager::sendAnalogCommand(Packets::ebuAnOut data, int ebuNum){
 	try{
 		switch(ebuNum){
 		case 1:
+			//recAnalogIn(1);
 			sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
+			break;
 		case 2:
+			//recAnalogIn(2);
 			sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+			break;
+		default:
+			Packets::EBUPacketAnalogOut epao;
+			Packets::ebuAnOut eo = epao.getChannel();
+			sendto(oneAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
+			sendto(twoAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+			break;
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);
@@ -60,32 +56,44 @@ void EBUManager::sendAnalogCommand(Packets::ebuAnOut data, int ebuNum){
  */
 void EBUManager::sendRelayCommand(Packets::EBURelayPacket rPack, int ebuNum) {
 	Packets::EBUrelays data = rPack.getRelays();
+	char * buffer[14];
+	memcpy(buffer, &data, 14);
 	try{
 		switch(ebuNum){
 		case 1:
-			recDigitalIn(1);
-			sendto(oneRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneRelay, slen);
+			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
+			break;
 		case 2:
-			recDigitalIn(2);
-			sendto(twoRelay, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoRelay, slen);
+			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
+			break;
+		default:
+			printf("nothing to do\n");
+			break;
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);
 		perror("Error sending relay packet to an EBU\n");
 		throw 1; //TBD
 	}
-
 }
 
 void EBU::EBUManager::sendDigitalCommand(Packets::EBUdigitalOut data, int ebuNum) {
 	try{
 		switch(ebuNum){
 		case 1:
-			recDigitalIn(ebuNum);
+			//recDigitalIn(ebuNum);
 			sendto(oneDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
+			break;
 		case 2:
-			recDigitalIn(ebuNum);
+			//recDigitalIn(ebuNum);
 			sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
+			break;
+		default:
+			Packets::EBUPacketDigitalOut epd;
+			Packets::EBUdigitalOut ed = epd.getChannel();
+			sendto(oneDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
+			sendto(twoDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
+			break;
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);
@@ -100,103 +108,104 @@ bool EBU::EBUManager::connectToEBU() {
 	if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	if ((oneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 1--------------------------------------------------
 	if ((oneDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 1--------------------------------------------------
 	if ((oneDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 1--------------------------------------------------
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 2--------------------------------------------------
 	if ((twoAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	if ((twoAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
-
+		return false;}
 	//------------------------------------EBU 2--------------------------------------------------
 	if ((twoDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 2--------------------------------------------------
 	if ((twoDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------EBU 2--------------------------------------------------
 	if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
-		return false;
-	}
+		return false;}
 	//------------------------------------------------------------------------------------------------
 	//-----------------------------------------ADRESSES-------------------------------------
 	//-------------------------------EBUAnalogOut for EBU 1-----------------------
 	memset((char *)&addrOneAnalogOut, 0, sizeof(addrOneAnalogOut));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogOut.sin_addr));
-	addrOneAnalogOut.sin_port = htons(25200);
+	inet_pton(AF_INET, EBU_IP_1, &(addrOneAnalogOut.sin_addr));
+	addrOneAnalogOut.sin_port = htons(PORT_ANALOG_OUT);
 	//-------------------------------EBUAnalogIn for EBU 1-----------------------
 	memset((char *)&addrOneAnalogIn, 0, sizeof(addrOneAnalogIn));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneAnalogIn.sin_addr));
-	addrOneAnalogIn.sin_port = htons(25101);
+	inet_pton(AF_INET,EBU_IP_ANY, &(addrOneAnalogIn.sin_addr));
+	addrOneAnalogIn.sin_port = htons(PORT_ANALOG_IN);
 	//--------------------------------EBUDigitalOut for EBU 1-----------------------
 	memset((char *)&addrOneDigitalOut, 0, sizeof(addrOneDigitalOut));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneDigitalOut.sin_addr));
-	addrOneDigitalOut.sin_port = htons(25300);
+	inet_pton(AF_INET, EBU_IP_1, &(addrOneDigitalOut.sin_addr));
+	addrOneDigitalOut.sin_port = htons(PORT_DIGITAL_OUT);
 	//---------------------------------EBUDigitalIn for EBU 1------------------------
 	memset((char *)&addrOneDigitalIn, 0, sizeof(addrOneDigitalIn));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneDigitalIn.sin_addr));
-	addrOneDigitalIn.sin_port = htons(25301);
+	inet_pton(AF_INET, EBU_IP_ANY, &(addrOneDigitalIn.sin_addr));
+	addrOneDigitalIn.sin_port = htons(PORT_DIGITAL_IN);
 	//-------------------------------Relays for EBU 1-------------------------------------
 	memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
-	inet_pton(AF_INET, "10.0.0.2", &(addrOneRelay.sin_addr));
-	addrOneRelay.sin_port = htons(25400);
+	inet_pton(AF_INET, EBU_IP_1, &(addrOneRelay.sin_addr));
+	addrOneRelay.sin_port = htons(PORT_RELAYS);
 	//--------------------------------EBUAnalogOut for EBU 2------------------------
 	memset((char *)&addrTwoAnalogOut, 0, sizeof(addrTwoAnalogOut));
-	inet_pton(AF_INET, "10.0.0.3", &(addrTwoAnalogOut.sin_addr));
-	addrTwoAnalogOut.sin_port = htons(25200);
+	inet_pton(AF_INET, EBU_IP_2, &(addrTwoAnalogOut.sin_addr));
+	addrTwoAnalogOut.sin_port = htons(PORT_ANALOG_OUT);
 	//-------------------------------EBUAnalogIn for EBU 2-----------------------
 	memset((char *)&addrTwoAnalogIn, 0, sizeof(addrTwoAnalogIn));
-	inet_pton(AF_INET, "10.0.0.2", &(addrTwoAnalogIn.sin_addr));
-	addrTwoAnalogIn.sin_port = htons(25101);
+	inet_pton(AF_INET, EBU_IP_ANY, &(addrTwoAnalogIn.sin_addr));
+	addrTwoAnalogIn.sin_port = htons(PORT_ANALOG_IN);
 	//--------------------------------EBUDigitalOut for EBU 2-----------------------
 	memset((char *)&addrTwoDigitalOut, 0, sizeof(addrTwoDigitalOut));
-	inet_pton(AF_INET, "10.0.0.3", &(addrTwoDigitalOut.sin_addr));
-	addrTwoDigitalOut.sin_port = htons(25300);
+	inet_pton(AF_INET, EBU_IP_2, &(addrTwoDigitalOut.sin_addr));
+	addrTwoDigitalOut.sin_port = htons(PORT_DIGITAL_OUT);
 	//---------------------------------EBUDigitalIn for EBU 2------------------------
 	memset((char *)&addrTwoDigitalIn, 0, sizeof(addrTwoDigitalIn));
-	inet_pton(AF_INET, "10.0.0.3", &(addrTwoDigitalIn.sin_addr));
-	addrTwoDigitalIn.sin_port = htons(25301);
+	inet_pton(AF_INET,EBU_IP_ANY, &(addrTwoDigitalIn.sin_addr));
+	addrTwoDigitalIn.sin_port = htons(PORT_DIGITAL_IN);
 	//-------------------------------Relays for EBU 2--------------------------------------
 	memset((char *)&addrTwoRelay, 0, sizeof(addrTwoRelay));
-	inet_pton(AF_INET, "10.0.0.3", &(addrTwoRelay.sin_addr));
-	addrTwoRelay.sin_port = htons(25400);
+	inet_pton(AF_INET, EBU_IP_2, &(addrTwoRelay.sin_addr));
+	addrTwoRelay.sin_port = htons(PORT_RELAYS);
+	//--------------------------------------------------------------------------------------------
+	//-------------------------------Bind for EBU 1--------------------------------------
+	//	if (bind(oneDigitalIn, (struct sockaddr *)&addrOneDigitalIn, sizeof(addrOneDigitalIn)) < 0) {
+	//		return false;}
+	//	if (bind(oneAnalogIn, (struct sockaddr *)&addrOneAnalogIn, sizeof(addrOneAnalogIn)) < 0) {
+	//		return false;}
+	//	//--------------------------------------------------------------------------------------------
+	//	//-------------------------------Bind for EBU 2--------------------------------------
+	//	if (bind(twoDigitalIn, (struct sockaddr *)&addrTwoDigitalIn, sizeof(addrTwoDigitalIn)) < 0) {
+	//		return false;}
+	//	if (bind(twoAnalogIn, (struct sockaddr *)&addrTwoAnalogIn, sizeof(addrTwoAnalogIn)) < 0) {
+	//		return false;}
 	return true;
 }
 

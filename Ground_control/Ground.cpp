@@ -22,37 +22,41 @@ Ground::Ground() {
 	memset((char *)&grAddr, 0, sizeof(grAddr));
 	inet_pton(AF_INET, SND_ADDR, &(grAddr.sin_addr));
 	grAddr.sin_port = htons(SND_PORT);
-
 }
-
-/*	Written by Robin Bond and modified by H�kan Ther�n
+/*	Written by Robin Bond and modified by Håkan
  * The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then transferred to Mobile.
+ * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
 void Ground::sendPacket() {
-	sp = simulator->recPac();
-	printf("Packet received from sim\n");
 	try{
-		if (not (sp == state)){
-			state = sp;
+			m_state.lock();
 			sendto(grSocket, (char*)&state.fromSim, sizeof(state.fromSim), 0, (struct sockaddr*) &grAddr, slen);
-			printf("Packet sent to mobile\n");
-		}
+			m_state.unlock();
+
 	}catch(int e){
+		m_state.unlock();
 		throw e;
 	}
 }
+void Ground::receiveSimPack(){
+	sp = simulator->recPac();
+	if((not (sp == state)) &&m_state.try_lock()){
+		state = sp;
+		m_state.unlock();
+	}
 
-/* Written by H�kan Ther�n
- * Does nothing with the data atm.
+}
+
+/* This function also needs a state for the IMU data and then anoher function can call sim and send
+ * 	the state
  */
-void Ground::receivePacket(){
+void Ground::receiveImuPacket(){
 	char buffer[255];
 	try{
-		//create imupacket
+		Packets::ImuPack imp = Packets::ImuPack();
 		recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen);
-		//copy buffer into packet
-		//memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
+		memcpy(&imp.sens, buffer, sizeof(imp.sens));
 	}catch(int e){
 		throw e;
 	}
@@ -64,7 +68,7 @@ void Ground::receivePacket(){
  */
 void Ground::startRecieve(){
 	while(true){
-		receivePacket();
+		receiveSimPack();
 	}
 }
 /* Written by H�kan Ther�n
@@ -73,7 +77,6 @@ void Ground::startRecieve(){
 void Ground::startSend(){
 	while(true){
 		sendPacket();
-		usleep(5000);
 	}
 }
 

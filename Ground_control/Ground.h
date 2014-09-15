@@ -17,6 +17,7 @@
 #include <thread>	//for std::thread
 #include <mutex>	//std mutex and unique locks
 #include <chrono>
+#include "../Packets/ImuPack.h"
 
 #include <stdio.h>	//for printf
 #include <string.h>	//std::string
@@ -48,14 +49,18 @@ private:
 	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
+	Packets::ImuPack imuState;
+	std::mutex m_imuState;
+	std::mutex m_state;
 	char *thetemp;
 public:
 	Simulator::Sim* simulator;
 	Ground();
 	void startRecieve();
 	void startSend();
-	void receivePacket();
+	void receiveImuPacket();
 	void sendPacket();
+	void receiveSimPack();
 	virtual ~Ground();
 };
 

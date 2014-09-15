@@ -25,6 +25,10 @@ sensorData ImuPack::getSensorData() {
 	return sens;
 }
 
+void ImuPack::stampTime() {
+	sens.timeStamp = std::chrono::high_resolution_clock::now();
+}
+
 ImuPack::~ImuPack() {
 	// TODO Auto-generated destructor stub
 }

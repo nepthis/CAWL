@@ -8,12 +8,15 @@
 #ifndef IMUPACK_H_
 #define IMUPACK_H_
 
-#define GYRO_X 	0
-#define GYRO_Y 	1
-#define GYRO_Z 	2
-#define ACC_X 		3
-#define ACC_Y 		4
-#define ACC_Z 		5
+#include <chrono>
+
+#define ACC_X 		0
+#define ACC_Y 		1
+#define ACC_Z 		2
+#define GYRO_X 	3
+#define GYRO_Y 	4
+#define GYRO_Z 	5
+
 
 namespace Packets {
 typedef struct sensorData {
@@ -22,14 +25,16 @@ typedef struct sensorData {
 	float values[6];
 	std::chrono::system_clock::time_point timeStamp;
 }sensorData;
+
 class ImuPack {
-private:
-	sensorData sens;
+
 public:
 	ImuPack();
+	sensorData sens;
 	void setSensorDataValue(int data, float value);
 	float	getSensorDataValue(int data);
 	sensorData getSensorData();
+	void stampTime();
 	virtual ~ImuPack();
 };
 

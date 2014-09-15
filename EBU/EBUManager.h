@@ -9,6 +9,15 @@
  */
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
+#define EBU_IP_1 "10.0.0.2"
+#define EBU_IP_2 "10.0.0.3"
+#define EBU_IP_ANY "0.0.0.0"
+#define PORT_ANALOG_OUT 25200
+#define PORT_ANALOG_IN 25201
+#define PORT_DIGITAL_OUT 25300
+#define PORT_DIGITAL_IN 25301
+#define PORT_RELAYS 25400
+
 
 #include <string.h> //Allows the usage of std::strings
 #include <stdint.h> //To access all types of ints

@@ -27,6 +27,7 @@
 #include "../Simulator/Sim.h"
 #include "../Packets/EBUPacketAnalogOut.h"	//Class/struct for information to the EBU, also contains defines for indexing
 #include "../Packets/EBUPacketDigitalOut.h"	//In order to set which relays easier, it contains all defines.
+#include "../Packets/ImuPack.h"
 
 
 namespace Major_Tom {
@@ -54,6 +55,8 @@ public:
 	void setEbuTwo(Packets::SimPack* sp, Packets::EBUPacketAnalogOut* epao, Packets::EBUPacketDigitalOut* epdo);
 	virtual ~Mobile();							//Destructor
 	EBU::EBUManager em;
+	Packets::EBURelayPacket rPackOne;
+	Packets::EBURelayPacket rPackTwo;
 private:
 	socklen_t slen;
 	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565
@@ -61,8 +64,6 @@ private:
 	struct sockaddr_in mobAddr;
 	struct sockaddr_in sndImuAddr;
 	Packets::EBUPacketAnalogOut stopPacket;
-	Packets::EBURelayPacket rPackOne;
-	Packets::EBURelayPacket rPackTwo;
 	Packets::SimPack state;
 	std::queue<Packets::SimPack> q_cawlBuffer;
 	std::mutex m_Queue;		//to prevent conflicts of two threads accessing the same queue.
