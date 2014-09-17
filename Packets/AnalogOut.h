@@ -6,9 +6,10 @@
  *      Desc: Container class to keep the state of the data to the EBU
  */
 
-#ifndef EBUPACKETANALOGOUT_H_
-#define EBUPACKETANALOGOUT_H_
+#ifndef ANALOGOUT_H_
+#define ANALOGOUT_H_
 //The defines are pin indices for the array
+//Borrowed from "the wheel loader project"
 #define AO_1	0
 #define AO_2	1
 #define AO_3	2
@@ -46,20 +47,19 @@ typedef struct ebuAnOut{
  *	The methods are simple setters and getters abstracting away the array
  *	that contains the data.
  */
-class EBUPacketAnalogOut {
+class AnalogOut {
 	int destination;
 	ebuAnOut toEBU;
 public:
-	EBUPacketAnalogOut();
-	//Returns the struct, because we use classes instead of just a struct.
-	ebuAnOut getChannel();
-	//Returns the value at a given pin that you want to read.
+	AnalogOut();
+	ebuAnOut getChannel();	//Returns the struct with the stored data, formatted after the EBU
 	uint16_t getChannelValue(int);
 	//Set the value of a specific channel/pin to the EBU. if too high, max will be set, if too low lowest will be set
 	int setChannelValue(float volt, int pin);
-	virtual ~EBUPacketAnalogOut();
+
 	int getDestination(void);
 	void setDestination(int dest);
+	virtual ~AnalogOut();
 };
 }
 

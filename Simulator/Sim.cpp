@@ -26,7 +26,7 @@ Packets::SimPack Sim::recPac(void) {
 	Packets::SimPack simpack;
 	recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen);
 	memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-	//simpack.stampTime();
+	simpack.stampTime();
 	simpack.setID(realID);
 	realID++;
 	return simpack;

@@ -16,7 +16,7 @@
 
 #define MAX 4.5
 #define MIN 0.5
-#define FREQ 10
+#define FREQ 1000
 #define PORT 65400
 #define ADDR "10.0.0.1"
 
@@ -92,11 +92,11 @@ void update(int i, float& vdir, float& brks, float& spd, int& forward, int& reve
 		reverse = 0;
 
 	}else if(i == 32){
-		((brks < MAX) ? brks+=0.5 :brks);
+		((brks < MAX) ? brks+=4.0 :brks);
 		spd=MIN;
 
 	}else if(i == 98){
-		((brks > MIN) ? brks-=0.5 :brks);
+		((brks > MIN) ? brks-=4.0 :brks);
 
 	}else if(i == 67){
 		((vdir < MAX-0.1) ? vdir+=0.1 :vdir);

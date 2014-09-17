@@ -30,20 +30,23 @@
 #define AI_24	23
 
 
-#ifndef EBUPACKETANALOGIN_H_
-#define EBUPACKETANALOGIN_H_
+#ifndef ANALOGIN_H_
+#define ANALOGIN_H_
 
 namespace Packets {
 typedef struct ebuData{
 	uint16_t channel[24];
 }ebuData;
 
-class EBUPacketAnalogIn {
+class AnalogIn {
 	ebuData ed;
+	int source;
 public:
-	EBUPacketAnalogIn();
-	uint16_t readPin(int pin);
-	virtual ~EBUPacketAnalogIn();
+	AnalogIn();
+	float readPin(int pin);
+	void setSource(int ebuNum);
+	int getSource();
+	virtual ~AnalogIn();
 };
 
 } /* namespace Packets */

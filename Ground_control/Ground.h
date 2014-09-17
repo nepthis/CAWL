@@ -13,11 +13,8 @@
 #define SND_ADDR "10.0.0.1"
 
 
-
-#include <thread>	//for std::thread
-#include <mutex>	//std mutex and unique locks
 #include <chrono>
-#include "../Packets/ImuPack.h"
+
 
 #include <stdio.h>	//for printf
 #include <string.h>	//std::string
@@ -32,6 +29,8 @@
 #include <cstring>
 //Own classes are included here
 #include "../Simulator/Sim.h"
+#include "../Packets/ImuPack.h"
+#include "../Globals.h"
 
 
 /*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
@@ -50,8 +49,7 @@ private:
 	Packets::SimPack sp;
 	Packets::SimPack state;
 	Packets::ImuPack imuState;
-	std::mutex m_imuState;
-	std::mutex m_state;
+
 	char *thetemp;
 public:
 	Simulator::Sim* simulator;

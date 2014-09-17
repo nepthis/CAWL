@@ -5,21 +5,21 @@
  *      Author: Robin Bond
  */
 
-#include "EBUPacketAnalogOut.h"
+#include "AnalogOut.h"
 using namespace Packets;
 
-EBUPacketAnalogOut::EBUPacketAnalogOut() {
+AnalogOut::AnalogOut() {
 	// TODO Auto-generated constructor stub
 	toEBU.channel[24] = ((uint16_t)0);
 	destination = 0;
 
 }
 
-EBUPacketAnalogOut::~EBUPacketAnalogOut() {
+AnalogOut::~AnalogOut() {
 	// TODO Auto-generated destructor stub
 }
 
-ebuAnOut EBUPacketAnalogOut::getChannel() {
+ebuAnOut AnalogOut::getChannel() {
 	return toEBU;
 }
 /*	If the value is too high or too low maximum/minimum values will be set.
@@ -27,7 +27,7 @@ ebuAnOut EBUPacketAnalogOut::getChannel() {
  * 	integer where lowest value 0V will equal 0 and the highest value of 5V will equal
  * 	65535.
  */
-int EBUPacketAnalogOut::setChannelValue(float volt,int  pin) {
+int AnalogOut::setChannelValue(float volt,int  pin) {
 	uint16_t data;
 	if(volt > 5.0){
 		data = 65535;
@@ -43,14 +43,14 @@ int EBUPacketAnalogOut::setChannelValue(float volt,int  pin) {
 	return 0;
 
 }
-uint16_t EBUPacketAnalogOut::getChannelValue(int pin) {
+uint16_t AnalogOut::getChannelValue(int pin) {
 	return toEBU.channel[pin];
 }
 
-int Packets::EBUPacketAnalogOut::getDestination(void) {
+int Packets::AnalogOut::getDestination(void) {
 	return destination;
 }
 
-void Packets::EBUPacketAnalogOut::setDestination(int dest) {
+void Packets::AnalogOut::setDestination(int dest) {
 	destination = dest;
 }

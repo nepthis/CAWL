@@ -66,7 +66,7 @@ typedef struct commandPacket {
 	uint32_t packetSize;
 	float analog[8];
 	uint32_t digital;
-	//std::chrono::system_clock::time_point timeStamp;
+	std::chrono::system_clock::time_point timeStamp;
 }commandPacket;
 
 class SimPack {
@@ -85,7 +85,7 @@ public:
 	float oneToFiveNeg(float);
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
-	//void stampTime();
+	void stampTime();
 	commandPacket getData(void);
 };
 

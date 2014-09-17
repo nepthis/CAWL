@@ -1,20 +1,20 @@
 /*
- * EBUPacketAnalogIn.cpp
+ * DigitalIn.cpp
  *
- *  Created on: Aug 25, 2014
+ *  Created on: Sep 17, 2014
  *      Author: cawl-server
  */
 
-#include "EBUPacketAnalogIn.h"
+#include "DigitalIn.h"
 
 namespace Packets {
 
-EBUPacketAnalogIn::EBUPacketAnalogIn() {
+DigitalIn::DigitalIn() {
 	// TODO Auto-generated constructor stub
 
 }
 
-EBUPacketAnalogIn::~EBUPacketAnalogIn() {
+DigitalIn::~DigitalIn() {
 	// TODO Auto-generated destructor stub
 }
 

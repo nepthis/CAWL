@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef EBURELAYPACKET_H_
-#define EBURELAYPACKET_H_
+#ifndef RELAYOUT_H_
+#define RELAYOUT_H_
 //The following defines makes it easier to set the right relay
 #define R_S19 	0
 #define R_S20 	1
@@ -162,12 +162,12 @@ typedef struct EBUrelays{
 /*	EBURelayPackets is a container class with methods that abstract away the
  * 	array containing the data to the EBU.
  */
-class EBURelayPacket {
+class RelayOut {
 public:
 	int destination;
 	EBUrelays er;
-	EBURelayPacket();
-	virtual ~EBURelayPacket();
+	RelayOut();
+	virtual ~RelayOut();
 	EBUrelays getRelays(void);
 	void setRelayValue(int relay, int value);
 	uint8_t getRelayValue( int relay);

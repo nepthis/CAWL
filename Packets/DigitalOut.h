@@ -1,5 +1,5 @@
-#ifndef EBUPACKETDIGITALOUT_H
-#define EBUPACKETDIGITALOUT_H
+#ifndef DIGITALOUT_H
+#define DIGITALOUT_H
 
 #include <stdint.h>
 
@@ -89,18 +89,18 @@ typedef struct EBUdigitalOut{
 } EBUdigitalOut;
 
 
-class EBUPacketDigitalOut{
+class DigitalOut{
 private:
 	int destination;
 	EBUdigitalOut edo;
 public:
-	EBUPacketDigitalOut();
+	DigitalOut();
 	void setDigitalOut(int channel, int value);
 	uint8_t getDigitalOut( int channel);
 	EBUdigitalOut getChannel();
 	void setDestination(int dest);
 	int getDestination();
-	virtual ~EBUPacketDigitalOut();
+	virtual ~DigitalOut();
 };
 
 }

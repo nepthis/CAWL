@@ -7,10 +7,12 @@
 
 #include "Ground.h"
 using namespace std;
-//	In the constructor, objects for the simulator and UDP socket are set up.
+using namespace Packets;
+
+
 Ground::Ground() {
 	slen = sizeof(grAddr);
-	sp 				=  Packets::SimPack();
+	sp 				=  SimPack();
 	thetemp 		= (char*) malloc(sizeof(sp.fromSim));
 	simulator 		= new Simulator::Sim();
 	if ((grSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
@@ -30,21 +32,22 @@ Ground::Ground() {
  */
 void Ground::sendPacket() {
 	try{
-			m_state.lock();
-			sendto(grSocket, (char*)&state.fromSim, sizeof(state.fromSim), 0, (struct sockaddr*) &grAddr, slen);
-			m_state.unlock();
-
-	}catch(int e){
+		//unique_lock<mutex> lock1(m_state, defer_lock);
+		m_state.lock();
+		sendto(grSocket, (char*)&state.fromSim, sizeof(state.fromSim), 0, (struct sockaddr*) &grAddr, slen);
 		m_state.unlock();
+	}catch(int e){
 		throw e;
 	}
 }
 void Ground::receiveSimPack(){
 	sp = simulator->recPac();
-	if((not (sp == state)) &&m_state.try_lock()){
+	m_state.lock();
+	if(not (sp == state)){
 		state = sp;
-		m_state.unlock();
+		printf("Simulator state change\n");
 	}
+	m_state.unlock();
 
 }
 
@@ -54,7 +57,7 @@ void Ground::receiveSimPack(){
 void Ground::receiveImuPacket(){
 	char buffer[255];
 	try{
-		Packets::ImuPack imp = Packets::ImuPack();
+		ImuPack imp = ImuPack();
 		recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen);
 		memcpy(&imp.sens, buffer, sizeof(imp.sens));
 	}catch(int e){
