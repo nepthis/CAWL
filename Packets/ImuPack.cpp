@@ -30,7 +30,6 @@ void ImuPack::stampTime() {
 }
 
 ImuPack::~ImuPack() {
-	// TODO Auto-generated destructor stub
 }
 
 } /* namespace Packets */

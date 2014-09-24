@@ -8,7 +8,7 @@
 #include "Ground.h"
 using namespace std;
 using namespace Packets;
-
+mutex m_state;
 
 Ground::Ground() {
 	slen = sizeof(grAddr);
@@ -33,9 +33,12 @@ Ground::Ground() {
 void Ground::sendPacket() {
 	try{
 		//unique_lock<mutex> lock1(m_state, defer_lock);
+		SimPack temp;
 		m_state.lock();
-		sendto(grSocket, (char*)&state.fromSim, sizeof(state.fromSim), 0, (struct sockaddr*) &grAddr, slen);
+		temp = state;
 		m_state.unlock();
+		sendto(grSocket, (char*)&temp.fromSim, sizeof(temp.fromSim), 0, (struct sockaddr*) &grAddr, slen);
+
 	}catch(int e){
 		throw e;
 	}
@@ -45,7 +48,6 @@ void Ground::receiveSimPack(){
 	m_state.lock();
 	if(not (sp == state)){
 		state = sp;
-		printf("Simulator state change\n");
 	}
 	m_state.unlock();
 

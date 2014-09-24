@@ -12,10 +12,9 @@
 #define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
 #define GND_ADDR "192.168.2.100"
-//For threads and mutex
+#include <mutex>
 #include <chrono>
-//#include <mutex>	//std::mutex
-#include <stdint.h> //Who doesn't like ints?
+#include <cstdint> //Who doesn't like ints?
 #include <string>	//Standard string
 #include <errno.h>	//For a huge list of errors
 #include <queue> //Used as a buffer
@@ -27,10 +26,12 @@
 #include"../EBU/EBUManager.h"				//For communication to EBU
 #include "../Simulator/Sim.h"
 #include "../Packets/AnalogOut.h"	//Class/struct for information to the EBU, also contains defines for indexing
+#include "../Packets/AnalogIn.h"	//Class/struct for information to the EBU, also contains defines for indexing
 #include "../Packets/DigitalOut.h"	//In order to set which relays easier, it contains all defines.
+#include "../Packets/DigitalIn.h"	//In order to set which relays easier, it contains all defines.
 #include "../Packets/ImuPack.h"
 #include "../Packets/RelayOut.h"
-#include "../Globals.h"
+//#include "../Globals.h"
 
 
 namespace Major_Tom {
@@ -49,13 +50,12 @@ public:
 	void socketSend(); 					//Sending data back through socket
 	void ebuSend(); 							//Send data to the EBU
 	void imuRec();
-	void setEbuOne(Packets::SimPack* sp, Packets::AnalogOut* epaoOne,  Packets::DigitalOut* epdoOne);
-	void setEbuTwo(Packets::SimPack* sp, Packets::AnalogOut* epaoTwo, Packets::DigitalOut* epdoTwo);
 	virtual ~Mobile();							//Destructor
 	EBU::EBUManager em;
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
 private:
+	EBU::EBUTranslator et;	//Translates simdata for the EBUs
 	socklen_t slen;
 	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565
 	int sndImuSocket;	//Socket for mobile client, will send packets on port 45454
@@ -63,19 +63,6 @@ private:
 	struct sockaddr_in sndImuAddr;
 	Packets::AnalogOut stopPacket;
 	Packets::SimPack state;
-	std::queue<Packets::SimPack> q_cawlBuffer;
-
-	void setBoom(float value, Packets::AnalogOut* pkt);
-	void setBucket(float value, Packets::AnalogOut* pkt);
-	void setGas(float value, Packets::AnalogOut* pkt);
-	void setBrake(float value, Packets::AnalogOut* pkt);
-	void setSteer(float value, Packets::AnalogOut* pkt);
-	void setGear(int p1,int  p2, int p3, Packets::DigitalOut* pkt);
-	void setBrakeLight(int onOff, Packets::DigitalOut *pkt);
-	void setHorn(int onOff, Packets::DigitalOut *pkt);
-	void setThirdFunc(float value, Packets::AnalogOut *pkt);
-	void setFourthFunc(float value, Packets::AnalogOut *pkt);
-
 };
 
 } /* namespace Major_Tom */

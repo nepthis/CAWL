@@ -12,6 +12,7 @@
 
 using namespace EBU;
 using namespace Packets;
+using namespace std;
 /*	In the Constructor the connection is set up towards the EBUs, currently just no. 1.
  * 	It's a regular setup for sending UDP Packages, the different ports are in the
  * 	comments inside the constructor.
@@ -66,7 +67,13 @@ void EBUManager::sendRelayCommand(RelayOut rPack, int ebuNum) {
 			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
 			break;
 		default:
-			printf("nothing o do\n");
+			RelayOut ro;
+			data = ro.getRelays();
+			memcpy(buffer, &data, 14);
+			ro.destination = 1;
+			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
+			ro.destination = 2;
+			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
 			break;
 		}
 	}catch(int e){
@@ -80,11 +87,9 @@ void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
 	try{
 		switch(ebuNum){
 		case 1:
-			//recDigitalIn(ebuNum);
 			sendto(oneDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
 			break;
 		case 2:
-			//recDigitalIn(ebuNum);
 			sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
 			break;
 		default:
@@ -138,11 +143,11 @@ bool EBU::EBUManager::connectToEBU() {
 		printf ("Error number is: %s\n",strerror(errno));
 		return false;}
 	//------------------------------------------------------------------------------------------------
-	if ((AnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+	if ((sockAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
 		return false;}
-	if ((DigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+	if ((sockDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
 		printf ("Error number is: %s\n",strerror(errno));
 		return false;}
@@ -185,54 +190,50 @@ bool EBU::EBUManager::connectToEBU() {
 	addrDigitalIn.sin_port = htons(PORT_DIGITAL_IN);
 	//--------------------------------------------------------------------------------------------
 	//-------------------------------Bind for EBU 1 & 2--------------------------------------
-	if (bind(DigitalIn, (struct sockaddr *)&addrDigitalIn, sizeof(addrDigitalIn)) < 0) {
+	if (bind(sockDigitalIn, (struct sockaddr *)&addrDigitalIn, sizeof(addrDigitalIn)) < 0) {
 		return false;}
-	if (bind(AnalogIn, (struct sockaddr *)&addrAnalogIn, sizeof(addrAnalogIn)) < 0) {
+	if (bind(sockAnalogIn, (struct sockaddr *)&addrAnalogIn, sizeof(addrAnalogIn)) < 0) {
 		return false;}
 
 	return true;
 }
-
-AnalogIn EBU::EBUManager::recAnalogIn() {
+//not complete, needs to handle errors AND figure out which ebu
+AnalogIn EBUManager::recAnalogIn() {
 	char buffer[255];
 	Packets::AnalogIn inData;
 	struct sockaddr_in ebuAddr;
 	memset(&(ebuAddr.sin_zero), '\0', 8);
-	recvfrom(AnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &sizeof(ebuAddr));
-	std::string ebuIP = inet_ntoa(ebuAddr.sin_addr);
-	if(ebuIP.compare(EBU_IP_1) == 0){
-		//New AnalogInPack and set source/dest to 1
-		//inData.
-		//memcopy the received struct into datafield
+	recvfrom(sockAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen);
+	char str[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN);
+	if((string)str == "10.0.0.2"){
+		inData.setSource(1);
 		return inData;
 	}
-	if(ebuIP.compare(EBU_IP_2) == 0){
-		//New AnalogInPack and set source/dest to 1
-		//memcopy the received struct into datafield
+	if((string)str == "10.0.0.3"){
+		inData.setSource(2);
 		return inData;
 	}
 	inData.setSource(0); //0 means unvalid
 	return inData;
 }
 
-DigitalIn EBU::EBUManager::recDigitalIn() {
+Packets::DigitalIn EBUManager::recDigitalIn() {
 	char buffer[255];
-	Packets::DigitalIn inData;
+	Packets::DigitalIn digidata;
 	struct sockaddr_in ebuAddr;
 	memset(&(ebuAddr.sin_zero), '\0', 8);
-	recvfrom(AnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &sizeof(ebuAddr));
-	std::string ebuIP = inet_ntoa(ebuAddr.sin_addr);
-	if(ebuIP.compare(EBU_IP_1) == 0){
-		//New DigitalIn and set source/dest to 1
-		//inData.
-		//memcopy the received struct into datafield
-		return inData;
+	recvfrom(sockDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen);
+	char str[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN);
+	if((string)str =="10.0.0.2"){
+		digidata.setSource(1);
+		return digidata;
 	}
-	if(ebuIP.compare(EBU_IP_2) == 0){
-		//New DigitalIn and set source/dest to 1
-		//memcopy the received struct into datafield
-		return inData;
+	if((string)str == "10.0.0.3"){
+		digidata.setSource(2);
+		return digidata;
 	}
-	inData.setSource(0); //0 means unvalid
-	return inData;
+	digidata.setSource(0); //0 means unvalid
+	return digidata;
 }

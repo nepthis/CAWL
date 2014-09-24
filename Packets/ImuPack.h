@@ -9,7 +9,7 @@
 #define IMUPACK_H_
 
 #include <chrono>
-
+#include <cstdint>
 #define ACC_X 		0
 #define ACC_Y 		1
 #define ACC_Z 		2

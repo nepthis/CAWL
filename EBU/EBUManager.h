@@ -9,18 +9,11 @@
  */
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
-#define EBU_IP_1 "10.0.0.2"
-#define EBU_IP_2 "10.0.0.3"
-#define EBU_IP_ANY "0.0.0.0"
-#define PORT_ANALOG_OUT 25200
-#define PORT_ANALOG_IN 25201
-#define PORT_DIGITAL_OUT 25300
-#define PORT_DIGITAL_IN 25301
-#define PORT_RELAYS 25400
 
 
-#include <string.h> //Allows the usage of std::strings
-#include <stdint.h> //To access all types of ints
+#include <cstring> //Allows the usage of std::strings
+#include <string> //Allows the usage of std::strings
+#include <cstdint> //To access all types of ints
 #include <stdlib.h>
 #include <stdio.h> //Used for printf
 #include <sys/socket.h> //Used for the UDP socket to the EBU
@@ -29,14 +22,26 @@
 #include <arpa/inet.h>	//defenitions for internet options
 
 #include "../Packets/AnalogOut.h"	//Packet for sending data TO the EBU
+#include "../Packets/AnalogIn.h"
 #include "../Packets/DigitalOut.h"
+#include "../Packets/DigitalIn.h"
 #include "../Packets/RelayOut.h"		//Packet for sending information on which relays to be open
+
 namespace EBU{
+
+#define EBU_IP_1 "10.0.0.2"
+#define EBU_IP_2 "10.0.0.3"
+#define EBU_IP_ANY "0.0.0.0"
+#define PORT_ANALOG_OUT 25200
+#define PORT_ANALOG_IN 25101
+#define PORT_DIGITAL_OUT 25300
+#define PORT_DIGITAL_IN 25301
+#define PORT_RELAYS 25400
+
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
  *		It can be used for both reading and sending data to the EBUs. The translation of
  *		packets from the simulator is also performed here.
  */
-
 class EBUManager {
 	socklen_t slen;
 	//---------------------------------------------------------------------------------------------------------------------------------------
@@ -44,8 +49,8 @@ class EBUManager {
 	int twoAnalogOut;
 	int oneDigitalOut;	//Sockets for sending DigitalPackets to the EBU
 	int twoDigitalOut;
-	int DigitalIn;		//Sockets for reading digital data from the EBU
-	int AnalogIn;
+	int sockDigitalIn;		//Sockets for reading digital data from the EBU
+	int sockAnalogIn;
 	int oneRelay;				//Sockets for sending relay Packages to the EBU
 	int twoRelay;
 	//---------------------------------------------------------------------------------------------------------------------------------------
@@ -59,7 +64,6 @@ class EBUManager {
 	struct sockaddr_in addrAnalogIn;		//Port 25101, Analog data FROM the EBU
 	struct sockaddr_in addrOneRelay; 				//Port 25400, send relay data here
 	struct sockaddr_in addrTwoRelay;
-	struct sockaddr_in bindAddr;
 	//---------------------------------------------------------------------------------------------------------------------------------------
 public:
 	EBUManager();

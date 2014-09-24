@@ -8,7 +8,8 @@
 using namespace  Major_Tom;
 using namespace Packets;
 using namespace std;
-
+mutex m_Queue;
+mutex m_Sendstate;
 /*	The contructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
  * 	For now sending data back over the CawlSocket is not performed but when it
@@ -40,15 +41,10 @@ Mobile::Mobile() {
 	//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
-	try{
-		//em 											= EBU::EBUManager();
-		//TODO: need to find cdc gears instead of CLC
-//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC
-//		rPackOne.setRelayValue(R_D10,1);		//GearCLCReverse
-//		rPackOne.setRelayValue(R_D11,1);
+		//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC, might need to go to cdc instead...
 		rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
 		rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
-		//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn
+		//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
 		rPackTwo.setRelayValue(R_A9,1);  		//Lift/sink 1st
 		rPackTwo.setRelayValue(R_A10,1);		// lift/sink 2nd
 		rPackTwo.setRelayValue(R_A11,1);		//tilt 1st
@@ -62,12 +58,9 @@ Mobile::Mobile() {
 		rPackTwo.setRelayValue(R_A19, 1);		//Gas
 		rPackTwo.setRelayValue(R_A20, 1);		//Gas
 		rPackTwo.setRelayValue(R_A7, 1);		//broms
-	}catch(int e){
-		throw e;
-	}
-
+		rPackTwo.setRelayValue(R_D22,1);		//Gear_Reverse
+		rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
-
 }
 
 //This function receives UDP packets and puts them in a buffer
@@ -79,14 +72,15 @@ void Mobile::socketReceive() {
 		try{
 			recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen);
 			memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-			m_Queue.lock();
-			if ((not (state == simpack))){
-				state = simpack;
-			}
-			m_Queue.unlock();
 		}catch(int e){
+			perror("socketReceive error");
 			throw e;
 		}
+		m_Queue.lock();
+		if ((not (state == simpack)) && (state.fromSim.timeStamp < simpack.fromSim.timeStamp)){
+			state = simpack;
+		}
+		m_Queue.unlock();
 	}
 }
 /*	SocketSend, not in use for now, will send data back over to the Ground Gateway.
@@ -115,96 +109,31 @@ void Mobile::imuRec() {
  * 	The data it sends comes from a state which is set in socketReceive() if it is different than the existing one
  */
 void Mobile::ebuSend() {
+	AnalogOut analogOne;
+	AnalogOut analogTwo;
+	DigitalOut digitalOne;
+	DigitalOut digitalTwo;	//Not really used for now
+	DigitalIn digitaldummy;
+	AnalogIn analogdummy;
 	while(not pleased){
-		AnalogOut analogOne;
-		AnalogOut analogTwo;
-		DigitalOut digitalOne;
-		DigitalOut digitalTwo;	//Not really used for now
-		try{
-			m_Queue.lock(); //state is not to be used simultaneously, lock mutex
-			setEbuOne(&state, &analogOne, &digitalOne);
-			setEbuTwo(&state, &analogTwo, &digitalTwo);
-			m_Queue.unlock();
-			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
-			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
-			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
-		}catch(int e){
-			errno = ECOMM;
-			throw 0;
-		}
-		usleep(150000); 		//The usleep prevents the EBU from crashing...needs fix
+		SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
+		m_Queue.lock();
+		tempState = state;
+		m_Queue.unlock();
+		et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
+		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
+		digitaldummy = em.recDigitalIn();
+		analogdummy = em.recAnalogIn();
+		//em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+		//em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+		em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+		em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
 	}
 }
-// Set the values in the data-struct destined for the first EBU (V-ECU)
-void Mobile::setEbuOne(SimPack* sp, AnalogOut* epaoOne, DigitalOut* epdoOne) {
-	epaoOne->setDestination(1);
-	epdoOne->setDestination(1);
-	setGear(sp->getDigital(ACTIVATIONCLC), sp->getDigital(GEARCLCFORWARD), sp->getDigital(GEARCLCREVERSE), epdoOne);
-	if (sp->getAnalog(BRAKEPEDAL) > 0.0){
-		setBrakeLight(1, epdoOne);
-	}else{
-		setBrakeLight(0, epdoOne);
-	}
-	//setHorn(sp->getDigital(HORN), epdoOne);
-}
-// Set the values in the data-struct destined for the second EBU (V2-ECU)
-void Mobile::setEbuTwo(SimPack* sp, AnalogOut* epaoTwo, DigitalOut* epdoTwo) {
-	epaoTwo->setDestination(2);
-	epdoTwo->setDestination(2);
-	setBoom(sp->getAnalog(LIFTSTICK), epaoTwo);
-	setBucket(sp->getAnalog(TILTSTICK), epaoTwo);
-	setBrake(sp->getAnalog(BRAKEPEDAL), epaoTwo);
-	setGas(sp->getAnalog(GASPEDAL), epaoTwo);
-	setSteer(sp->getAnalog(JOYSTICK),epaoTwo);
-	setThirdFunc(sp->getAnalog(THIRDFUNCTION), epaoTwo);
-	setFourthFunc(sp->getAnalog(FOURTHFUNCTION), epaoTwo);
-}
-void Mobile::setBoom(float value, AnalogOut* pkt) {
-	float temp = value  * 2.0 + 2.5;
-	pkt->setChannelValue(5.0-temp, AO_9);
-	pkt->setChannelValue(temp, AO_10);
-}
-void Mobile::setBucket(float value, AnalogOut* pkt) {
-	float temp = value * 2.0 + 2.5;
-	pkt->setChannelValue(5-temp, AO_11);
-	pkt->setChannelValue(temp, AO_12);
-}
-void Mobile::setGas(float value, AnalogOut* pkt) {
-	float temp = value*4.0+0.5;
-	pkt->setChannelValue(5.0-temp, AO_19);
-	pkt->setChannelValue((temp), AO_20);
-}
-void Mobile::setSteer(float value, AnalogOut* pkt) {
-	float temp = value  * 2.0 + 2.5;
-	pkt->setChannelValue(temp, AO_17);
-	pkt->setChannelValue(5.0-temp, AO_18);
-}
-void Mobile::setBrake(float value, AnalogOut* pkt) {
-	float temp = value*3.0; //pretty close to max Amp for the solonoid used
-	pkt->setChannelValue(temp, AO_7);
-}
-void Mobile::setBrakeLight(int onOff, DigitalOut *pkt){
-	pkt->setDigitalOut(SO7_HB56, onOff);
-}
-void Mobile::setHorn(int onOff, DigitalOut *pkt){
-	pkt->setDigitalOut(SO5_HB54, onOff);
-}
-void Mobile::setGear(int p1,int  p2, int p3, DigitalOut* pkt){
-	//Kolla upp cdc växling och skicka dit istället
-	pkt->setDigitalOut(DO9_EA37, p1);
-	pkt->setDigitalOut(DO10_EA36, p2);
-	pkt->setDigitalOut(DO11_EA35, p3);
-}
-void Mobile::setThirdFunc(float value, AnalogOut* pkt) {
-	float temp = value * 2.0 + 2.5;
-	pkt->setChannelValue(5.0-temp, AO_13);
-	pkt->setChannelValue(temp, AO_14);
-}
-void Mobile::setFourthFunc(float value, AnalogOut* pkt) {
-	float temp = value * 2.0 + 2.5;
-	pkt->setChannelValue(temp, AO_15);
-	pkt->setChannelValue(5.0-temp, AO_16);
-}
+//void Mobile::sendEbuOne(){
+//
+//}
+
 
 Mobile::~Mobile() {
 	em.sendAnalogCommand(stopPacket.getChannel(), 1);

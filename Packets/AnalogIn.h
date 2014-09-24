@@ -4,6 +4,15 @@
  *  Created on: Aug 25, 2014
  *      Author: cawl-server
  */
+
+
+
+#ifndef ANALOGIN_H_
+#define ANALOGIN_H_
+#include <stdint.h>
+namespace Packets {
+//See pinout excel sheet for what each channel controls on the EBU.
+
 #define AI_1	0
 #define AI_2	1
 #define AI_3	2
@@ -29,11 +38,6 @@
 #define AI_23	22
 #define AI_24	23
 
-
-#ifndef ANALOGIN_H_
-#define ANALOGIN_H_
-
-namespace Packets {
 typedef struct ebuData{
 	uint16_t channel[24];
 }ebuData;

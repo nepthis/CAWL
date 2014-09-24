@@ -15,7 +15,7 @@
 
 #include <chrono>
 
-
+#include <mutex>
 #include <stdio.h>	//for printf
 #include <string.h>	//std::string
 #include <ctype.h>
@@ -30,7 +30,6 @@
 //Own classes are included here
 #include "../Simulator/Sim.h"
 #include "../Packets/ImuPack.h"
-#include "../Globals.h"
 
 
 /*	The class ground is responsible for maintaining a connection with the simulator (sim.h)

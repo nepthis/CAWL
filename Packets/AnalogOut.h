@@ -52,9 +52,8 @@ class AnalogOut {
 	ebuAnOut toEBU;
 public:
 	AnalogOut();
-	ebuAnOut getChannel();	//Returns the struct with the stored data, formatted after the EBU
+	ebuAnOut getChannel();
 	uint16_t getChannelValue(int);
-	//Set the value of a specific channel/pin to the EBU. if too high, max will be set, if too low lowest will be set
 	int setChannelValue(float volt, int pin);
 
 	int getDestination(void);
