@@ -10,12 +10,16 @@
 
 #include <chrono>
 #include <cstdint>
-#define ACC_X 		0
-#define ACC_Y 		1
-#define ACC_Z 		2
-#define GYRO_X 	3
-#define GYRO_Y 	4
-#define GYRO_Z 	5
+
+//meters
+#define SURGE 		0
+#define SWAY 		1
+#define HEAVE 		2
+
+//radians
+#define ROLL 		3
+#define PITCH 		4
+#define YAW		 	5
 
 
 namespace Packets {

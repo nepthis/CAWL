@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <bitset>
 #include "rs232.h"
 #include "../Packets/ImuPack.h"
@@ -30,6 +31,12 @@
 #define IMU_TIMEOUT 500
 #define FILTER_RATIO 0.1
 #define CALIBRATION_N 100
+#define R_X 0
+#define R_Y 1
+#define R_Z 2
+#define TO_DEG 57.3
+
+
 
 //ACC PARAMS
 #define MAX_VOLTAGE 3.3
@@ -40,6 +47,8 @@
 #define M_PI 3.14159265358979323846
 #define GYRO_SCALE 80
 #define NEG_GYRO_Y -1
+#define FILTER_WEIGHT 13		//Value between 5-20 as per description of filter
+#define T 1/100				//frequence for IMU
 
 namespace IMU{
 
@@ -57,7 +66,8 @@ class IMUManager{
 public:
 	IMUManager();
 	virtual ~IMUManager();
-	Packets::ImuPack getControl();
+	Packets::ImuPack imupack;
+
 	bool connected(){return conn;}
 	bool 			conn;
 
@@ -77,7 +87,15 @@ private:
 	uint32_t 		gytemp;
 	int16_t 		actemp;
 
-	bool 			filter;
+	bool 			imuinit;
+	int				imuinitn;
+
+	double racc[3];
+	double racc_prev[3];		//rav_l => result_acc_v_last
+	double rest[3];
+
+	double rgyro_prev[3];
+	double rgyro[3];
 
 	imud 			imudata;
 	imud 			old;
@@ -96,7 +114,7 @@ private:
 	 */
 	std::vector<std::tuple<std::string,int,int,int,std::string>> dev_id = {
 			std::make_tuple("A4001kB2",509,511,509,"IMU1"),
-			std::make_tuple("AD01REIF",509,505,532,"IMU2")};
+			std::make_tuple("AD01REIF",509,505,532,"IMU2")};  //red led, offset/bias set 2014-09-23
 
 	/* Used to map IMU to comport with rs232. To add more
 	/interfaces fill map as is in rs232.c, for the moment
@@ -112,9 +130,12 @@ private:
 
 	int init();
 	int getDev();
-	int getX(){return offset_accx;}
-	int getY(){return offset_accy;}
-	int getZ(){return offset_accz;}
+	int getxoffset(){return offset_accx;}
+	int getyoffset(){return offset_accy;}
+	int getzoffset(){return offset_accz;}
+
+	void setAngles(float accx, float accy, float accz, float gyrox, float gyroy, float gyroz);
+	void getControl();
 
 	void calibrate(int x, int y , int z);
 	void readImu();
