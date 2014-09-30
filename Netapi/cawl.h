@@ -10,6 +10,9 @@
 
 #include <netinet/sctp.h>
 #include <cstdlib>
+#include <sys/sysctl.h>
+#include <iostream>
+#include <stdio.h>
 //#include "../Netapi/GatherMetrics.h"
 
 namespace Netapi{
@@ -17,9 +20,13 @@ namespace Netapi{
 class cawl {
 private:
 	int SctpSocket;
+
+    int sysctlopts[] = {CTL_KERN, KERN_PRINTK};
+    int newval[2] = {};
 public:
 	cawl(int socket);
 	~cawl();
+
 	int sctp_bindx(int sd, struct sockaddr *addrs, int addrcnt, int flags);
 
 	int sctp_connectx(int sd, struct sockaddr *addrs, int addrcnt,
