@@ -30,23 +30,36 @@ int main(){
 	DigitalIn tempIn = em.recDigitalIn();
 	em.sendRelayCommand(rPackTwo, 2);
 	AnalogOut ao;
+	DigitalOut dio;
 	while(true){
 		if(toggle){
 			toggle = 0;
 			float temp = toggle*3.0; //pretty close to max Amp for the solonoid used
 			ao.setChannelValue(temp, AO_7);
 			ao.setDestination(2);
+			dio.setDestination(2);
+			dio.setDigitalOut(DO22_EA61, 0);
+			dio.setDigitalOut(DO31_EA52, 1);
 			tempAn = em.recAnalogIn();
 			tempIn = em.recDigitalIn();
-			em.sendAnalogCommand(ao.getChannel(), 2);
+			if((tempAn.getSource())==2 && (tempIn.getSource() == 2)){
+				em.sendAnalogCommand(ao.getChannel(), 2);
+				em.sendDigitalCommand(dio.getChannel(),2);
+			}
 		}else{
 			toggle = 1;
 			float temp = toggle*3.0; //pretty close to max Amp for the solonoid used
 			ao.setChannelValue(temp, AO_7);
 			ao.setDestination(2);
+			dio.setDestination(2);
+			dio.setDigitalOut(DO22_EA61, 1);
+			dio.setDigitalOut(DO31_EA52, 0);
 			tempAn = em.recAnalogIn();
 			tempIn = em.recDigitalIn();
-			em.sendAnalogCommand(ao.getChannel(), 2);
+			if((tempAn.getSource())==2 && (tempIn.getSource() == 2)){
+						em.sendAnalogCommand(ao.getChannel(), 2);
+						em.sendDigitalCommand(dio.getChannel(),2);
+					}
 		}
 	}
 	printf("Done\n");

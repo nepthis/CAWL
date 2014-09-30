@@ -16,19 +16,14 @@ mutex m_Sendstate;
  * 	is a separate socket for sending the data will be used.
  */
 Mobile::Mobile() {
-	//Variable setup
+	et = EBU::EBUTranslator();
 	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
 	slen = sizeof(mobAddr);
-	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{
-		throw 13;
-	}
+	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){throw 13;}
 	memset((char *)&mobAddr, 0, slen);
-	inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr));
+	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){throw 13;}
 	mobAddr.sin_port = htons(REC_PORT);
-	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {
-		throw 14;
-	}
+	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {throw 13;}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
 	//	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
@@ -41,31 +36,30 @@ Mobile::Mobile() {
 	//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
-		//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC, might need to go to cdc instead...
-		rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
-		rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
-		//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
-		rPackTwo.setRelayValue(R_A9,1);  		//Lift/sink 1st
-		rPackTwo.setRelayValue(R_A10,1);		// lift/sink 2nd
-		rPackTwo.setRelayValue(R_A11,1);		//tilt 1st
-		rPackTwo.setRelayValue(R_A12,1);		//tilt 2nd
-		rPackTwo.setRelayValue(R_A13, 1);		//Third Function 1st
-		rPackTwo.setRelayValue(R_A14, 1);		//Third Function 2nd
-		rPackTwo.setRelayValue(R_A15, 1);		//Fourth Function 2nd
-		rPackTwo.setRelayValue(R_A16, 1);		//Fourth Function 1st
-		rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
-		rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
-		rPackTwo.setRelayValue(R_A19, 1);		//Gas
-		rPackTwo.setRelayValue(R_A20, 1);		//Gas
-		rPackTwo.setRelayValue(R_A7, 1);		//broms
-		rPackTwo.setRelayValue(R_D22,1);		//Gear_Reverse
-		rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
+	//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC, might need to go to cdc instead...
+	rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
+	rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
+	//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
+	rPackTwo.setRelayValue(R_A9,1);  		//Lift/sink 1st
+	rPackTwo.setRelayValue(R_A10,1);		// lift/sink 2nd
+	rPackTwo.setRelayValue(R_A11,1);		//tilt 1st
+	rPackTwo.setRelayValue(R_A12,1);		//tilt 2nd
+	rPackTwo.setRelayValue(R_A13, 1);		//Third Function 1st
+	rPackTwo.setRelayValue(R_A14, 1);		//Third Function 2nd
+	rPackTwo.setRelayValue(R_A15, 1);		//Fourth Function 2nd
+	rPackTwo.setRelayValue(R_A16, 1);		//Fourth Function 1st
+	rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
+	rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
+	rPackTwo.setRelayValue(R_A19, 1);		//Gas
+	rPackTwo.setRelayValue(R_A20, 1);		//Gas
+	rPackTwo.setRelayValue(R_A7, 1);		//broms
+	rPackTwo.setRelayValue(R_D22,1);		//Gear_Reverse
+	rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 }
 
 //This function receives UDP packets and puts them in a buffer
 void Mobile::socketReceive() {
-
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
@@ -102,16 +96,15 @@ void Mobile::socketSend() {
 void Mobile::imuRec() {
 	//TODO: Use function from håkans IMUHandler and receive IMUdata
 }
-
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
  * 	the ebuManager. This method is designed to be started as a thread.
  * 	For now there is a sleep of 200000 microseconds in order to not crash the EBU.
  * 	The data it sends comes from a state which is set in socketReceive() if it is different than the existing one
  */
-void Mobile::ebuSend() {
+void Mobile::ebuOneSend() {
 	AnalogOut analogOne;
-	AnalogOut analogTwo;
 	DigitalOut digitalOne;
+	AnalogOut analogTwo;
 	DigitalOut digitalTwo;	//Not really used for now
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
@@ -121,13 +114,37 @@ void Mobile::ebuSend() {
 		tempState = state;
 		m_Queue.unlock();
 		et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
+		digitaldummy = em.recDigitalIn();
+		analogdummy = em.recAnalogIn();
+		if((digitaldummy.getSource() == 1) && analogdummy.getSource()==1){
+			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+			continue;
+		}
+		if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
+			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+			continue;
+		}
+	}
+}
+void Mobile::ebuTwoSend() {
+	AnalogOut analogTwo;
+	DigitalOut digitalTwo;	//Not really used for now
+	DigitalIn digitaldummy;
+	AnalogIn analogdummy;
+	while(not pleased){
+		SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
+		m_Queue.lock();
+		tempState = state;
+		m_Queue.unlock();
 		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
 		digitaldummy = em.recDigitalIn();
 		analogdummy = em.recAnalogIn();
-		//em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
-		//em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
-		em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
-		em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+		if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
+			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+		}
 	}
 }
 //void Mobile::sendEbuOne(){

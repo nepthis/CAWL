@@ -31,7 +31,8 @@
 #include "../Packets/DigitalIn.h"	//In order to set which relays easier, it contains all defines.
 #include "../Packets/ImuPack.h"
 #include "../Packets/RelayOut.h"
-//#include "../Globals.h"
+#include "../EBU/EBUTranslator.h"
+
 
 
 namespace Major_Tom {
@@ -48,12 +49,13 @@ public:
 	Mobile();	//Constructor
 	void socketReceive(); 				//Receiving data from an UDP socket, port 65656
 	void socketSend(); 					//Sending data back through socket
-	void ebuSend(); 							//Send data to the EBU
+	void ebuTwoSend(); 							//Send data to the EBU
+	void ebuOneSend();
 	void imuRec();
 	virtual ~Mobile();							//Destructor
-	EBU::EBUManager em;
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
+	EBU::EBUManager em;	//Manages EBU connections
 private:
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs
 	socklen_t slen;

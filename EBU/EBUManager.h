@@ -27,6 +27,7 @@
 #include "../Packets/DigitalIn.h"
 #include "../Packets/RelayOut.h"		//Packet for sending information on which relays to be open
 
+
 namespace EBU{
 
 #define EBU_IP_1 "10.0.0.2"

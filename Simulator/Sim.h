@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 
 #include "../Packets/SimPack.h"
+#include "../Packets/ImuPack.h"
 
 #define OWN_IP "192.168.2.100"	//This is the IP address that the Ground Gateway must have on the network for the simulator
 #define SIM_IP "192.168.2.97"	//The Simulators IP address, movement packages does not go here.
@@ -41,17 +42,20 @@ namespace Simulator{
  * 	for the data received.
  */
 class Sim {
+private:
 	socklen_t slen;
 	int simulatorSocket;
+	int motionSocket;
 	int realID; //The packetID from the simulator is a bit...weird. Use this instead.
 	struct sockaddr_in simAddr;
-	struct sockaddr_in ownAddr;
+	struct sockaddr_in motAddr;
+	Packets::ImuPack imuState;
 public:
 	Sim();
 	virtual ~Sim();
 	bool connectToSim();
 	Packets::SimPack recPac(void);
-	void sendPac();
+	void sendPac(Packets::ImuPack imudata);
 };
 }
 

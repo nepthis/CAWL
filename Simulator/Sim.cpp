@@ -35,23 +35,24 @@ Packets::SimPack Sim::recPac(void) {
  * Accelerometer data XYZ followed by gyroscoperotation XYZ
  * input should be imuPack from the "state"
  */
-void Sim::sendPac() {
+void Sim::sendPac(Packets::ImuPack imudata) {
 	//Packets going out must have packe ID field of 2001
+	imudata.sens.packetId = 2001;
+
 
 }
 
 bool Simulator::Sim::connectToSim() {
 	//Create socket for the simulator
-	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{
-		return false;
-	}
+	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){return false;}
 	memset((char *)&simAddr, 0, slen);
-	inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr));
+	if(inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr)) < 0){return false;}
 	simAddr.sin_port = htons(65400);
-
-	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {
-		return false;
-	}
+	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {return false;}
+	//---------------------------------------------------------------------------------------------
+	if ((motionSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){return false;}
+	memset((char *)&motAddr, 0, slen);
+	if(inet_pton(AF_INET, MOV_IP, &(motAddr.sin_addr)) < 0){return false;}
+	motAddr.sin_port = htons(MOV_PORT);
 	return true;
 }
