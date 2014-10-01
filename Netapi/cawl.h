@@ -9,6 +9,9 @@
 #define CAWL_H_
 
 #include <netinet/sctp.h>
+#include<cstdlib>
+#include <cstdio>
+#include <cstring>
 //#include "../Netapi/GatherMetrics.h"
 
 namespace Netapi{

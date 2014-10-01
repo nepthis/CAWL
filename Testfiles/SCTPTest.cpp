@@ -10,13 +10,11 @@
 #define addr_count 1
 #define RECVBUFSIZE	256
 #define PPID	1234
-//Our own code
-#include "../Netapi/cawl.h" //This is SCTP
-#include "../Packets/SimPack.h"
-//Netwok
+
+//Network
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 //#include <netinet/sctp.h>
 #include <arpa/inet.h>
 //standard stuff
@@ -26,8 +24,9 @@
 #include <string>
 #include <unistd.h>
 #include <errno.h>
-
-
+//Our own code
+#include "../Netapi/cawl.h" //This is SCTP
+#include "../Packets/SimPack.h"
 using namespace Packets;
 using namespace std;
 
@@ -57,10 +56,11 @@ void client(){
 		perror("Description: ");
 		exit(1);
 	}
-	//cawl cClient = cawl(sctpClient);
+	Netapi::cawl cawlClient = Netapi::cawl(sctpClient);
 
 	printf("socket created...\n");
 	initmsg.sinit_num_ostreams = 1;
+
 
 	//Set socket options for client
 	if (setsockopt( sctpClient, IPPROTO_SCTP, SCTP_INITMSG, &initmsg,sizeof(initmsg))<0 ){
@@ -76,13 +76,6 @@ void client(){
 	servAddr.sin_family = AF_INET;
 	servAddr.sin_port = htons(S_PORT);
 	servAddr.sin_addr.s_addr = inet_addr( SERV_IP );
-
-	/*You can do exactly the same with SCTP—don't call bind() and leave it to the SCTP stack.
-	 * This will choose an ephemeral port like TCP, but instead of using a single
-	 *  interface, it will choose a set of interfaces (probably all that are available).
-	 *  So calling connect() without an initial bind() or sctp_bindx() will give you multihoming
-	 *  on the client side automatically.
-	 */
 
 	//establish SCTP association
 	if (connect( sctpClient, (struct sockaddr *)&servAddr, sizeof(servAddr) ) < 0){
@@ -116,7 +109,7 @@ void client(){
 		char sendbuffer[255];
 		memcpy(&sendbuffer,&clientPack.fromSim, sizeof(clientPack.fromSim));
 		printf("sending REALLY\n");
-		if (sctp_sendmsg(sctpClient, (char*)sendbuffer,sizeof(sendbuffer), NULL, 0,htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0){
+		if (cawlClient.sctp_sendmsg(sctpClient, (char*)sendbuffer,sizeof(sendbuffer), NULL, 0,htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0){
 			printf("After sctp_sendmsg errno: %d\n", errno);
 			perror("Description: ");
 			exit(1);
@@ -154,6 +147,8 @@ void server(){
 	}
 	printf("socket created...\n");
 
+	Netapi::cawl cawlServ = Netapi::cawl(sctpServ);
+
 	if (setsockopt(sctpServ, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
 		printf("After setsockopt errno: %d\n", errno);
 		perror("Description: ");
@@ -185,7 +180,7 @@ void server(){
 		from_len = (socklen_t)sizeof(struct sockaddr_in);
 		memset((void *)&sinfo, 0, sizeof(struct sctp_sndrcvinfo));
 		printf("Receiving, really\n");
-		n = sctp_recvmsg(sctpServ, (void*)pRecvBuffer, RECVBUFSIZE,(struct sockaddr *)&servAddr, &from_len, &sinfo, &flags);
+		n =cawlServ.sctp_recvmsg(sctpServ, (void*)pRecvBuffer, RECVBUFSIZE,(struct sockaddr *)&servAddr, &from_len, &sinfo, &flags);
 		printf("Received\n");
 		memcpy(&servPack.fromSim, pRecvBuffer, sizeof(servPack.fromSim));
 		if (-1 == n)
@@ -219,7 +214,6 @@ void server(){
 }
 
 int main(int argc, char * args[]){
-	for (int i = 0; i < argc; i++){
 		if ((argc > 1) && ((std::string)args[1] == "server")){
 			printf("server mode\n");
 			server();
@@ -228,8 +222,6 @@ int main(int argc, char * args[]){
 			printf("client mode\n");
 			client();
 		}
-	}
-
 
 }
 
