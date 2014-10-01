@@ -8,9 +8,8 @@
 #define CLIENT_IP "127.0.0.1"
 #define S_PORT 5079
 #define addr_count 1
-
-#define RECVBUFSIZE     256
-#define PPID            1234
+#define RECVBUFSIZE	256
+#define PPID	1234
 //Our own code
 #include "../Netapi/cawl.h" //This is SCTP
 #include "../Packets/SimPack.h"
@@ -18,38 +17,39 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+//#include <netinet/sctp.h>
 #include <arpa/inet.h>
 //standard stuff
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <unistd.h>
 #include <errno.h>
 
 
-
 using namespace Packets;
-using namespace Netapi;
 using namespace std;
 
 void client(){
-	socklen_t addrSize = sizeof(struct sockaddr_in);;
+	socklen_t addrSize = sizeof(struct sockaddr_in);
 	SimPack clientPack;
 	float toggle = 1.0;
 	int sctpClient, in, flags;
-	char * szMsg = clientPack.fromSim;
+	char * szMsg;
 	int iMsgSize = sizeof(clientPack.fromSim);
 	socklen_t opt_len;
-	struct sockaddr_in servAddr,clientAddrOne, clientAddrTwo, *clientAddresses;
-	clientAddresses = malloc(addrSize * addr_count);
+
+	struct sockaddr_in servAddr,clientAddrOne, clientAddrTwo;
+
+	//clientAddresses = malloc((addrSize * addr_count));
 	servAddr = {0};
 	struct sctp_status status = {0};
 	struct sctp_sndrcvinfo sndrcvinfo = {0};
 	struct sctp_event_subscribe events = {0};
 	struct sctp_initmsg initmsg = {0};
 
-	char * szRecvBuffer[RECVBUFSIZE + 1] = {0}; //receive buffer
-	socklen_t from_len = (socklen_t) sizeof(struct sockaddr_in);
+	socklen_t from_len = sizeof(struct sockaddr_in);
 
 	//Create the socket, fails if lksctp doesn't exist
 	if ((sctpClient = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
@@ -57,7 +57,7 @@ void client(){
 		perror("Description: ");
 		exit(1);
 	}
-	cawl cClient = cawl(sctpClient);
+	//cawl cClient = cawl(sctpClient);
 
 	printf("socket created...\n");
 	initmsg.sinit_num_ostreams = 1;
@@ -71,7 +71,8 @@ void client(){
 	printf("setsockopt succeeded...\n");
 
 	//server address  information, zero the address struct
-	bzero( (void *)&servAddr, sizeof(servAddr) );
+	//bzero( (void *)&servAddr, sizeof(servAddr) );
+	memset(&servAddr, 0, sizeof(servAddr));
 	servAddr.sin_family = AF_INET;
 	servAddr.sin_port = htons(S_PORT);
 	servAddr.sin_addr.s_addr = inet_addr( SERV_IP );
@@ -101,9 +102,9 @@ void client(){
 		printf("Receiver window size\t= %d\n", status.sstat_rwnd );
 	}
 	//send message to server
-	printf("Sending to server: %s\n", szMsg);
 	int send = 30;
 	while(send){
+		printf("sending\n");
 		send--;
 		if(toggle){
 			toggle = 0;
@@ -112,15 +113,17 @@ void client(){
 			toggle = 1;
 			clientPack.setAnalog(1, (toggle*1.0));
 		}
-		memcpy(szMsg,& clientPack.fromSim, sizeof(clientPack.fromSim));
-		if (cClient.sctp_sendmsg(sctpClient, (const void *)szMsg, iMsgSize, NULL, 0,htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0){
+		char sendbuffer[255];
+		memcpy(&sendbuffer,&clientPack.fromSim, sizeof(clientPack.fromSim));
+		printf("sending REALLY\n");
+		if (sctp_sendmsg(sctpClient, (char*)sendbuffer,sizeof(sendbuffer), NULL, 0,htonl(PPID), 0, 0 /*stream 0*/, 0, 0) < 0){
 			printf("After sctp_sendmsg errno: %d\n", errno);
 			perror("Description: ");
 			exit(1);
 		}
 		printf("Message sent\n");
 	}
-	cClient.sctp_sendmsg(sctpClient, (const void *)"exit", sizeof("exit"), NULL, 0, htonl(PPID), 0,0/*stream 0*/, 0,0);
+	sctp_sendmsg(sctpClient, (const void *)"exit", sizeof("exit"), NULL, 0, htonl(PPID), 0,0/*stream 0*/, 0,0);
 	if (close(sctpClient) < 0) {
 		printf("After close errno: %d\n", errno);
 		perror("Description: ");
@@ -149,7 +152,6 @@ void server(){
 		perror("Description: ");
 		exit(1);
 	}
-	cawl cServ = cawl(sctpServ);
 	printf("socket created...\n");
 
 	if (setsockopt(sctpServ, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
@@ -176,13 +178,15 @@ void server(){
 	printf("listen succeeded...\n");
 	while(true)
 	{
+		printf("Receiving\n");
 		//each time erase the stuff
 		flags = 0;
 		memset((void *)&servAddr, 0, sizeof(struct sockaddr_in));
 		from_len = (socklen_t)sizeof(struct sockaddr_in);
 		memset((void *)&sinfo, 0, sizeof(struct sctp_sndrcvinfo));
-
-		n = cServ.sctp_recvmsg(sctpServ, (void*)pRecvBuffer, RECVBUFSIZE,(struct sockaddr *)&servAddr, &from_len, &sinfo, &flags);
+		printf("Receiving, really\n");
+		n = sctp_recvmsg(sctpServ, (void*)pRecvBuffer, RECVBUFSIZE,(struct sockaddr *)&servAddr, &from_len, &sinfo, &flags);
+		printf("Received\n");
 		memcpy(&servPack.fromSim, pRecvBuffer, sizeof(servPack.fromSim));
 		if (-1 == n)
 		{
@@ -212,15 +216,18 @@ void server(){
 		perror("close");
 	}
 	exit(1);
-
 }
 
 int main(int argc, char * args[]){
-	if ((argc > 1) && (args[1] == "server")){
-		server();
-	}
-	if((argc > 1) && (args[1] == "client")){
-		client();
+	for (int i = 0; i < argc; i++){
+		if ((argc > 1) && ((std::string)args[1] == "server")){
+			printf("server mode\n");
+			server();
+		}
+		if((argc > 1) && ((std::string)args[1] == "client")){
+			printf("client mode\n");
+			client();
+		}
 	}
 
 
