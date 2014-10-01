@@ -13,6 +13,7 @@
 #include <sys/sysctl.h>
 #include <iostream>
 #include <stdio.h>
+#include <string.h>
 //#include "../Netapi/GatherMetrics.h"
 
 namespace Netapi{
@@ -20,9 +21,6 @@ namespace Netapi{
 class cawl {
 private:
 	int SctpSocket;
-
-    int sysctlopts[] = {CTL_KERN, KERN_PRINTK};
-    int newval[2] = {};
 public:
 	cawl(int socket);
 	~cawl();
