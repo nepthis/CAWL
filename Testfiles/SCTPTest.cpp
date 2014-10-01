@@ -25,9 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-//Mutex and threads
-#include <mutex>
-#include <thread>
+
 
 
 using namespace Packets;
