@@ -10,7 +10,9 @@
 namespace Packets {
 
 ImuPack::ImuPack() {
-	sens.values[6]= ((float)0);
+	sens.packetId   = 2001;
+	sens.packetSize = 32;
+	sens.values[6]  = ((float)0);
 }
 
 void ImuPack::setSensorDataValue(int data, float value) {

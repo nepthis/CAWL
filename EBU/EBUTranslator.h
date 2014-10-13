@@ -11,6 +11,8 @@
 #include "../Packets/AnalogOut.h"
 #include "../Packets/DigitalOut.h"
 #include "../Packets/SimPack.h"
+#include <stdio.h>
+
 
 namespace EBU {
 using namespace Packets;
@@ -24,6 +26,7 @@ private:
 	void setGear(int  forward, int reverse, Packets::DigitalOut* pkt);
 	void setBrakeLight(int onOff, Packets::DigitalOut *pkt);
 	void setHorn(int onOff, Packets::DigitalOut *pkt);
+	void setCDC(int onOff, Packets::DigitalOut *pkt);
 	void setThirdFunc(float value, Packets::AnalogOut *pkt);
 	void setFourthFunc(float value, Packets::AnalogOut *pkt);
 public:

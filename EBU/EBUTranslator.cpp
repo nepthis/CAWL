@@ -28,21 +28,23 @@ void EBUTranslator::setEbuOne(SimPack* sp, AnalogOut* epaoOne, DigitalOut* epdoO
 void EBUTranslator::setEbuTwo(SimPack* sp, AnalogOut* epaoTwo, DigitalOut* epdoTwo) {
 	epaoTwo->setDestination(2);
 	epdoTwo->setDestination(2);
-	//-----------------------------------Boom--------------------------------------------------
+	//-----------------------------------Boom----------------------------------------------------
 	setBoom(sp->getAnalog(LIFTSTICK), epaoTwo);
 	//-----------------------------------Bucket--------------------------------------------------
 	setBucket(sp->getAnalog(TILTSTICK), epaoTwo);
-	//-----------------------------------Brake--------------------------------------------------
+	//-----------------------------------Brake---------------------------------------------------
 	setBrake(sp->getAnalog(BRAKEPEDAL), epaoTwo);
-	//-------------------------------------Gas----------------------------------------------------
+	//-------------------------------------Gas---------------------------------------------------
 	setGas(sp->getAnalog(GASPEDAL), epaoTwo);
-	//---------------------------------Steering------------------------------------------------
+	//---------------------------------Steering--------------------------------------------------
 	setSteer(sp->getAnalog(JOYSTICK),epaoTwo);
-	//--------------------------------Oth. func.-----------------------------------------------
+	//--------------------------------Oth. func.-------------------------------------------------
 	setThirdFunc(sp->getAnalog(THIRDFUNCTION), epaoTwo);
 	setFourthFunc(sp->getAnalog(FOURTHFUNCTION), epaoTwo);
-	//-----------------------------------gears--------------------------------------------------
+	//-----------------------------------gears---------------------------------------------------
 	setGear(sp->getDigital(GEARCLCFORWARD),sp->getDigital(GEARCLCREVERSE),epdoTwo);
+	//-----------------------------------CDC-Activation------------------------------------------
+	setCDC(sp->getDigital(ACTIVATIONCDC), epdoTwo);
 }
 void EBUTranslator::setBoom(float value, AnalogOut* pkt) {
 	float temp = value  * 2.0 + 2.5;
@@ -74,6 +76,11 @@ void EBUTranslator::setBrakeLight(int onOff, DigitalOut *pkt){
 void EBUTranslator::setHorn(int onOff, DigitalOut *pkt){
 	pkt->setDigitalOut(SO5_HB54, onOff);
 }
+
+void EBUTranslator::setCDC(int onOff, DigitalOut *pkt){
+	pkt->setDigitalOut(DO12_EA34, onOff);
+}
+
 void EBUTranslator::setGear(int  forward, int reverse, DigitalOut* pkt){
 	pkt->setDigitalOut(DO22_EA61, reverse);
 	pkt->setDigitalOut(DO31_EA52, forward);

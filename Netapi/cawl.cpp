@@ -14,15 +14,12 @@
 #include "cawl.h"
 
 Netapi::cawl::cawl(int socket) {
-	long value = 1;
-
-	struct sctp_paddrparams heartbeat;
-	struct sctp_rtoinfo rtoinfo;
-	struct sctp_assocparams assoc;
-
+	value = 1;
+	metrics = GatherMetrics();
 	memset(&heartbeat,  0, sizeof(struct sctp_paddrparams));
 	memset(&rtoinfo,    0, sizeof(struct sctp_rtoinfo));
 	memset(&assoc,      0, sizeof(struct sctp_assocparams));
+	memset(&srttinfo,   0, sizeof(struct sctp_paddrinfo));
 
 	heartbeat.spp_flags 		= SPP_HB_ENABLE;
 	heartbeat.spp_hbinterval 	= 3000;				//default value: 15000
@@ -42,11 +39,16 @@ Netapi::cawl::cawl(int socket) {
 	/*Disable fragmentation*/
 	if(setsockopt(SctpSocket, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS, &value,sizeof(value))<0){
 		::exit(EXIT_FAILURE);
-	//	Logga fel
+		//	Logga fel
 	}
 
 	/*Set Heartbeats*/
 	if(setsockopt(socket, SOL_SCTP, SCTP_PEER_ADDR_PARAMS , &heartbeat, sizeof(heartbeat)) != 0){
+		perror("setsockopt");
+	}
+
+	/*Set srttinfo struct*/
+	if(setsockopt(socket, SOL_SCTP, SCTP_GET_PEER_ADDR_INFO , &srttinfo, sizeof(srttinfo)) != 0){
 		perror("setsockopt");
 	}
 
@@ -60,13 +62,13 @@ Netapi::cawl::cawl(int socket) {
 		::exit(EXIT_FAILURE);
 	}
 	/*
-	* PF_RETRANS, Not available through socket or sysctl.h
-	* need to recompile sctp with new source update kernel etc.
-	* to access variable
-	*
-	* is default 0, paper suggest 5
-	*
-	* could be done by piping command to bash >> sysctl
+	 * PF_RETRANS, Not available through socket or sysctl.h
+	 * need to recompile sctp with new source update kernel etc.
+	 * to access variable
+	 *
+	 * is default 0, draft-nishida-tsvwg-sctp-failover-00, suggest 5
+	 *
+	 * could be done by piping command to bash >> sysctl
 	default 0			same as def PMR	5?
     FILE* pipe = popen("sudo sysctl -w net.sctp.pf_retrans=5", "r");
     if (!pipe) return "ERROR";
@@ -95,14 +97,20 @@ int Netapi::cawl::sctp_connectx(int sd, struct sockaddr* addrs, int addrcnt,
 int Netapi::cawl::sctp_sendmsg(int s, const void* msg, size_t len,
 		struct sockaddr* to, socklen_t tolen, uint32_t ppid, uint32_t flags,
 		uint16_t stream_no, uint32_t timetolive, uint32_t context) {
-	return ::sctp_sendmsg(s, msg, len, to, tolen, ppid, flags, stream_no, timetolive, context);
-	/*Kolla SRTT och lägg in i databas */
 
+	int ret = ::sctp_sendmsg(s, msg, len, to, tolen, ppid, flags, stream_no, timetolive, context);
+	metrics.setMeasure(SRTT,srttinfo.spinfo_srtt);
+
+	return ret;
 }
 
 int Netapi::cawl::sctp_send(int s, const void* msg, size_t len,
 		const struct sctp_sndrcvinfo* sinfo, int flags) {
-	return ::sctp_send(s, msg, len, sinfo, flags);
+
+	int ret = ::sctp_send(s, msg, len, sinfo, flags);
+	metrics.setMeasure(SRTT,srttinfo.spinfo_srtt);
+
+	return ret;
 }
 
 int Netapi::cawl::sctp_recvmsg(int s, void* msg, size_t len,

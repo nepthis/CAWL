@@ -10,7 +10,7 @@
 #define GROUND_H_
 
 #define SND_PORT 56565
-#define SND_ADDR "10.0.0.1"
+#define SND_ADDR "127.0.0.1"
 
 
 #include <chrono>

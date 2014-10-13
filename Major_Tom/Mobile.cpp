@@ -38,7 +38,7 @@ Mobile::Mobile() {
 	pleased = false;
 	//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC, might need to go to cdc instead...
 	rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
-	rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
+	//rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
 	//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
 	rPackTwo.setRelayValue(R_A9,1);  		//Lift/sink 1st
 	rPackTwo.setRelayValue(R_A10,1);		// lift/sink 2nd
@@ -55,6 +55,7 @@ Mobile::Mobile() {
 	rPackTwo.setRelayValue(R_A7, 1);		//broms
 	rPackTwo.setRelayValue(R_D22,1);		//Gear_Reverse
 	rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
+	rPackTwo.setRelayValue(R_D12,1);		//CDC_Activation
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 }
 
@@ -95,6 +96,7 @@ void Mobile::socketSend() {
  */
 void Mobile::imuRec() {
 	//TODO: Use function from håkans IMUHandler and receive IMUdata
+
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
  * 	the ebuManager. This method is designed to be started as a thread.
@@ -108,22 +110,37 @@ void Mobile::ebuOneSend() {
 	DigitalOut digitalTwo;	//Not really used for now
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
+
+	bool ebuOneAnaRec = false;
+	bool ebuOneDigRec = false;
+	bool ebuTwoAnaRec = false;
+	bool ebuTwoDigRec = false;
+
 	while(not pleased){
 		SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
 		m_Queue.lock();
 		tempState = state;
 		m_Queue.unlock();
 		et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
+		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
 		digitaldummy = em.recDigitalIn();
 		analogdummy = em.recAnalogIn();
-		if((digitaldummy.getSource() == 1) && analogdummy.getSource()==1){
+
+		(digitaldummy.getSource() == 1)?ebuOneDigRec=true:ebuTwoDigRec=true;
+		(analogdummy.getSource() == 1)?ebuOneAnaRec=true:ebuTwoAnaRec=true;
+
+		//if((digitaldummy.getSource() == 1) && analogdummy.getSource()==1){
+		if(ebuOneAnaRec == true && ebuOneDigRec == true){
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
 			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+			ebuOneAnaRec = ebuOneDigRec = false;
 			continue;
 		}
-		if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
+		//if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
+		if(ebuTwoAnaRec == true && ebuTwoDigRec == true){
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+			ebuTwoAnaRec = ebuTwoDigRec = false;
 			continue;
 		}
 	}

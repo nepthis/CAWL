@@ -56,7 +56,7 @@ void mysqlconnector::insertWorker(){
 }
 
 
-void mysqlconnector::start(int threads){
+int mysqlconnector::start(int threads){
 	try{
 		// Create a connection
 		driver = get_driver_instance();
@@ -66,7 +66,7 @@ void mysqlconnector::start(int threads){
 		con->setSchema(db);
 
 	} catch (sql::SQLException &e) {
-		// Throw something nice ;)
+		return -1;
 	}
 
 	// Min 1, Max 8 workerthreads
@@ -76,6 +76,7 @@ void mysqlconnector::start(int threads){
 		std::thread worker(&mysqlconnector::insertWorker, this);
 		worker.detach();
 	}
+	return 1;
 }
 
 

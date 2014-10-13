@@ -82,6 +82,9 @@ void Ground::startRecieve(){
 void Ground::startSend(){
 	while(true){
 		sendPacket();
+
+		// added sleep to prevent cpu drain
+		usleep(100);
 	}
 }
 

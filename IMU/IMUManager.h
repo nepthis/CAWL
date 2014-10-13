@@ -29,26 +29,38 @@
 #define PATH "/dev/serial/by-id/"
 #define BUFFER_SIZE 1024
 #define IMU_TIMEOUT 500
-#define FILTER_RATIO 0.1
+#define FILTER_RATIO_A 0.3
+#define FILTER_RATIO_G 0.4
 #define CALIBRATION_N 100
 #define R_X 0
 #define R_Y 1
 #define R_Z 2
 #define TO_DEG 57.3
 
-
+//SIM SEND INCLUDES/PARAMS
+#include <sys/socket.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <cstring>
+#define SIM_ADDR "192.168.2.97"
+#define SIM_PORTEN 12345
 
 //ACC PARAMS
 #define MAX_VOLTAGE 3.3
 #define SENSITIVITY 0.192
-#define RESOLUTION_ACC 512
+#define RESOLUTION_ACC 256
 
-//GYRO PARAMS
+//LINEAR ACC FILTER
+#define LIN_FILT 0.1
+
+//GYRO ACC FILTER PARAMS
 #define M_PI 3.14159265358979323846
 #define GYRO_SCALE 80
 #define NEG_GYRO_Y -1
-#define FILTER_WEIGHT 13		//Value between 5-20 as per description of filter
-#define T 1/100				//frequence for IMU
+#define FILTER_WEIGHT 18		//Value between 5-20 as per description of filter
+#define T 1/100				    //frequence for IMU
+#define DEG_TO_RAD 0.0174532925
 
 namespace IMU{
 
@@ -97,6 +109,10 @@ private:
 	double rgyro_prev[3];
 	double rgyro[3];
 
+	double linear_accx;
+	double linear_accy;
+	double linear_accz;
+
 	imud 			imudata;
 	imud 			old;
 
@@ -107,6 +123,10 @@ private:
 	struct dirent 	*dir;
 	std::string   	full_device_name;
 	std::string 	dev;
+
+	//Used for sending to sim
+	int simsock;
+	struct sockaddr_in simAddr;
 
 	/* Vector containing id and its measured offset for accl.
 	 * in the order:
@@ -141,6 +161,7 @@ private:
 	void readImu();
 	void filterData();
 	void setData(char*);
+	void sendData();
 
 	float gyroToFloat(int value){return (value/GYRO_SCALE)*(M_PI/180);}
 	float accToFloat(int value){return value*(MAX_VOLTAGE/SENSITIVITY)/(RESOLUTION_ACC-1);}

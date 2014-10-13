@@ -27,20 +27,24 @@ EBUManager::~EBUManager() {
  * 	regular sendto with UDP
  */
 void EBUManager::sendAnalogCommand(ebuAnOut data, int ebuNum){
+
 	try{
 		switch(ebuNum){
+
 		case 1:
 			sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
 			break;
 		case 2:
 			sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
 			break;
+		/* Håkan kommenterade ut. Som jag ser det får man oönskad effekt
 		default:
 			AnalogOut epao;
 			ebuAnOut eo = epao.getChannel();
 			sendto(oneAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
 			sendto(twoAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
 			break;
+		*/
 		}
 	}catch(int e){
 		printf("Error number: %i\n",e);

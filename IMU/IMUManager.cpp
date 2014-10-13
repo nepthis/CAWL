@@ -45,17 +45,24 @@ int IMU::IMUManager::init() {
 		conn = true;
 	}
 
+	// Used for testing simulator!!
+	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		return 1;
+	}
+
+	memset((char *)&simAddr, 0, sizeof(simAddr));
+	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
+	simAddr.sin_port = htons(SIM_PORTEN);
+	//end
+
 	std::thread t1 (&IMU::IMUManager::readImu, this);
 	std::thread t2 (&IMU::IMUManager::getControl , this);
 
 	t1.detach();
 	t2.detach();
 
-	//Todo Start threads for reading the comport
-	while(1){
-		//printf("%s\n",(char*)buf);
-		sleep(1);
-	}
 	return -1;
 }
 
@@ -198,15 +205,15 @@ void IMU::IMUManager::setData(char* command) {
 	//Set accx,y,z from  command (accelerometers) 9 bit resolution
 	memmove(&actemp,command+12,2);
 	actemp = __builtin_bswap16(actemp);
-	accy = (actemp - getxoffset()) >> 1;
+	accy = (actemp - getxoffset()) >> 2;
 
 	memmove(&actemp,command+14,2);
 	actemp = __builtin_bswap16(actemp);
-	accx = (actemp - getyoffset()) >> 1;
+	accx = (actemp - getyoffset()) >> 2;
 
 	memmove(&actemp,command+16,2);
 	actemp = __builtin_bswap16(actemp);
-	accz = (actemp - getzoffset()) >> 1;
+	accz = (actemp - getzoffset()) >> 2;
 
 
 	data_lock.lock();
@@ -234,17 +241,13 @@ void IMU::IMUManager::getControl() {
 		float gyroz= imudata.gyroz;
 		data_lock.unlock();
 
-		Packets::ImuPack p = Packets::ImuPack();
-		p.setSensorDataValue(GYRO_X,gyrox);
-		p.setSensorDataValue(GYRO_Y,gyroy);
-		p.setSensorDataValue(GYRO_Z,gyroz);
-		p.setSensorDataValue(ACC_X,accx);
-		p.setSensorDataValue(ACC_Y,accy);
-		p.setSensorDataValue(ACC_Z,accz);
-		p.stampTime();
-
-		setAngles(accx,accy,accz,gyrox,gyroy,gyroz);
-		usleep(1000000/10000);
+		// wait for correct data
+		if(imuinitn <5){
+			imuinitn++;
+		}else{
+			setAngles(accx,accy,accz,gyrox,gyroy,gyroz);
+		}
+		usleep(1000000/100);
 
 
 		//Spårutskrifter
@@ -265,9 +268,13 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	raccyn = accy/raccl;
 	racczn = accz/raccl;
 
-	double raccxnd = acos(raccxn);
-	double raccynd = acos(raccyn);
-	double raccznd = acos(racczn);
+	double raccxnd = acos(raccxn)*57.3;
+	double raccynd = acos(raccyn)*57.3;
+	double raccznd = acos(racczn)*57.3;
+
+	double rxgyro;
+	double rygyro;
+	double rzgyro;
 
 	//Set initial acc values
 	if(imuinit){
@@ -275,27 +282,35 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 		rest[R_Y] = raccyn;
 		rest[R_Z] = racczn;
 
+		linear_accx = 0;
+		linear_accy = 0;
+		linear_accz = 0;
+
+		imuinit = false;
+	}
+	if(fabs(rest[R_Z]) > 0.1){
 		rgyro[R_X]= gyrox;
 		rgyro[R_Y]= gyroy;
 		rgyro[R_Z]= gyroz;
-		imuinit = false;
+
+		double axz_prev = atan2(rest[R_X],rest[R_Z]);
+		double ayz_prev = atan2(rest[R_Y],rest[R_Z]);
+
+		double axz = axz_prev + rgyro[R_X]*T;
+		double ayz = ayz_prev + rgyro[R_Y]*T;
+
+		rxgyro = sin(axz) / sqrt(1 + pow(cos(axz),2.0) * pow(tan(ayz),2.0));
+		rygyro = sin(ayz) / sqrt(1 + pow(cos(ayz),2.0) * pow(tan(axz),2.0));
+		double rzgyrotemp = sqrt(1 - pow(rxgyro,2.0) - pow(rygyro,2.0));
+		rzgyro = rzgyrotemp>=0?rzgyrotemp:rzgyrotemp*-1;
+	}else{
+		rxgyro = rest[R_X];
+		rygyro = rest[R_Y];
+		rzgyro = rest[R_Z];
 	}
-
-	double axz_prev = atan2(rest[R_X],rest[R_Z]);
-	double ayz_prev = atan2(rest[R_Y],rest[R_Z]);
-
-	double axz = axz_prev + rgyro[R_X]*T;
-	double ayz = ayz_prev + rgyro[R_Y]*T;
-
-	double rxgyro = sin(axz) / sqrt(1 + pow(cos(axz),2.0) * pow(tan(ayz),2.0));
-	double rygyro = sin(ayz) / sqrt(1 + pow(cos(ayz),2.0) * pow(tan(axz),2.0));
-	double rzgyrotemp = sqrt(1 - pow(rgyro[R_Z],2.0) - pow(rgyro[R_Y],2.0));
-	double rzgyro = rzgyrotemp>=0?rzgyrotemp:rzgyrotemp*-1;
-
-
-	rest[R_X] = (accx + rxgyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
-	rest[R_Y] = (accy + rygyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
-	rest[R_Z] = (accz + rzgyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
+	rest[R_X] = (raccxn + rxgyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
+	rest[R_Y] = (raccyn + rygyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
+	rest[R_Z] = (racczn + rzgyro * FILTER_WEIGHT ) / (1 + FILTER_WEIGHT);
 
 	double r = sqrt(pow(rest[R_X],2.0) + pow(rest[R_Y],2.0) +  pow(rest[R_Z],2.0));
 
@@ -303,38 +318,75 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	rest[R_Y] = rest[R_Y]/r;
 	rest[R_Z] = rest[R_Z]/r;
 
-	if(imuinitn <1000){
-		imuinitn++;
-	}else{
-		 // set imupack
-		imupack.setSensorDataValue(ROLL,rest[R_Y]);
-		imupack.setSensorDataValue(PITCH,rest[R_X]);
-		imupack.setSensorDataValue(YAW,rest[R_Z]);
+	double roll = acos(rest[R_X]) - M_PI / 2;
+	double pitch= acos(rest[R_Y]) - M_PI / 2;
 
-		// Should we rumble (force feedback)
-		imupack.setSensorDataValue(HEAVE,0);
-		imupack.setSensorDataValue(SWAY,0);
-		imupack.setSensorDataValue(SURGE,0);
-	}
+	// set imupack
+	imupack.setSensorDataValue(ROLL,
+			fabs(roll) > M_PI/6 ?
+					copysign(M_PI/6,roll) :
+					roll);
+
+	imupack.setSensorDataValue(PITCH,
+			fabs(pitch)>M_PI/6 ?
+					copysign(M_PI/6,pitch) :
+					pitch);
+
+	imupack.setSensorDataValue(YAW,0);  // Use gyroz ?
+
+	/* To be implemented... use highpass filter
+	 *acc_vectors - g_vectors might work according to BSON?
+	 */
+	// ????????????????????? Must test max of rigg ?????????????????????
+	linear_accx = (raccxn - rest[R_X]);
+	linear_accy = linear_accx*LIN_FILT + (raccyn - rest[R_Y])*(1-LIN_FILT);
+	linear_accz = linear_accx*LIN_FILT + (racczn - rest[R_Z])*(1-LIN_FILT);
+
+	imupack.setSensorDataValue(HEAVE,0.3);
+	imupack.setSensorDataValue(SWAY,0);
+	imupack.setSensorDataValue(SURGE,0);
+	imupack.stampTime();
+
+	//Trace: Data from IMU in deg. (acc + gyro)
+	//printf("%f   %f   %f \n", (acos(rest[R_X])*57.3),(acos(rest[R_Y])*57.3),acos(rest[R_Z])*57.3);
+
+	//Trace: Data from acc
+	//printf("%f   %f   %f \n", raccxn, raccyn, racczn);
+
+	//Trace: Data for linear acceleration
+	//printf("%f   %f   %f \n", linear_accx,linear_accy,linear_accz);
+	//printf("%f\n",fabs(linear_accz)>0.001?linear_accz/10:0);
+
+	//Trace: raw gyro data
+	//printf("%f   %f   %f \n", gyrox,gyroy,gyroz);
+
+	//Trace: Compare gyro+acc / acc
+	//printf("acc:,%f,%f,acc+gyro\n",(raccxnd-90),(acos(rest[R_X])*57.3)-90);
+
+	//printf("accx:%f  accy:%f accz:%f\n",accx,accy,accz);
+
+	//Trace: IMUPack data
+	printf("ROLL: %f PITCH: %f \n",imupack.getSensorDataValue(ROLL),imupack.getSensorDataValue(PITCH));
+
+	//Used for simulator test
+	sendData();
 }
 
 void IMU::IMUManager::filterData() {
 
-	float accx = (imudata.accx*FILTER_RATIO)+(old.accx*(1-FILTER_RATIO));
-	float accy = (imudata.accy*FILTER_RATIO)+(old.accy*(1-FILTER_RATIO));
-	float accz = (imudata.accz*FILTER_RATIO)+(old.accz*(1-FILTER_RATIO));
-	float gyrox= (imudata.gyrox*(1-FILTER_RATIO))+(old.gyrox*(FILTER_RATIO));
-	float gyroy= (imudata.gyroy*(1-FILTER_RATIO))+(old.gyroy*(FILTER_RATIO));
-	float gyroz= (imudata.gyroz*(1-FILTER_RATIO))+(old.gyroz*(FILTER_RATIO));
+	float accx = (imudata.accx*FILTER_RATIO_A)+(old.accx*(1-FILTER_RATIO_A));
+	float accy = (imudata.accy*FILTER_RATIO_A)+(old.accy*(1-FILTER_RATIO_A));
+	float accz = (imudata.accz*FILTER_RATIO_A)+(old.accz*(1-FILTER_RATIO_A));
+	float gyrox= (imudata.gyrox*(FILTER_RATIO_G))+(old.gyrox*(1-FILTER_RATIO_G));
+	float gyroy= (imudata.gyroy*(FILTER_RATIO_G))+(old.gyroy*(1-FILTER_RATIO_G));
+	float gyroz= (imudata.gyroz*(FILTER_RATIO_G))+(old.gyroz*(1-FILTER_RATIO_G));
 
 	imudata.accx = accx;
 	imudata.accy = accy;
 	imudata.accz = accz;
-
-	//Highpass for gyroscope will compromise measurements DO NOT USE
-	//imudata.gyrox= gyrox;
-	//imudata.gyroy= gyroy;
-	//imudata.gyroz= gyroz;
+	imudata.gyrox= gyrox;
+	imudata.gyroy= gyroy;
+	imudata.gyroz= gyroz;
 
 	old.accx = imudata.accx;
 	old.accy = imudata.accy;
@@ -342,6 +394,10 @@ void IMU::IMUManager::filterData() {
 	old.gyrox =imudata.gyrox;
 	old.gyroy =imudata.gyroy;
 	old.gyroz =imudata.gyroz;
+}
+
+void IMU::IMUManager::sendData() {
+	sendto(simsock, (char*)&imupack.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
 }
 
 IMU::IMUManager::~IMUManager() {

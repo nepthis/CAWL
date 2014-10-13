@@ -12,7 +12,7 @@
 #include<cstdlib>
 #include <cstdio>
 #include <cstring>
-//#include "../Netapi/GatherMetrics.h"
+#include "../Netapi/GatherMetrics.h"
 
 namespace Netapi{
 
@@ -20,6 +20,13 @@ class cawl {
 private:
 	int SctpSocket;
 public:
+
+	long value;
+	Netapi::GatherMetrics metrics;
+	struct sctp_paddrinfo srttinfo;
+	struct sctp_paddrparams heartbeat;
+	struct sctp_rtoinfo rtoinfo;
+	struct sctp_assocparams assoc;
 	cawl(int socket);
 	~cawl();
 	int sctp_bindx(int sd, struct sockaddr *addrs, int addrcnt, int flags);

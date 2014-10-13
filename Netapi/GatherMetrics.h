@@ -10,29 +10,27 @@
 #define GATHERMETRICS_H_
 #include <vector> 	//for storing metrics data
 #include <time.h> 	//to create a referene point for measurements
+#include <ctime>
 #include <utility> 	//used for pairs
 #include <string> 	//used for ID and tags
 #include <fstream>	//used for opening/reading error files from sctp
 #include <stdexcept> //used for exceptions
 #include <iostream> //for printing
-#include "../Packets/CawlPacket.h" //for accessing the delay
 #include "MeasurementData.h"
 #include "../Db/mysqlconnector.h"
 
-typedef struct measureOpt{
-	bool DELAY;
-	bool CHKSUMERR;
-}measureOpt;
+#define SRTT 0
+
+
+
 namespace Netapi {
 
 class GatherMetrics {
-	measureOpt options{false,false};
 	Db::mysqlconnector *database = new Db::mysqlconnector();
+	bool db_init;
 public:
 	GatherMetrics();
-	void  measuredata(Packets::CawlPacket, int testID, std::string name);
-	void measureDelay(Packets::CawlPacket packet, int testID, std::string name);
-	void setOption(std::string measurement, bool value);
+	int setMeasure(int measurement, float value);
 	virtual ~GatherMetrics();
 };
 
