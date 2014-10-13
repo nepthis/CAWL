@@ -46,8 +46,8 @@ int setInput(int argc, char * args[], State * s){
 		if(((std::string)args[i] == "-u")&&(not s->sctp)){s->udp = true;continue;}
 	}
 	if(s->ip && s->ipAddr.empty()){return -1;}
-	else if(not s->ipAddr.empty())
-	{printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
+	else if(not s->ipAddr.empty()){
+	printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
 	return 0;
 }
 void startUp(State * s){
@@ -80,7 +80,7 @@ void startUp(State * s){
 		Major_Tom::Mobile *major = new Major_Tom::Mobile(); //make into input args later
 		while(rtMobile){
 			if(not major->em.connectToEBU()){
-				printf("Connecting to EBUs failed, retrying in %i seconds\n", TIMEOUT);
+				//printf("Connecting to EBUs failed, retrying in %i seconds\n", TIMEOUT);
 				rtMobile--;
 				sleep(TIMEOUT);
 			}else{
