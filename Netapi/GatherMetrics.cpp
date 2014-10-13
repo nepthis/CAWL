@@ -26,7 +26,7 @@ int GatherMetrics::setMeasure(int measurement, float value) {
 		std::time_t tim = std::time(nullptr);
 		std::string timt = asctime(std::localtime(&tim));
 		data.name = "SRTT";
-		data.type = strcat((char*)"SRTT - ",(char*)timt.c_str());
+		data.type = "";//strcat((char*)"SRTT - ",(char*)timt.c_str());
 		data.timeStamp= timt;
 		data.id = "0";
 		data.value = std::to_string(value);
