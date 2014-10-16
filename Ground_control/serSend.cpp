@@ -13,7 +13,6 @@ serSend::serSend(){
 }
 
 serSend::~serSend(){
-
 }
 
 void serSend::sndPulse(){

@@ -11,6 +11,7 @@ Sim::Sim() {
 	realID = 1;
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
+	ss = serSend();
 }
 Sim::~Sim() {
 }
@@ -29,6 +30,7 @@ Packets::SimPack Sim::recvSim(void) {
 	simpack.stampTime();
 	simpack.setID(realID);
 	realID++;
+	if(abs(simpack.getAnalog(LIFTSTICK)) > 0.5){ss.sndPulse();}
 	return simpack;
 }
 void Sim::sendSim(Packets::ImuPack imudata) {

@@ -31,7 +31,7 @@
 //Own classes are included here
 #include "../Simulator/Sim.h"
 #include "../Packets/AllPackets.h"
-#include "serSend.h"
+
 
 
 /*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
@@ -50,7 +50,7 @@ private:
 	Packets::SimPack sp;
 	Packets::SimPack state;
 	Packets::ImuPack imuState;
-	serSend ss;
+
 public:
 	Simulator::Sim* simulator;
 	Ground();

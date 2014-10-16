@@ -11,7 +11,7 @@ using namespace Packets;
 mutex m_state;
 
 Ground::Ground() {
-	ss = serSend();
+
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
 	simulator 		= new Simulator::Sim();
@@ -43,7 +43,7 @@ void Ground::sendMobile() {
 void Ground::receiveSim(){
 	while(true){
 		sp = simulator->recvSim();
-		if(sp.getAnalog(BRAKEPEDAL) > abs(0.5)){ss.sndPulse();}
+
 		m_state.lock();
 		if(not (sp == state)){state = sp;}
 		m_state.unlock();

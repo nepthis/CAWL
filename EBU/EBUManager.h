@@ -37,6 +37,8 @@ namespace EBU{
 #define PORT_DIGITAL2_IN 25302	//EBU 2
 #define PORT_RELAYS 25400				//EBU 1 & 2
 
+#define RETRIES 5
+
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
  *		It can be used for both reading and sending data to the EBUs. The translation of
  *		packets from the simulator is also performed here.

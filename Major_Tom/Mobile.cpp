@@ -95,11 +95,17 @@ void Mobile::sendEBUOne() {
 		m_State.lock();
 		tempState = state;
 		m_State.unlock();
-		et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
-		digitaldummy = em.recvDigitalEBUOne();
-		analogdummy = em.recvAnalogEBUOne();
-		em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
-		em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+		try{
+			et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
+			digitaldummy = em.recvDigitalEBUOne();
+			analogdummy = em.recvAnalogEBUOne();
+			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+		}catch(int e){
+			perror("sendEBUOne error");
+			throw e;
+		}
+
 	}
 }
 void Mobile::sendEBUTwo() {
@@ -112,11 +118,17 @@ void Mobile::sendEBUTwo() {
 		m_State.lock();
 		tempState = state;
 		m_State.unlock();
-		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
-		digitaldummy = em.recvDigitalEBUTwo();
-		analogdummy = em.recvAnalogEBUTwo();
-		em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
-		em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+		try{
+			et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
+			digitaldummy = em.recvDigitalEBUTwo();
+			analogdummy = em.recvAnalogEBUTwo();
+			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
+		}catch(int e){
+			perror("sendEBUTwo error");
+			throw e;
+		}
+
 	}
 }
 
