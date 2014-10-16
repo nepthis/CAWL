@@ -19,6 +19,8 @@ using namespace std;
  */
 EBUManager::EBUManager() {
 	slen = sizeof(struct sockaddr_in);
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
 }
 EBUManager::~EBUManager() {
 }
@@ -27,29 +29,13 @@ EBUManager::~EBUManager() {
  * 	regular sendto with UDP
  */
 void EBUManager::sendAnalogCommand(ebuAnOut data, int ebuNum){
-
-	try{
-		switch(ebuNum){
-
-		case 1:
-			sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
-			break;
-		case 2:
-			sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
-			break;
-		/* Håkan kommenterade ut. Som jag ser det får man oönskad effekt
-		default:
-			AnalogOut epao;
-			ebuAnOut eo = epao.getChannel();
-			sendto(oneAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
-			sendto(twoAnalogOut, (char*)&eo, sizeof(eo), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
-			break;
-		*/
-		}
-	}catch(int e){
-		printf("Error number: %i\n",e);
-		perror("Error sending Aanalog Packet to the EBU\n");
-		throw 1; //TBD
+	switch(ebuNum){
+	case 1:
+		sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen);
+		break;
+	case 2:
+		sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen);
+		break;
 	}
 }
 /*	The sendRelayCommand works similiar to the sendAnalogCommand function, the difference is that
@@ -60,52 +46,41 @@ void EBUManager::sendRelayCommand(RelayOut rPack, int ebuNum) {
 	EBUrelays data = rPack.getRelays();
 	char * buffer[14];
 	memcpy(buffer, &data, 14);
-	try{
-		switch(ebuNum){
-		case 1:
-			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
-			break;
-		case 2:
-			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
-			break;
-		default:
-			RelayOut ro;
-			data = ro.getRelays();
-			memcpy(buffer, &data, 14);
-			ro.destination = 1;
-			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
-			ro.destination = 2;
-			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
-			break;
-		}
-	}catch(int e){
-		printf("Error number: %i\n",e);
-		perror("Error sending relay packet to an EBU\n");
-		throw 1; //TBD
+	switch(ebuNum){
+	case 1:
+		sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
+		break;
+	case 2:
+		sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
+		break;
+		//		default:
+		//			RelayOut ro;
+		//			data = ro.getRelays();
+		//			memcpy(buffer, &data, 14);
+		//			ro.destination = 1;
+		//			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
+		//			ro.destination = 2;
+		//			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
+		//			break;
 	}
 }
 
 void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
-	try{
-		switch(ebuNum){
-		case 1:
-			sendto(oneDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
-			break;
-		case 2:
-			sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
-			break;
-		default:
-			DigitalOut epd;
-			EBUdigitalOut ed = epd.getChannel();
-			sendto(oneDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
-			sendto(twoDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
-			break;
-		}
-	}catch(int e){
-		printf("Error number: %i\n",e);
-		perror("Error sending Analog Packet to the EBU\n");
-		throw 1; //TBD
+	switch(ebuNum){
+	case 1:
+		sendto(oneDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
+		break;
+	case 2:
+		sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
+		break;
+		//		default:
+		//			DigitalOut epd;
+		//			EBUdigitalOut ed = epd.getChannel();
+		//			sendto(oneDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
+		//			sendto(twoDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
+		//			break;
 	}
+
 }
 //Read this at your own risk.
 bool EBU::EBUManager::connectToEBU() {
@@ -120,6 +95,12 @@ bool EBU::EBUManager::connectToEBU() {
 	//----------------------------------Relays--------------------------------------------------
 	if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
+	//---------------------------------AnalogIn-----------------------------------------------
+	if ((sockOneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
+	//---------------------------------DigitalIn-----------------------------------------------
+	if ((sockOneDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
 	//------------------------------------EBU 2--------------------------------------------------
 	//--------------------------------AnalogOut----------------------------------------------
 	if ((twoAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
@@ -131,10 +112,10 @@ bool EBU::EBUManager::connectToEBU() {
 	if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
 	//---------------------------------AnalogIn-----------------------------------------------
-	if ((sockAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	if ((sockTwoAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
 	//---------------------------------DigitalIn-----------------------------------------------
-	if ((sockDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	if ((sockTwoDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{perror("socket error");printf ("Error number is: %s\n",strerror(errno));return false;}
 	//------------------------------------------------------------------------------------------------
 	//-----------------------------------------ADRESSES-------------------------------------
@@ -150,6 +131,14 @@ bool EBU::EBUManager::connectToEBU() {
 	memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
 	inet_pton(AF_INET, EBU_IP_1, &(addrOneRelay.sin_addr));
 	addrOneRelay.sin_port = htons(PORT_RELAYS);
+	//-------------------------------EBUAnalogIn for EBU 1-----------------------
+	memset((char *)&addrOneAnalogIn, 0, sizeof(addrOneAnalogIn));
+	inet_pton(AF_INET, EBU_IP_ANY, &(addrOneAnalogIn.sin_addr));
+	addrOneAnalogIn.sin_port = htons(PORT_ANALOG_IN);
+	//---------------------------------EBUDigitalIn for EBU 1------------------------
+	memset((char *)&addrOneDigitalIn, 0, sizeof(addrOneDigitalIn));
+	inet_pton(AF_INET,EBU_IP_ANY, &(addrOneDigitalIn.sin_addr));
+	addrOneDigitalIn.sin_port = htons(PORT_DIGITAL_IN);
 	//--------------------------------EBUAnalogOut for EBU 2------------------------
 	memset((char *)&addrTwoAnalogOut, 0, sizeof(addrTwoAnalogOut));
 	inet_pton(AF_INET, EBU_IP_2, &(addrTwoAnalogOut.sin_addr));
@@ -162,46 +151,80 @@ bool EBU::EBUManager::connectToEBU() {
 	memset((char *)&addrTwoRelay, 0, sizeof(addrTwoRelay));
 	inet_pton(AF_INET, EBU_IP_2, &(addrTwoRelay.sin_addr));
 	addrTwoRelay.sin_port = htons(PORT_RELAYS);
+	//-------------------------------EBUAnalogIn for EBU 2-----------------------
+	memset((char *)&addrTwoAnalogIn, 0, sizeof(addrTwoAnalogIn));
+	inet_pton(AF_INET, EBU_IP_ANY, &(addrTwoAnalogIn.sin_addr));
+	addrTwoAnalogIn.sin_port = htons(PORT_ANALOG2_IN);
+	//---------------------------------EBUDigitalIn for EBU 2------------------------
+	memset((char *)&addrTwoDigitalIn, 0, sizeof(addrTwoDigitalIn));
+	inet_pton(AF_INET,EBU_IP_ANY, &(addrTwoDigitalIn.sin_addr));
+	addrTwoDigitalIn.sin_port = htons(PORT_DIGITAL2_IN);//change back to 2
+	//------------------------------------------------------------------------------------------
+	//------------------------------------Bind----------------------------------------------
+	//------------------------------Bind for EBU 1------------------------------------
+	if (bind(sockOneDigitalIn, (struct sockaddr *)&addrOneDigitalIn, sizeof(addrOneDigitalIn)) < 0) {return false;}
+	if (bind(sockOneAnalogIn, (struct sockaddr *)&addrOneAnalogIn, sizeof(addrOneAnalogIn)) < 0) {return false;}
+	//--------------------------------Bind for EBU 2-------------------------------------
+	if (bind(sockTwoDigitalIn, (struct sockaddr *)&addrTwoDigitalIn, sizeof(addrTwoDigitalIn)) < 0) {return false;}
+	if (bind(sockTwoAnalogIn, (struct sockaddr *)&addrTwoAnalogIn, sizeof(addrTwoAnalogIn)) < 0) {return false;}
+	//-------------------------------------------------------------------------------------------------
+	//-------------------------------Socket options------------------------------------------
+	//-----------------------------Options for EBU 1----------------------------------------
+	if (setsockopt(sockOneDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;} //Timeout for recvfrom
+	if (setsockopt(sockOneAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;}
+	//-----------------------------Options for EBU 2----------------------------------------
+	if (setsockopt(sockTwoDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;} //Timeout for recvfrom
+	if (setsockopt(sockTwoAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;}
 	//--------------------------------------------------------------------------------------------
-	//-------------------------------EBUAnalogIn for EBUs-----------------------
-	memset((char *)&addrAnalogIn, 0, sizeof(addrAnalogIn));
-	inet_pton(AF_INET, EBU_IP_ANY, &(addrAnalogIn.sin_addr));
-	addrAnalogIn.sin_port = htons(PORT_ANALOG_IN);
-	//---------------------------------EBUDigitalIn for EBUs------------------------
-	memset((char *)&addrDigitalIn, 0, sizeof(addrDigitalIn));
-	inet_pton(AF_INET,EBU_IP_ANY, &(addrDigitalIn.sin_addr));
-	addrDigitalIn.sin_port = htons(PORT_DIGITAL_IN);
-	//--------------------------------------------------------------------------------------------
-	//-------------------------------Bind for EBU 1 & 2--------------------------------------
-	if (bind(sockDigitalIn, (struct sockaddr *)&addrDigitalIn, sizeof(addrDigitalIn)) < 0) {return false;}
-	if (bind(sockAnalogIn, (struct sockaddr *)&addrAnalogIn, sizeof(addrAnalogIn)) < 0) {return false;}
-	return true;
+	return true; //If everything has been set up successfully return true.
 }
-//not complete, needs to handle errors
-AnalogIn EBUManager::recAnalogIn() {
+//not complete, needs to handle errors, 4 functions not needed. maybe could make it into one or two similar to "send"
+AnalogIn EBUManager::recvAnalogEBUOne() {
 	char buffer[255];
 	Packets::AnalogIn inData;
 	struct sockaddr_in ebuAddr; //This struct stores the senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
-	recvfrom(sockAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen);
+	if(recvfrom(sockOneAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){throw 13;}
 	char str[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); //Gets senders IP into readable
-	if((string)str == "10.0.0.2"){inData.setSource(1);return inData;}
-	if((string)str == "10.0.0.3"){inData.setSource(2);return inData;}
+	if((string)str == EBU_IP_1){inData.setSource(1);return inData;}	//Verifies that it's the correct sender IP
 	inData.setSource(0); //0 means unvalid
 	return inData;
 }
-
-Packets::DigitalIn EBUManager::recDigitalIn() {
+AnalogIn EBUManager::recvAnalogEBUTwo() {
+	char buffer[255];
+	Packets::AnalogIn inData;
+	struct sockaddr_in ebuAddr; //This struct stores the senders IP
+	memset(&(ebuAddr.sin_zero), '\0', 8);
+	if(recvfrom(sockTwoAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){throw 13;}
+	char str[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Gets senders IP into readable
+	if((string)str == EBU_IP_2){inData.setSource(2);return inData;}				//Verifies that it's the correct sender IP
+	inData.setSource(0); //0 means unvalid
+	return inData;
+}
+Packets::DigitalIn EBUManager::recvDigitalEBUOne() {
 	char buffer[255];
 	Packets::DigitalIn digidata;
 	struct sockaddr_in ebuAddr;	//Stores senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
-	recvfrom(sockDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen);
-	char str[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); //Extract senders IP into str, readable.
-	if((string)str =="10.0.0.2"){digidata.setSource(1);return digidata;}
-	if((string)str == "10.0.0.3"){digidata.setSource(2);return digidata;}
-	digidata.setSource(0); //0 means unvalid
+	if(recvfrom(sockOneDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){throw 13;}
+	//char str[INET_ADDRSTRLEN];
+	//inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Extract senders IP into str, readable.
+	//if((string)str ==EBU_IP_1){digidata.setSource(1);return digidata;}		//Verifies that it's the correct sender IP
+	//digidata.setSource(0); //0 means unvalid
 	return digidata;
 }
+Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
+	char buffer[255];
+	Packets::DigitalIn digidata;
+	struct sockaddr_in ebuAddr;	//Stores senders IP
+	memset(&(ebuAddr.sin_zero), '\0', 8);
+	if(recvfrom(sockTwoDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){throw 13;}
+	//char str[INET_ADDRSTRLEN];
+	//inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Extract senders IP into str, readable.
+	//if((string)str == EBU_IP_2){digidata.setSource(2);return digidata;}		//Verifies that it's the correct sender IP
+	//digidata.setSource(0); //0 means unvalid
+	return digidata;
+}
+

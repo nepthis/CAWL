@@ -11,9 +11,9 @@ using namespace Packets;
 mutex m_state;
 
 Ground::Ground() {
+	ss = serSend();
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
-	thetemp 		= (char*) malloc(sizeof(sp.fromSim));
 	simulator 		= new Simulator::Sim();
 	if ((grSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{
@@ -22,35 +22,32 @@ Ground::Ground() {
 		throw grSocket; //TBD
 	}
 	memset((char *)&grAddr, 0, sizeof(grAddr));
-	inet_pton(AF_INET, SND_ADDR, &(grAddr.sin_addr));
-	grAddr.sin_port = htons(SND_PORT);
+	inet_pton(AF_INET, DEST_ADDR, &(grAddr.sin_addr));
+	grAddr.sin_port = htons(DEST_PORT);
 }
 /*	Written by Robin Bond and modified by Håkan
  * The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then transferred to Mobile.
  * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
-void Ground::sendPacket() {
-	try{
-		//unique_lock<mutex> lock1(m_state, defer_lock);
+void Ground::sendMobile() {
+	while(true){
+		usleep(1000);
 		SimPack temp;
 		m_state.lock();
 		temp = state;
 		m_state.unlock();
-		sendto(grSocket, (char*)&temp.fromSim, sizeof(temp.fromSim), 0, (struct sockaddr*) &grAddr, slen);
-
-	}catch(int e){
-		throw e;
+		sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen);
 	}
 }
-void Ground::receiveSimPack(){
-	sp = simulator->recPac();
-	m_state.lock();
-	if(not (sp == state)){
-		state = sp;
+void Ground::receiveSim(){
+	while(true){
+		sp = simulator->recvSim();
+		if(sp.getAnalog(BRAKEPEDAL) > abs(0.5)){ss.sndPulse();}
+		m_state.lock();
+		if(not (sp == state)){state = sp;}
+		m_state.unlock();
 	}
-	m_state.unlock();
-
 }
 
 /* This function also needs a state for the IMU data and then anoher function can call sim and send
@@ -67,26 +64,6 @@ void Ground::receiveImuPacket(){
 	}
 }
 
-
-/* Written by H�kan Ther�n
- * Used in the threads that will run
- */
-void Ground::startRecieve(){
-	while(true){
-		receiveSimPack();
-	}
-}
-/* Written by H�kan Ther�n
- * Used in the threads that will run
- */
-void Ground::startSend(){
-	while(true){
-		sendPacket();
-
-		// added sleep to prevent cpu drain
-		usleep(100);
-	}
-}
 
 Ground::~Ground() {
 	delete simulator;

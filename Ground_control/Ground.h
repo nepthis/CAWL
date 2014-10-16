@@ -9,8 +9,8 @@
 #ifndef GROUND_H_
 #define GROUND_H_
 
-#define SND_PORT 56565
-#define SND_ADDR "127.0.0.1"
+#define DEST_PORT 56565
+#define DEST_ADDR "127.0.0.1"
 
 
 #include <chrono>
@@ -19,6 +19,7 @@
 #include <stdio.h>	//for printf
 #include <string.h>	//std::string
 #include <ctype.h>
+#include <cmath> //for fabs
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -29,7 +30,8 @@
 #include <cstring>
 //Own classes are included here
 #include "../Simulator/Sim.h"
-#include "../Packets/ImuPack.h"
+#include "../Packets/AllPackets.h"
+#include "serSend.h"
 
 
 /*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
@@ -48,16 +50,13 @@ private:
 	Packets::SimPack sp;
 	Packets::SimPack state;
 	Packets::ImuPack imuState;
-
-	char *thetemp;
+	serSend ss;
 public:
 	Simulator::Sim* simulator;
 	Ground();
-	void startRecieve();
-	void startSend();
 	void receiveImuPacket();
-	void sendPacket();
-	void receiveSimPack();
+	void sendMobile();
+	void receiveSim();
 	virtual ~Ground();
 };
 

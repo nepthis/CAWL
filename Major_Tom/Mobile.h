@@ -23,14 +23,9 @@
 #include <netdb.h> // in_addr_t
 #include <iostream>
 
-#include"../EBU/EBUManager.h"				//For communication to EBU
+#include"../EBU/EBUManager.h"
 #include "../Simulator/Sim.h"
-#include "../Packets/AnalogOut.h"	//Class/struct for information to the EBU, also contains defines for indexing
-#include "../Packets/AnalogIn.h"	//Class/struct for information to the EBU, also contains defines for indexing
-#include "../Packets/DigitalOut.h"	//In order to set which relays easier, it contains all defines.
-#include "../Packets/DigitalIn.h"	//In order to set which relays easier, it contains all defines.
-#include "../Packets/ImuPack.h"
-#include "../Packets/RelayOut.h"
+#include "../Packets/AllPackets.h"
 #include "../EBU/EBUTranslator.h"
 
 
@@ -47,11 +42,10 @@ class Mobile {
 public:
 	bool pleased;
 	Mobile();	//Constructor
-	void socketReceive(); 				//Receiving data from an UDP socket, port 65656
-	void socketSend(); 					//Sending data back through socket
-	void ebuTwoSend(); 							//Send data to the EBU
-	void ebuOneSend();
-	void imuRec();
+	void recvGround(); 				//Receiving data from an UDP socket, port 65656
+	void sendEBUOne();
+	void sendEBUTwo();
+	void recvIMU();
 	virtual ~Mobile();							//Destructor
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;

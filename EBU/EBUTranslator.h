@@ -8,9 +8,7 @@
 #ifndef EBUTRANSLATOR_H_
 #define EBUTRANSLATOR_H_
 
-#include "../Packets/AnalogOut.h"
-#include "../Packets/DigitalOut.h"
-#include "../Packets/SimPack.h"
+#include "../Packets/AllPackets.h"
 #include <stdio.h>
 
 

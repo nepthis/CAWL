@@ -61,17 +61,17 @@ namespace Packets {
  * 	Setters and getters for the data exist to abastract away
  * 	the array and variables.
  */
-typedef struct commandPacket {
+typedef struct fromSim {
 	uint32_t packetId;
 	uint32_t packetSize;
 	float analog[8];
 	uint32_t digital;
 	std::chrono::system_clock::time_point timeStamp;
-}commandPacket;
+}fromSim;
 
 class SimPack {
 public:
-	commandPacket fromSim;
+	fromSim fs;
 	SimPack();
 	void setID(uint32_t id);
 	uint32_t getPacketSize(void);
@@ -79,14 +79,10 @@ public:
 	int setDigital(int,int);
 	float getAnalog(int);
 	int setAnalog(int, float);
-	float fiveToOne(float);
-	float fiveToOneNeg(float);
-	float oneToFive(float);
-	float oneToFiveNeg(float);
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
 	void stampTime();
-	commandPacket getData(void);
+	fromSim getData(void);
 };
 
 } /* namespace Packets */

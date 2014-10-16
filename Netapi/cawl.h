@@ -20,13 +20,13 @@ class cawl {
 private:
 	int SctpSocket;
 public:
-
 	long value;
 	Netapi::GatherMetrics metrics;
 	struct sctp_paddrinfo srttinfo;
 	struct sctp_paddrparams heartbeat;
 	struct sctp_rtoinfo rtoinfo;
 	struct sctp_assocparams assoc;
+	//----------------------------------------------------
 	cawl(int socket);
 	~cawl();
 	int sctp_bindx(int sd, struct sockaddr *addrs, int addrcnt, int flags);
@@ -46,38 +46,31 @@ public:
 	 * Sockets API Extensions for SCTP. This is implemented using the
 	 * recvmsg() interface.
 	 */
-
 	int sctp_recvmsg(int s, void *msg, size_t len, struct sockaddr *from, socklen_t *fromlen, struct sctp_sndrcvinfo *sinfo, int *msg_flags);
 
 	int sctp_peeloff(int sd, sctp_assoc_t assoc_id);
-
 	/* Prototype for the library function sctp_opt_info defined in
 	 * API 7. Socket Options.
 	 */
 	int sctp_opt_info(int sd, sctp_assoc_t id, int opt, void *arg, socklen_t *size);
-
 	/* Get all peer address on a socket.  This is a new SCTP API
 	 * described in the section 8.3 of the Sockets API Extensions for SCTP.
 	 * This is implemented using the getsockopt() interface.
 	 */
 	int sctp_getpaddrs(int sd, sctp_assoc_t id, struct sockaddr **addrs);
-
 	/* Frees all resources allocated by sctp_getpaddrs().  This is a new SCTP API
 	 * described in the section 8.4 of the Sockets API Extensions for SCTP.
 	 */
 	int sctp_freepaddrs(struct sockaddr *addrs);
-
 	/* Get all locally bound address on a socket.  This is a new SCTP API
 	 * described in the section 8.5 of the Sockets API Extensions for SCTP.
 	 * This is implemented using the getsockopt() interface.
 	 */
 	int sctp_getladdrs(int sd, sctp_assoc_t id, struct sockaddr **addrs);
-
 	/* Frees all resources allocated by sctp_getladdrs().  This is a new SCTP API
 	 * described in the section 8.6 of the Sockets API Extensions for SCTP.
 	 */
 	int sctp_freeladdrs(struct sockaddr *addrs);
-
 	/* Return the address length for an address family. */
 	int sctp_getaddrlen(sa_family_t family);
 };

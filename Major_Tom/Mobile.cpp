@@ -8,7 +8,7 @@
 using namespace  Major_Tom;
 using namespace Packets;
 using namespace std;
-mutex m_Queue;
+mutex m_State;
 mutex m_Sendstate;
 /*	The contructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
@@ -24,6 +24,11 @@ Mobile::Mobile() {
 	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){throw 13;}
 	mobAddr.sin_port = htons(REC_PORT);
 	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {throw 13;}
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {throw 13;}
+
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
 	//	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
@@ -36,7 +41,6 @@ Mobile::Mobile() {
 	//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
-	//		rPackOne.setRelayValue(R_D9,1); 			//ActivationCLC, might need to go to cdc instead...
 	rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
 	//rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
 	//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
@@ -60,114 +64,61 @@ Mobile::Mobile() {
 }
 
 //This function receives UDP packets and puts them in a buffer
-void Mobile::socketReceive() {
+void Mobile::recvGround() {
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
-		try{
-			recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen);
-			memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
-		}catch(int e){
-			perror("socketReceive error");
-			throw e;
-		}
-		m_Queue.lock();
-		if ((not (state == simpack)) && (state.fromSim.timeStamp < simpack.fromSim.timeStamp)){
+		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) <= 0){throw 13;}
+		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
+		m_State.lock();//(not (state == simpack)) &&
+		if ((state.fs.timeStamp < simpack.fs.timeStamp)){
 			state = simpack;
 		}
-		m_Queue.unlock();
-	}
-}
-/*	SocketSend, not in use for now, will send data back over to the Ground Gateway.
- * 	The data being sent back is not really important right now and will just be the standard AnalogIn data.
- */
-void Mobile::socketSend() {
-	while(not pleased){
-		try{
-			//em.recAnalogIn(1);
-			//em.recAnalogIn(2);
-		}catch(int e){
-			throw e;
-		}
+		m_State.unlock();
 	}
 }
 /*	Receives data from an IMUHandler and puts it into a state.
- * 	Written by Robin
  */
-void Mobile::imuRec() {
-	//TODO: Use function from håkans IMUHandler and receive IMUdata
-
+void Mobile::recvIMU() {
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
  * 	the ebuManager. This method is designed to be started as a thread.
- * 	For now there is a sleep of 200000 microseconds in order to not crash the EBU.
  * 	The data it sends comes from a state which is set in socketReceive() if it is different than the existing one
  */
-void Mobile::ebuOneSend() {
+void Mobile::sendEBUOne() {
 	AnalogOut analogOne;
 	DigitalOut digitalOne;
-	AnalogOut analogTwo;
-	DigitalOut digitalTwo;	//Not really used for now
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
-
-	bool ebuOneAnaRec = false;
-	bool ebuOneDigRec = false;
-	bool ebuTwoAnaRec = false;
-	bool ebuTwoDigRec = false;
-
+	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
 	while(not pleased){
-		SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
-		m_Queue.lock();
+		m_State.lock();
 		tempState = state;
-		m_Queue.unlock();
+		m_State.unlock();
 		et.setEbuOne(&tempState, &analogOne, &digitalOne);	//Use EBUTranslator (et) to translate simdata
-		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
-		digitaldummy = em.recDigitalIn();
-		analogdummy = em.recAnalogIn();
-
-		(digitaldummy.getSource() == 1)?ebuOneDigRec=true:ebuTwoDigRec=true;
-		(analogdummy.getSource() == 1)?ebuOneAnaRec=true:ebuTwoAnaRec=true;
-
-		//if((digitaldummy.getSource() == 1) && analogdummy.getSource()==1){
-		if(ebuOneAnaRec == true && ebuOneDigRec == true){
-			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
-			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
-			ebuOneAnaRec = ebuOneDigRec = false;
-			continue;
-		}
-		//if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
-		if(ebuTwoAnaRec == true && ebuTwoDigRec == true){
-			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
-			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
-			ebuTwoAnaRec = ebuTwoDigRec = false;
-			continue;
-		}
+		digitaldummy = em.recvDigitalEBUOne();
+		analogdummy = em.recvAnalogEBUOne();
+		em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
+		em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
 	}
 }
-void Mobile::ebuTwoSend() {
+void Mobile::sendEBUTwo() {
 	AnalogOut analogTwo;
 	DigitalOut digitalTwo;	//Not really used for now
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
+	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
 	while(not pleased){
-		SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
-		m_Queue.lock();
+		m_State.lock();
 		tempState = state;
-		m_Queue.unlock();
+		m_State.unlock();
 		et.setEbuTwo(&tempState, &analogTwo, &digitalTwo);
-		digitaldummy = em.recDigitalIn();
-		analogdummy = em.recAnalogIn();
-		if((digitaldummy.getSource() == 2) && analogdummy.getSource()==2){
-			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
-			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
-		}
+		digitaldummy = em.recvDigitalEBUTwo();
+		analogdummy = em.recvAnalogEBUTwo();
+		em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
+		em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 	}
 }
-//void Mobile::sendEbuOne(){
-//
-//}
-
 
 Mobile::~Mobile() {
 	em.sendAnalogCommand(stopPacket.getChannel(), 1);

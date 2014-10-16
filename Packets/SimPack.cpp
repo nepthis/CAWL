@@ -10,52 +10,52 @@
 namespace Packets {
 
 SimPack::SimPack() {
-	fromSim.packetId = 0;
-	fromSim.packetSize = 0;
-	fromSim.analog[8]= ((float)0);
-	fromSim.digital = 0;
+	fs.packetId = 0;
+	fs.packetSize = 0;
+	fs.analog[8]= ((float)0);
+	fs.digital = 0;
 }
 
 SimPack::~SimPack() {
 	// TODO Auto-generated destructor stub
-	//delete &fromSim;
+	//delete &fs;
 }
 
 
 void Packets::SimPack::setID(uint32_t id) {
-	fromSim.packetId = id;
+	fs.packetId = id;
 }
 
 uint32_t Packets::SimPack::getPacketSize(void) {
-	return fromSim.packetSize;
+	return fs.packetSize;
 }
 
 int Packets::SimPack::getDigital(int i) {
-	return fromSim.digital & (1 << i)?1:0;
+	return fs.digital & (1 << i)?1:0;
 }
 
 float Packets::SimPack::getAnalog(int i) {
-	return fromSim.analog[i];
+	return fs.analog[i];
 }
 
 bool Packets::SimPack::operator ==(const SimPack& s) {
-	return (fromSim.digital == s.fromSim.digital)
-	& fromSim.analog[0] == s.fromSim.analog[0]
-	& fromSim.analog[1] == s.fromSim.analog[1]
-	& fromSim.analog[2] == s.fromSim.analog[2]
-	& fromSim.analog[3] == s.fromSim.analog[3]
-	& fromSim.analog[4] == s.fromSim.analog[4]
-	& fromSim.analog[5] == s.fromSim.analog[5]
-	& fromSim.analog[6] == s.fromSim.analog[6]
-	& fromSim.analog[7] == s.fromSim.analog[7];
+	return (fs.digital == s.fs.digital)
+	& fs.analog[0] == s.fs.analog[0]
+	& fs.analog[1] == s.fs.analog[1]
+	& fs.analog[2] == s.fs.analog[2]
+	& fs.analog[3] == s.fs.analog[3]
+	& fs.analog[4] == s.fs.analog[4]
+	& fs.analog[5] == s.fs.analog[5]
+	& fs.analog[6] == s.fs.analog[6]
+	& fs.analog[7] == s.fs.analog[7];
 }
 
 int Packets::SimPack::setDigital(int i, int value) {
 	if(i < 32 && value == 1){
-		fromSim.digital |= 1 << i;
+		fs.digital |= 1 << i;
 		return 1;
 	}else if(i < 32 && value == 0){
-		fromSim.digital &= ~(1 << i);
+		fs.digital &= ~(1 << i);
 		return 1;
 	}else{
 		return -1;
@@ -64,31 +64,19 @@ int Packets::SimPack::setDigital(int i, int value) {
 
 int Packets::SimPack::setAnalog(int i, float value) {
 	if(i < 8){
-		fromSim.analog[i] = value;
+		fs.analog[i] = value;
 		return 1;
 	}else{
 		return -1;
 	}
 }
 
-float Packets::SimPack::fiveToOne(float value){
-	return (value-0.5)/4.0;
-}
-float Packets::SimPack::fiveToOneNeg(float value){
-	return (value-2.5)/2.5;
-}
-float Packets::SimPack::oneToFive(float value){
-	return (value*4.0)+0.5;
-}
-float Packets::SimPack::oneToFiveNeg(float value){
-	return (value*2.5)+2.5;
-}
-Packets::commandPacket Packets::SimPack::getData(void) {
- 	return fromSim;
+fromSim Packets::SimPack::getData(void) {
+ 	return fs;
 }
 
 void SimPack::stampTime() {
-	fromSim.timeStamp = std::chrono::high_resolution_clock::now();
+	fs.timeStamp = std::chrono::high_resolution_clock::now();
 }
 
 } /* namespace Packets */

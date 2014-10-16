@@ -6,40 +6,34 @@
  */
 #include "Sim.h"
 using namespace Simulator;
-
-/*	The constructor sets up the socket to the simulator and binds it, if an error occurs it will throw
- * 	an int with a number for that occasion
- */
 Sim::Sim() {
 	slen = sizeof(simAddr);
 	realID = 1;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
 }
-
 Sim::~Sim() {
 }
 /*	The method recPac reveices a UDP packet from the simulator and
  * 	inserts the data into a SimPack with a memcpy. The SimPack will
  * 	get a new ID because the simulator returns the same one.
  */
-Packets::SimPack Sim::recPac(void) {
+Packets::SimPack Sim::recvSim(void) {
 	char recbuf[255];
 	Packets::SimPack simpack;
-	recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen);
-	memcpy(&simpack.fromSim, recbuf, sizeof(simpack.fromSim));
+	if(recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen)<0){
+		//logga fel
+		exit(1);
+	}
+	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 	simpack.stampTime();
 	simpack.setID(realID);
 	realID++;
 	return simpack;
 }
-/* TODO: Simple sendmsg with UDP to the motion control rig
- * Accelerometer data XYZ followed by gyroscoperotation XYZ
- * input should be imuPack from the "state"
- */
-void Sim::sendPac(Packets::ImuPack imudata) {
+void Sim::sendSim(Packets::ImuPack imudata) {
 	//Packets going out must have packe ID field of 2001
 	imudata.sens.packetId = 2001;
-
-
 }
 
 bool Simulator::Sim::connectToSim() {
@@ -54,5 +48,6 @@ bool Simulator::Sim::connectToSim() {
 	memset((char *)&motAddr, 0, slen);
 	if(inet_pton(AF_INET, MOV_IP, &(motAddr.sin_addr)) < 0){return false;}
 	motAddr.sin_port = htons(MOV_PORT);
+	if (setsockopt(simulatorSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;} //Timeout for recvfrom
 	return true;
 }

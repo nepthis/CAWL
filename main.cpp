@@ -47,7 +47,7 @@ int setInput(int argc, char * args[], State * s){
 	}
 	if(s->ip && s->ipAddr.empty()){return -1;}
 	else if(not s->ipAddr.empty()){
-	printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
+		printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
 	return 0;
 }
 void startUp(State * s){
@@ -63,8 +63,9 @@ void startUp(State * s){
 			}else{
 				try{
 					//needs more threads...IMU receive
-					std::thread g1(&Ground::startSend, gc);	//For simulator data to Mobile
-					std::thread g2(&Ground::startRecieve, gc);	//For receiving data from simulator
+					printf("Main: thread starting\n");
+					std::thread g1(&Ground::sendMobile, gc);	//For simulator data to Mobile
+					std::thread g2(&Ground::receiveSim, gc);	//For receiving data from simulator
 					printf("Main: thread started, joining\n");
 					g1.join();
 					g2.join();
@@ -80,22 +81,25 @@ void startUp(State * s){
 		Major_Tom::Mobile *major = new Major_Tom::Mobile(); //make into input args later
 		while(rtMobile){
 			if(not major->em.connectToEBU()){
-				//printf("Connecting to EBUs failed, retrying in %i seconds\n", TIMEOUT);
+				printf("Connecting to EBUs failed, retrying in %i seconds\n", TIMEOUT);
 				rtMobile--;
 				sleep(TIMEOUT);
 			}else{
 				try{
-					major->em.recAnalogIn();
-					major->em.recDigitalIn();
+					printf("Trying to sync up for the relay packets\n");
+					major->em.recvAnalogEBUOne();
+					major->em.recvDigitalEBUOne();
 					major->em.sendRelayCommand(major->rPackOne, 1);
+					major->em.recvAnalogEBUTwo();
+					major->em.recvDigitalEBUTwo();
 					major->em.sendRelayCommand(major->rPackTwo, 2);
 					printf("Starting threads.\n");
-					std::thread m1(&Major_Tom::Mobile::socketReceive, major);
-					std::thread m2(&Major_Tom::Mobile::ebuOneSend, major);
-					//std::thread m3(&Major_Tom::Mobile::ebuTwoSend, major);
+					std::thread m1(&Major_Tom::Mobile::recvGround, major);
+					std::thread m2(&Major_Tom::Mobile::sendEBUOne, major);
+					std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
 					m1.join();
 					m2.join();
-					//m3.join();
+					m3.join();
 				}catch(int e){
 					major->pleased = true;
 					printf("Error number: %i\n", e);

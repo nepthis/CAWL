@@ -50,12 +50,14 @@ private:
 	struct sockaddr_in simAddr;
 	struct sockaddr_in motAddr;
 	Packets::ImuPack imuState;
+	struct timeval tv;
+
 public:
 	Sim();
 	virtual ~Sim();
 	bool connectToSim();
-	Packets::SimPack recPac(void);
-	void sendPac(Packets::ImuPack imudata);
+	Packets::SimPack recvSim(void);
+	void sendSim(Packets::ImuPack imudata);
 };
 }
 

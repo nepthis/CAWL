@@ -16,11 +16,12 @@
 Netapi::cawl::cawl(int socket) {
 	value = 1;
 	metrics = GatherMetrics();
+	//-----------------------------------------------------------------------------------------------------
 	memset(&heartbeat,  0, sizeof(struct sctp_paddrparams));
 	memset(&rtoinfo,    0, sizeof(struct sctp_rtoinfo));
 	memset(&assoc,      0, sizeof(struct sctp_assocparams));
 	memset(&srttinfo,   0, sizeof(struct sctp_paddrinfo));
-
+	//-----------------------------------------------------------------------------------------------------
 	heartbeat.spp_flags 		= SPP_HB_ENABLE;
 	heartbeat.spp_hbinterval 	= 3000;				//default value: 15000
 	heartbeat.spp_pathmaxrxt 	= 1;				//default value: 5
@@ -28,7 +29,7 @@ Netapi::cawl::cawl(int socket) {
 	rtoinfo.srto_min 			= 500;				//default value: 1000
 	rtoinfo.srto_initial		= 1500;				//default value: 3000
 	assoc.sasoc_asocmaxrxt		= 6;
-
+	//-----------------------------------------------------------------------------------------------------
 	SctpSocket = socket;
 	/*Disable Nagles algorithm*/
 	if(setsockopt(SctpSocket, IPPROTO_SCTP, SCTP_NODELAY, &value,sizeof(value))<0){
@@ -41,22 +42,18 @@ Netapi::cawl::cawl(int socket) {
 		::exit(EXIT_FAILURE);
 		//	Logga fel
 	}
-
 	/*Set Heartbeats*/
 	if(setsockopt(socket, SOL_SCTP, SCTP_PEER_ADDR_PARAMS , &heartbeat, sizeof(heartbeat)) != 0){
 		perror("setsockopt");
 	}
-
 	/*Set srttinfo struct*/
 	if(setsockopt(socket, SOL_SCTP, SCTP_GET_PEER_ADDR_INFO , &srttinfo, sizeof(srttinfo)) != 0){
 		perror("setsockopt");
 	}
-
 	/*Set rto_max*/
 	if(setsockopt(socket, SOL_SCTP, SCTP_RTOINFO , &rtoinfo, sizeof(rtoinfo)) != 0){
 		::exit(EXIT_FAILURE);
 	}
-
 	/*Set association_max_retransmit*/
 	if(setsockopt(socket, SOL_SCTP, SCTP_ASSOCINFO , &assoc, sizeof(assoc)) != 0){
 		::exit(EXIT_FAILURE);
@@ -83,7 +80,6 @@ Netapi::cawl::~cawl() {
 	//redo kernel specific default values set by sysctl
 
 }
-
 int Netapi::cawl::sctp_bindx(int sd, struct sockaddr* addrs, int addrcnt,
 		int flags) {
 	return ::sctp_bindx(sd, addrs, addrcnt, flags);
@@ -132,21 +128,16 @@ int Netapi::cawl::sctp_getpaddrs(int sd, sctp_assoc_t id,
 		struct sockaddr** addrs) {
 	return ::sctp_getpaddrs(sd, id, addrs);
 }
-
 int Netapi::cawl::sctp_freepaddrs(struct sockaddr* addrs) {
 	return ::sctp_freepaddrs( addrs);
-
 }
-
 int Netapi::cawl::sctp_getladdrs(int sd, sctp_assoc_t id,
 		struct sockaddr** addrs) {
 	return ::sctp_getladdrs(sd, id, addrs);
 }
-
 int Netapi::cawl::sctp_freeladdrs(struct sockaddr* addrs) {
 	return ::sctp_freeladdrs(addrs);
 }
-
 int Netapi::cawl::sctp_getaddrlen(sa_family_t family) {
 	return sctp_getaddrlen(family);
 }
