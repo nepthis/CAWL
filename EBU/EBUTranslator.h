@@ -16,6 +16,8 @@ namespace EBU {
 using namespace Packets;
 class EBUTranslator {
 private:
+	bool parkingBrake;
+	void setPBrake(int onOff);
 	void setBoom(float value, Packets::AnalogOut* pkt);
 	void setBucket(float value, Packets::AnalogOut* pkt);
 	void setGas(float value, Packets::AnalogOut* pkt);

@@ -53,15 +53,6 @@ void EBUManager::sendRelayCommand(RelayOut rPack, int ebuNum) {
 	case 2:
 		sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
 		break;
-		//		default:
-		//			RelayOut ro;
-		//			data = ro.getRelays();
-		//			memcpy(buffer, &data, 14);
-		//			ro.destination = 1;
-		//			sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen);
-		//			ro.destination = 2;
-		//			sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen);
-		//			break;
 	}
 }
 
@@ -73,19 +64,13 @@ void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
 	case 2:
 		sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
 		break;
-		//		default:
-		//			DigitalOut epd;
-		//			EBUdigitalOut ed = epd.getChannel();
-		//			sendto(oneDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrOneDigitalOut, slen);
-		//			sendto(twoDigitalOut, (char*)&ed, sizeof(ed), 0, (struct sockaddr*) &addrTwoDigitalOut, slen);
-		//			break;
 	}
 
 }
-//Read this at your own risk.
+//Read this at your own risk..
+//UDP connection, must write SCTP vers
 bool EBU::EBUManager::connectToEBU() {
 	try{
-
 		//----------------------------------Sockets------------------------------------------------
 		//------------------------------------EBU 1--------------------------------------------------
 		//--------------------------------AnalogOut----------------------------------------------
@@ -215,10 +200,6 @@ Packets::DigitalIn EBUManager::recvDigitalEBUOne() {
 	struct sockaddr_in ebuAddr;	//Stores senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
 	if(recvfrom(sockOneDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){throw 14;}
-	//char str[INET_ADDRSTRLEN];
-	//inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Extract senders IP into str, readable.
-	//if((string)str ==EBU_IP_1){digidata.setSource(1);return digidata;}		//Verifies that it's the correct sender IP
-	//digidata.setSource(0); //0 means unvalid
 	return digidata;
 }
 Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
@@ -227,10 +208,6 @@ Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
 	struct sockaddr_in ebuAddr;	//Stores senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
 	if(recvfrom(sockTwoDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){throw 14;}
-	//char str[INET_ADDRSTRLEN];
-	//inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Extract senders IP into str, readable.
-	//if((string)str == EBU_IP_2){digidata.setSource(2);return digidata;}		//Verifies that it's the correct sender IP
-	//digidata.setSource(0); //0 means unvalid
 	return digidata;
 }
 

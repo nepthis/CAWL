@@ -2,8 +2,9 @@
 
 serSend::serSend(){
   cport_nr=16;        /* /dev/ttyUSB0 */
-  bdrate=1000000;
-  strcpy(str, "\xFF");
+  //bdrate=1000000;
+  bdrate=9600;
+  strcpy(str, "\xA0");
 
   if(RS232_OpenComport(cport_nr, bdrate)){
 	  perror("Comport error");

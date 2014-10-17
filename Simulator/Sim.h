@@ -24,10 +24,11 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <cmath>
 
 #include "../Packets/SimPack.h"
 #include "../Packets/ImuPack.h"
-#include "serSend.h"
+#include "../Ground_control/serSend.h"
 
 #define OWN_IP "192.168.2.100"	//This is the IP address that the Ground Gateway must have on the network for the simulator
 #define SIM_IP "192.168.2.97"	//The Simulators IP address, movement packages does not go here.
@@ -52,7 +53,6 @@ private:
 	struct sockaddr_in motAddr;
 	Packets::ImuPack imuState;
 	struct timeval tv;
-	serSend ss;
 public:
 	Sim();
 	virtual ~Sim();

@@ -10,6 +10,7 @@
 namespace EBU {
 //using namespace Packets;
 EBUTranslator::EBUTranslator() {
+	parkingBrake = true;
 }
 // Set the values in the data-struct destined for the first EBU (V-ECU)
 void EBUTranslator::setEbuOne(SimPack* sp, AnalogOut* epaoOne, DigitalOut* epdoOne) {
@@ -30,8 +31,12 @@ void EBUTranslator::setEbuTwo(SimPack* sp, AnalogOut* epaoTwo, DigitalOut* epdoT
 	setBoom(sp->getAnalog(LIFTSTICK), epaoTwo);
 	//-----------------------------------Bucket--------------------------------------------------
 	setBucket(sp->getAnalog(TILTSTICK), epaoTwo);
-	//-----------------------------------Brake---------------------------------------------------
-	setBrake(sp->getAnalog(BRAKEPEDAL), epaoTwo);
+	//-----------------------Brake & Parking brake------------------------------------
+	if(parkingBrake){
+		setBrake(1.0, epaoTwo);
+	}else{
+		setBrake(sp->getAnalog(BRAKEPEDAL), epaoTwo);
+	}
 	//-------------------------------------Gas---------------------------------------------------
 	setGas(sp->getAnalog(GASPEDAL), epaoTwo);
 	//---------------------------------Steering--------------------------------------------------
@@ -43,6 +48,10 @@ void EBUTranslator::setEbuTwo(SimPack* sp, AnalogOut* epaoTwo, DigitalOut* epdoT
 	setGear(sp->getDigital(GEARCLCFORWARD),sp->getDigital(GEARCLCREVERSE),epdoTwo);
 	//-----------------------------------CDC-Activation------------------------------------------
 	setCDC(sp->getDigital(ACTIVATIONCDC), epdoTwo);
+	//---------------------------------"Parkingbrake"--------------------------------------------
+	//This is actually not for the REAL parkingbrake, it just has the kind of same effect for now.
+	//Should be changed into the real one later on the wheel loader. Lot's of work...
+	setPBrake(sp->getDigital(PARKINGBRAKE));
 }
 void EBUTranslator::setBoom(float value, AnalogOut* pkt) {
 	//4.5V is max, 0.5 min. signal is sent over two pins, inverted. 2.5V is "0" on both pins
@@ -95,6 +104,11 @@ void EBUTranslator::setFourthFunc(float value, AnalogOut* pkt) {
 	float temp = value * 2.0 + 2.5;
 	pkt->setChannelValue(temp, AO_15);
 	pkt->setChannelValue(5.0-temp, AO_16);
+}
+//This is actually not for the REAL parkingbrake, it just has the kind of same effect for now.
+void EBUTranslator::setPBrake(int onOff) {
+	if(onOff == 1){parkingBrake = true;}
+	else if (onOff == 0){parkingBrake = false;}
 }
 
 EBUTranslator::~EBUTranslator() {
