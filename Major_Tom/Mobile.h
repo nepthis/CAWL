@@ -12,22 +12,20 @@
 #define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
 #define GND_ADDR "192.168.2.100"
+
 #include <mutex>
 #include <chrono>
 #include <cstdint> //Who doesn't like ints?
 #include <string>	//Standard string
 #include <errno.h>	//For a huge list of errors
-#include <queue> //Used as a buffer
 #include <unistd.h>
 #include <netinet/in.h> //For UDP
 #include <netdb.h> // in_addr_t
 #include <iostream>
 
-#include"../EBU/EBUManager.h"
-#include "../Simulator/Sim.h"
+#include"EBUManager.h"
 #include "../Packets/AllPackets.h"
-#include "../EBU/EBUTranslator.h"
-
+#include "EBUTranslator.h"
 
 
 namespace Major_Tom {
@@ -41,16 +39,23 @@ namespace Major_Tom {
 class Mobile {
 public:
 	bool pleased;
+
 	Mobile();	//Constructor
+	bool startUp(bool sctp);
 	void recvGround(); 				//Receiving data from an UDP socket, port 65656
 	void sendEBUOne();
 	void sendEBUTwo();
+	void recvEBUOne();
+	void recvEBUTwo();	//Kind of, sendEBUX actualy does the receiving in order to sync data with EBUs...
 	void recvIMU();
+	void setSCTP();
 	virtual ~Mobile();							//Destructor
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
+	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
+	void sendAllStop();
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs
 	socklen_t slen;
 	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565
@@ -59,6 +64,10 @@ private:
 	struct sockaddr_in sndImuAddr;
 	Packets::AnalogOut stopPacket;
 	Packets::SimPack state;
+	Packets::AnalogIn recvAnalogOne;
+	Packets::AnalogIn recvAnalogTwo;
+	Packets::DigitalIn recvDigitalOne;
+	Packets::DigitalIn recvDigitalTwo;
 };
 
 } /* namespace Major_Tom */

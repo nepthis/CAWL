@@ -17,9 +17,9 @@ namespace Packets {
 #define AI_2	1
 #define AI_3	2
 #define AI_4	3
-#define AI_5	4
-#define AI_6	5
-#define AI_7	6
+#define AI_5	4	//For V2-ECU this is Angle sensor waist (not your waist)
+#define AI_6	5	//For V2-ECU this is Angle sensor waist (not your waist)
+#define AI_7	6	//this one is "cut" on the V2-ECU and used for the brakes from the EBU...does nothing.
 #define AI_8	7
 #define AI_9	8
 #define AI_10	9

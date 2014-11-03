@@ -7,7 +7,7 @@
 
 #include "mysqlconnector.h"
 
-namespace Db {
+namespace Netapi {
 
 mysqlconnector::mysqlconnector() {
 
@@ -17,7 +17,6 @@ mysqlconnector::mysqlconnector() {
 
 	con         = NULL;
 	driver      = NULL;
-
 
 	//Thread specific vars
 	ready       = false;
@@ -57,6 +56,7 @@ void mysqlconnector::insertWorker(){
 
 
 int mysqlconnector::start(int threads){
+	
 	try{
 		// Create a connection
 		driver = get_driver_instance();
@@ -113,15 +113,16 @@ void mysqlconnector::dbInsert(measurementData data) {
 			(std::string)(") VALUES (")		+
 			(std::string)("NULL, \'")		+
 			name+(std::string)("\', \'")	+
-			dtime+(std::string)("\', \'")   +
-			type+(std::string)("\', \'")    +
+			type+(std::string)("\', \'")   +
+			dtime+(std::string)("\', \'")    +
 			mdata+(std::string)("\', \'")   +
 			cawlId+(std::string)("\')");
 
 	// Insert into database and catch exception if any is thrown
 	try{
 		stmt->execute(quer);
-	} catch (sql::SQLException &e) {
+	} catch (sql::SQLException &e){
+		printf("%s\n",e.what());
 		throw 20;
 	}
 }

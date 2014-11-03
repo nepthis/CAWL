@@ -8,22 +8,27 @@
 #include "Ground.h"
 using namespace std;
 using namespace Packets;
+using namespace Ground_control;
 mutex m_state;
 
-Ground::Ground() {
-
+Ground::Ground(bool sctpStatus) {
+	sctpIsOn = sctpStatus;
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
-	simulator 		= new Simulator::Sim();
-	if ((grSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{
-		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
-		throw grSocket; //TBD
+	simulator 		= new Sim();
+	if(sctpIsOn){
+
+	}else{
+		//-------------------------------------UDP------------------------------------------
+		if ((grSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			perror("socket error");
+			exit(0);}
+		memset((char *)&grAddr, 0, sizeof(grAddr));
+		inet_pton(AF_INET, DEST_ADDR, &(grAddr.sin_addr));
+		grAddr.sin_port = htons(DEST_PORT);
+		//----------------------------------------------------------------------------------
 	}
-	memset((char *)&grAddr, 0, sizeof(grAddr));
-	inet_pton(AF_INET, DEST_ADDR, &(grAddr.sin_addr));
-	grAddr.sin_port = htons(DEST_PORT);
+
 }
 /*	Written by Robin Bond and modified by Håkan
  * The sendPacket method receives a packet from the simulator containing data
@@ -37,13 +42,20 @@ void Ground::sendMobile() {
 		m_state.lock();
 		temp = state;
 		m_state.unlock();
-		sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen);
+		if(sctpIsOn){
+
+		}else{
+			if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
+				perror("Ground:sendMobile");
+				exit(0);
+			}
+		}
+
 	}
 }
 void Ground::receiveSim(){
 	while(true){
 		sp = simulator->recvSim();
-
 		m_state.lock();
 		if(not (sp == state)){state = sp;}
 		m_state.unlock();

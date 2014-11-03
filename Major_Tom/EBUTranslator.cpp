@@ -10,7 +10,7 @@
 namespace EBU {
 //using namespace Packets;
 EBUTranslator::EBUTranslator() {
-	parkingBrake = true;
+	parkingBrake = false;
 }
 // Set the values in the data-struct destined for the first EBU (V-ECU)
 void EBUTranslator::setEbuOne(SimPack* sp, AnalogOut* epaoOne, DigitalOut* epdoOne) {
@@ -51,7 +51,7 @@ void EBUTranslator::setEbuTwo(SimPack* sp, AnalogOut* epaoTwo, DigitalOut* epdoT
 	//---------------------------------"Parkingbrake"--------------------------------------------
 	//This is actually not for the REAL parkingbrake, it just has the kind of same effect for now.
 	//Should be changed into the real one later on the wheel loader. Lot's of work...
-	setPBrake(sp->getDigital(PARKINGBRAKE));
+	//setPBrake(sp->getDigital(PARKINGBRAKE));
 }
 void EBUTranslator::setBoom(float value, AnalogOut* pkt) {
 	//4.5V is max, 0.5 min. signal is sent over two pins, inverted. 2.5V is "0" on both pins
@@ -77,8 +77,25 @@ void EBUTranslator::setSteer(float value, AnalogOut* pkt) {
 	pkt->setChannelValue(5.0-temp, AO_18);
 }
 void EBUTranslator::setBrake(float value, AnalogOut* pkt) {
-	float temp = value*3.0; //pretty close to max Amp for the solenoid used
-	pkt->setChannelValue(temp, AO_7);
+	//TODO: Fix intervaults, different functions for different intervaults of the input.
+	//if(not parkingBrake){
+	float temp2;
+	if((value <=0.1) && (value >= 0.0)){
+		temp2 = 11.5*value;
+		printf("small\n");
+	}
+	if((value <=0.6) && (value > 0.1)){
+		temp2 = 1.15 + 1.95*pow((value/0.6), 4.0);
+		printf("medium\n");
+	}
+	if((value <=3.1) && (value > 0.6)){
+		temp2 = 3.1;
+		printf("Fruck\n");
+	}
+	//float temp = 0.0 + 9.65*value -19.9875*pow(value,2) + 15.3125*pow(value, 3) -1.875*pow(value, 4);
+	printf("VALUE: %f \tBRAKE: %f\n",value,  temp2);
+	pkt->setChannelValue(temp2, AO_7);
+	//}
 }
 void EBUTranslator::setBrakeLight(int onOff, DigitalOut *pkt){
 	pkt->setDigitalOut(SO7_HB56, onOff);
@@ -110,8 +127,19 @@ void EBUTranslator::setPBrake(int onOff) {
 	if(onOff == 1){parkingBrake = true;}
 	else if (onOff == 0){parkingBrake = false;}
 }
+//void EBUTranslator::readEbuOne(fromEBU* data, AnalogIn* epaiOne,DigitalIn* epdiOne) {
+//	//nothing of interest to read from here...for now.
+//}
+//
+//void EBUTranslator::readEbuTwo(fromEBU* data, AnalogIn* epaiTwo,DigitalIn* epdiTwo) {
+//	//only one thing to for now...
+//
+//}
 
 EBUTranslator::~EBUTranslator() {
 }
 
+
 } /* namespace Packets */
+
+

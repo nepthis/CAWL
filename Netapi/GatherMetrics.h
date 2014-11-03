@@ -16,8 +16,9 @@
 #include <fstream>	//used for opening/reading error files from sctp
 #include <stdexcept> //used for exceptions
 #include <iostream> //for printing
-#include "MeasurementData.h"
-#include "../Db/mysqlconnector.h"
+#include <cstdio>
+//#include "MeasurementData.h"
+#include "mysqlconnector.h"
 
 #define SRTT 0
 
@@ -26,7 +27,7 @@
 namespace Netapi {
 
 class GatherMetrics {
-	Db::mysqlconnector *database = new Db::mysqlconnector();
+	Netapi::mysqlconnector *database = new Netapi::mysqlconnector();
 	bool db_init;
 public:
 	GatherMetrics();

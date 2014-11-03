@@ -21,6 +21,7 @@ EBUManager::EBUManager() {
 	slen = sizeof(struct sockaddr_in);
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
+	socketCheck = false;
 }
 EBUManager::~EBUManager() {
 }
@@ -69,7 +70,7 @@ void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
 }
 //Read this at your own risk..
 //UDP connection, must write SCTP vers
-bool EBU::EBUManager::connectToEBU() {
+bool EBU::EBUManager::setUpSockets() {
 	try{
 		//----------------------------------Sockets------------------------------------------------
 		//------------------------------------EBU 1--------------------------------------------------
@@ -163,6 +164,7 @@ bool EBU::EBUManager::connectToEBU() {
 		if (setsockopt(sockTwoDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;} //Timeout for recvfrom
 		if (setsockopt(sockTwoAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;}
 		//--------------------------------------------------------------------------------------------
+		socketCheck = true;
 		return true; //If everything has been set up successfully return true.
 	}catch (int e){
 		perror("Connecting to EBU Error");
@@ -211,3 +213,6 @@ Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
 	return digidata;
 }
 
+bool EBU::EBUManager::socketsAreChecked() {
+	return socketCheck;
+}

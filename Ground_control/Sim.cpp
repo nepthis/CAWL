@@ -5,7 +5,7 @@
  *      Author: Robin Bond
  */
 #include "Sim.h"
-using namespace Simulator;
+using namespace Ground_control;
 Sim::Sim() {
 	slen = sizeof(simAddr);
 	realID = 1;
@@ -38,7 +38,7 @@ void Sim::sendSim(Packets::ImuPack imudata) {
 	imudata.sens.packetId = 2001;
 }
 
-bool Simulator::Sim::connectToSim() {
+bool Sim::connectToSim() {
 	//Create socket for the simulator
 	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){return false;}
 	memset((char *)&simAddr, 0, slen);

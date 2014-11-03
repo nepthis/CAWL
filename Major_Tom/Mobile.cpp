@@ -41,6 +41,17 @@ Mobile::Mobile() {
 	//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
+
+}
+bool Mobile::startUp(bool sctp){
+	bool check = true;
+	sctpIsOn = sctp;
+	for (int i = 0; i< 14; i++){
+		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
+		rPackOne.er.channel[i] = 0;
+		rPackTwo.er.channel[i] = 0;
+		//printf("value in relaypack two: %i\n", rPackTwo.er.channel[i]);
+	}
 	rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
 	//rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
 	//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
@@ -61,18 +72,43 @@ Mobile::Mobile() {
 	rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
 	rPackTwo.setRelayValue(R_D12,1);		//CDC_Activation
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
+	printf("Trying to sync up for the relay packets\n");
+	try{
+		em.recvAnalogEBUOne();
+		em.recvDigitalEBUOne();
+		em.sendRelayCommand(rPackOne, 1);
+		em.recvAnalogEBUTwo();
+		em.recvDigitalEBUTwo();
+		em.sendRelayCommand(rPackTwo, 2);
+	}catch(int e){
+		perror("Error with sending relay commands");
+		check = false;
+	}
+
+	return check;
 }
 
 //This function receives UDP packets and puts them in a buffer
 void Mobile::recvGround() {
+	//TODO: IF this one fails send a STOP and BRAKE to the wheel loader and then exit.
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
-		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) <= 0){throw 13;}
-		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
-		m_State.lock();//(not (state == simpack)) &&
-		if ((state.fs.timeStamp < simpack.fs.timeStamp)){
+		if(sctpIsOn){
+
+		}else{
+			if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
+				sendAllStop();
+				errno = ENODATA;
+				perror("recvGround");
+			}
+			memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
+		}
+		//	printf("ID received: %i %tvalue received: %f\n", simpack.fs.packetId, simpack.getAnalog(LIFTSTICK));
+		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
+		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) || (simpack.fs.packetId < 200)){
 			state = simpack;
+			//printf("state changed");
 		}
 		m_State.unlock();
 	}
@@ -101,6 +137,7 @@ void Mobile::sendEBUOne() {
 			analogdummy = em.recvAnalogEBUOne();
 			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
+			//printf("State being sent value: %f\n", tempState.getAnalog(LIFTSTICK));
 		}catch(int e){
 			perror("sendEBUOne error");
 			throw e;
@@ -140,5 +177,26 @@ Mobile::~Mobile() {
 	em.sendRelayCommand(rPackTwo, 2);
 }
 
+void Major_Tom::Mobile::recvEBUOne() {
+}
 
+void Major_Tom::Mobile::recvEBUTwo() {
+}
 
+void Major_Tom::Mobile::setSCTP() {
+	sctpIsOn = true;
+}
+
+void Major_Tom::Mobile::sendAllStop() {
+	Packets::SimPack stop;
+	stop.setAnalog(BRAKEPEDAL, 3.0);
+	stop.setAnalog(LIFTSTICK, 0.0);
+	stop.setAnalog(TILTSTICK, 0.0);
+	stop.setDigital(GEARCLCREVERSE, 0);
+	stop.setDigital(GEARCLCFORWARD, 0);
+	stop.setAnalog(JOYSTICK, 0.0);
+	m_State.lock();
+	state = stop;
+	m_State.unlock();
+
+}

@@ -71,10 +71,12 @@ class EBUManager {
 	struct sockaddr_in addrTwoRelay;
 	//---------------------------------------------------------------------------------------------------------------------------------------
 	struct timeval tv; //Used for Timeout for the recvfrom
+	bool socketCheck;
 public:
 	EBUManager();
+	bool socketsAreChecked();
 	virtual ~EBUManager();
-	bool connectToEBU();
+	bool setUpSockets();
 	void sendAnalogCommand(Packets::ebuAnOut data, int ebuNum);
 	void sendDigitalCommand(Packets::EBUdigitalOut data, int ebuNum);
 	void sendRelayCommand(Packets::RelayOut, int ebuNum);

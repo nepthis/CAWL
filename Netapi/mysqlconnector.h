@@ -17,19 +17,28 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <stdio.h>
 
-#include "../Netapi/MeasurementData.h"
+//#include "../Netapi/MeasurementData.h"
 
 
 // Database credentials etc.
-#define mysql_address   "192.168.2.5"
+#define mysql_address   "127.0.0.1"
 #define port            "3306"
 #define user            "cawl"
-#define password        "gurksallad"
+#define password        "ultrasupergurksallad"
 #define db              "cawl"
 #define tbl             "tests"
 
-namespace Db {
+typedef struct measurementData{
+	std::string id;
+	std::string name;
+	std::string timeStamp;
+	std::string type;
+	std::string value;
+}measurementData;
+
+namespace Netapi {
 
 class mysqlconnector {
 public:

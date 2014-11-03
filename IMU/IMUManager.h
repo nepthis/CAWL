@@ -38,6 +38,7 @@
 #define TO_DEG 57.3
 
 //SIM SEND INCLUDES/PARAMS
+//following includes are temporary for testing
 #include <sys/socket.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -59,7 +60,7 @@
 #define GYRO_SCALE 80
 #define NEG_GYRO_Y -1
 #define FILTER_WEIGHT 18		//Value between 5-20 as per description of filter
-#define T 1/100				    //frequence for IMU
+#define T 1/100				    //frequency for IMU
 #define DEG_TO_RAD 0.0174532925
 
 namespace IMU{
@@ -157,14 +158,14 @@ private:
 	void setAngles(float accx, float accy, float accz, float gyrox, float gyroy, float gyroz);
 	void getControl();
 
-	void calibrate(int x, int y , int z);
 	void readImu();
-	void filterData();
+	void filterData(double ax, double ay, double az,
+			double gx, double gy, double gz);
 	void setData(char*);
 	void sendData();
 
-	float gyroToFloat(int value){return (value/GYRO_SCALE)*(M_PI/180);}
-	float accToFloat(int value){return value*(MAX_VOLTAGE/SENSITIVITY)/(RESOLUTION_ACC-1);}
+	double gyroToFloat(int value){return (value/GYRO_SCALE)*(M_PI/180);}
+	double accToFloat(int value){return value*(MAX_VOLTAGE/SENSITIVITY)/(RESOLUTION_ACC-1);}
 };
 }
 

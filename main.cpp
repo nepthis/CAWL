@@ -24,13 +24,15 @@ void INT_handler(int dummy){
 	exit(EXIT_SUCCESS);
 }
 using namespace std;
+using namespace Ground_control;
 
-typedef struct state{
+typedef struct States{
 	bool ip = false;
 	bool sctp, udp = false;
 	std::string mode = "empty";
 	std::vector<std::string>  ipAddr;
 }State;
+
 bool checkIP(char *ipAddress){
 	struct sockaddr_in temp;
 	if( inet_pton(AF_INET, ipAddress, &(temp.sin_addr))){return true;}
@@ -50,15 +52,15 @@ int setInput(int argc, char * args[], State * s){
 		printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
 	return 0;
 }
-void startUp(State * s){
-	int rtMobile = RETRIES;
+void start(State * s){
+	int retr = RETRIES;
 	int rtGround = RETRIES;
 	if(s->mode == "ground"){
 		Ground* gc =  new  Ground(); //(char*)"192.168.2.5",(char*) "192.168.2.100"
-		while(rtGround){
+		while(retr){
 			if (gc->simulator->connectToSim() != connected){
 				printf("Socket for simulator failed, retrying in %i seconds\n", TIMEOUT);
-				rtGround--;
+				retr--;
 				sleep(TIMEOUT);
 			}else{
 				try{
@@ -79,34 +81,31 @@ void startUp(State * s){
 	}
 	if(s->mode=="mobile"){
 		Major_Tom::Mobile *major = new Major_Tom::Mobile(); //make into input args later
-		while(rtMobile){
-			if(not major->em.connectToEBU()){
-				printf("Connecting to EBUs failed, retrying in %i seconds\n", TIMEOUT);
-				rtMobile--;
-				sleep(TIMEOUT);
-			}else{
-				try{
-					printf("Trying to sync up for the relay packets\n");
-					major->em.recvAnalogEBUOne();
-					major->em.recvDigitalEBUOne();
-					major->em.sendRelayCommand(major->rPackOne, 1);
-					major->em.recvAnalogEBUTwo();
-					major->em.recvDigitalEBUTwo();
-					major->em.sendRelayCommand(major->rPackTwo, 2);
-					printf("Starting threads.\n");
-					std::thread m1(&Major_Tom::Mobile::recvGround, major);
-					std::thread m2(&Major_Tom::Mobile::sendEBUOne, major);
-					std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
-					m1.join();
-					m2.join();
-					m3.join();
-				}catch(int e){
-					major->pleased = true;
-					printf("Error number: %i\n", e);
-					perror("Description: ");
-					exit(-1);
+		while(retr){
+			if(not major->em.socketsAreChecked()){	//I know, nested if is ugly but meh. I am lazy with this thing.
+				if(not major->em.setUpSockets()){printf("Error setting up sockets...Exiting\n");exit(1);}
+			}else
+				if(not major->startUp(false)){ //The bool should be sctp variable in status.
+					printf("Sending relay data failed, retrying in %i seconds\n", TIMEOUT);
+					retr--;
+					sleep(TIMEOUT);
+					continue;
+				}else{
+					try{
+						printf("Relaypackets sent\n");
+						printf("Starting threads.\n");
+						std::thread m1(&Major_Tom::Mobile::recvGround, major);
+						std::thread m2(&Major_Tom::Mobile::sendEBUOne, major);
+						std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
+						m1.join();
+						m2.join();
+						m3.join();
+					}catch(int e){
+						major->pleased = true;
+						perror("Description");
+						exit(-1);
+					}
 				}
-			}
 		}
 	}
 }
@@ -117,7 +116,7 @@ int main(int argc, char * args[]){
 		printf("ERROR parsing input\n");
 		exit(1);
 	}
-	startUp(&s);
+	start(&s);
 
 	return 1;
 }

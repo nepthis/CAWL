@@ -29,11 +29,11 @@
 #include <errno.h>	//For raising errors
 #include <cstring>
 //Own classes are included here
-#include "../Simulator/Sim.h"
+#include "Sim.h"
 #include "../Packets/AllPackets.h"
 
 
-
+namespace Ground_control {
 /*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
  * 	and to translate packages from the simulator into packets for the EBU and then to send
  * 	them to the Mobile gateway using a CawlSocket.
@@ -44,6 +44,7 @@ class Ground {
 private:
 	int grSocket;
 	int recImuSocket;
+	bool sctpIsOn;
 	socklen_t slen;
 	struct sockaddr_in grAddr;
 	struct sockaddr_in recImuAddr;
@@ -52,12 +53,12 @@ private:
 	Packets::ImuPack imuState;
 
 public:
-	Simulator::Sim* simulator;
-	Ground();
+	Ground_control::Sim* simulator;
+	Ground(bool sctpStatus);
 	void receiveImuPacket();
 	void sendMobile();
 	void receiveSim();
 	virtual ~Ground();
 };
-
+}
 #endif /* GROUND_H_ */

@@ -12,31 +12,25 @@ std::mutex data_lock;
 IMU::IMUManager::IMUManager() {
 	imuinit = true;
 	conn = false;
-	offset_accx = 0;
-	offset_accy = 0;
-	offset_accz = 0;
-	bufsize = 0;
+
+	bufsize = imuinitn = 0;
+
+	offset_accx = offset_accy = offset_accz = 0;
+	old.accx = old.accy = old.accz = 0;
+	old.gyrox = old.gyroy = old.gyroz = 0;
+
 	devid = -1;
-	old.accx = 0;
-	old.accy = 0;
-	old.accz = 0;
-	old.gyrox = 0;
-	old.gyroy = 0;
-	old.gyroz = 0;
-	imuinitn = 0;
 
 	init();
 }
 
-
 /*
- * Start the interfacing the IMU
+ * Start interfacing the IMU using rs232
  */
 int IMU::IMUManager::init() {
 	while(devid<0){
 		devid = getDev();
 		if(devid == -1){sleep(5);}
-
 	}
 
 	if(RS232_OpenComport(devid, BAUD)) {
@@ -46,15 +40,15 @@ int IMU::IMUManager::init() {
 	}
 
 	// Used for testing simulator!!
-	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
-		return 1;
-	}
-
-	memset((char *)&simAddr, 0, sizeof(simAddr));
-	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
-	simAddr.sin_port = htons(SIM_PORTEN);
+//	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+//		perror("socket error");
+//		printf ("Error number is: %s\n",strerror(errno));
+//		return 1;
+//	}
+//
+//	memset((char *)&simAddr, 0, sizeof(simAddr));
+//	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
+//	simAddr.sin_port = htons(SIM_PORTEN);
 	//end
 
 	std::thread t1 (&IMU::IMUManager::readImu, this);
@@ -67,11 +61,10 @@ int IMU::IMUManager::init() {
 }
 
 /*
- * Used to see what IMU if any and to recieve it's
+ * Used to see what IMU if any is connected and to recieve it's
  * full devicename not the device path included
- * Checks dev_id vector for usable id's
- *
- *  Todo Cleanup less variables...
+ * Checks dev_id vector for usable id's. Also sets stored offsets
+ * for IMU
  *
  */
 int IMU::IMUManager::getDev() {
@@ -96,10 +89,9 @@ int IMU::IMUManager::getDev() {
 				std::size_t f = devtmp.find(tmp);
 				if(static_cast<int>(f) != -1){
 					full_device_name = devtmp;
-					calibrate(
-							std::get<1>(dev_id[i]),
-							std::get<2>(dev_id[i]),
-							std::get<3>(dev_id[i]));
+					offset_accx = std::get<1>(dev_id[i]);
+					offset_accy = std::get<2>(dev_id[i]);
+					offset_accz = std::get<3>(dev_id[i]);
 				}
 			}
 		}
@@ -113,23 +105,11 @@ int IMU::IMUManager::getDev() {
 		closedir(d);
 		return -1;
 	}
-
 }
 
 
-
-
 /*
- * ?
- */
-void IMU::IMUManager::calibrate(int x, int y , int z) {
-	offset_accx = x;
-	offset_accy = y;
-	offset_accz = z;
-}
-
-/*
- *?
+ * Used to get a 22 byte command from the IMU
  */
 void IMU::IMUManager::readImu() {
 	int n,t=0;
@@ -149,7 +129,6 @@ void IMU::IMUManager::readImu() {
 				i--;
 				usleep(IMU_TIMEOUT);
 			}
-
 		}
 		memset(&buf,0,22);
 
@@ -158,7 +137,7 @@ void IMU::IMUManager::readImu() {
 			t=t+n;
 			uint32_t gyrox = 0;
 
-			/* Spår utskrift för bitrepresentaiton av kommandon
+			/* Trace print to get command from IMU
 			const char* beg = reinterpret_cast<const char*>(&buf);
 			const char* end = beg + sizeof(buf);
 			while(beg != end){
@@ -215,20 +194,43 @@ void IMU::IMUManager::setData(char* command) {
 	actemp = __builtin_bswap16(actemp);
 	accz = (actemp - getzoffset()) >> 2;
 
+	filterData(accToFloat(accx), accToFloat(accy), accToFloat(accz),
+			gyroToFloat(gyrox), gyroToFloat(gyroy*NEG_GYRO_Y), gyroToFloat(gyroz));
 
-	data_lock.lock();
-	imudata.gyrox = gyroToFloat(gyrox);
-	imudata.gyroy = gyroToFloat(gyroy*NEG_GYRO_Y);//*NEG_GYRO_Y; //Inverted placement on board
-	imudata.gyroz = gyroToFloat(gyroz);
-	imudata.accx  = accToFloat(accx);
-	imudata.accy  = accToFloat(accy);
-	imudata.accz  = accToFloat(accz);
-	filterData();
-	data_lock.unlock();
 }
 
+
+
+void IMU::IMUManager::filterData(double ax, double ay, double az,
+		double gx, double gy, double gz) {
+
+	double accx = (ax*FILTER_RATIO_A)+(old.accx*(1-FILTER_RATIO_A));
+	double accy = (ay*FILTER_RATIO_A)+(old.accy*(1-FILTER_RATIO_A));
+	double accz = (az*FILTER_RATIO_A)+(old.accz*(1-FILTER_RATIO_A));
+	double gyrox= (gx*(FILTER_RATIO_G))+(old.gyrox*(1-FILTER_RATIO_G));
+	double gyroy= (gy*(FILTER_RATIO_G))+(old.gyroy*(1-FILTER_RATIO_G));
+	double gyroz= (gz*(FILTER_RATIO_G))+(old.gyroz*(1-FILTER_RATIO_G));
+
+	data_lock.lock();
+	imudata.accx = accx;
+	imudata.accy = accy;
+	imudata.accz = accz;
+	imudata.gyrox= gyrox;
+	imudata.gyroy= gyroy;
+	imudata.gyroz= gyroz;
+	data_lock.unlock();
+
+	old.accx = accx;
+	old.accy = accy;
+	old.accz = accz;
+	old.gyrox= gyrox;
+	old.gyroy= gyroy;
+	old.gyroz= gyroz;
+}
+
+
 /*
- * ?
+ * Reads data and calls filter
  */
 void IMU::IMUManager::getControl() {
 	while(1){
@@ -248,15 +250,13 @@ void IMU::IMUManager::getControl() {
 			setAngles(accx,accy,accz,gyrox,gyroy,gyroz);
 		}
 		usleep(1000000/100);
-
-
-		//Spårutskrifter
-		//usleep(50000);
-		//std::cout << "X: "<< accx << " Y: " << accy << " Z: " << accz << std::endl;
-		//std::cout << "X: "<<gyrox << " Y: " <<gyroy << " Z: " <<gyroz << std::endl;
-		//std::cout << std::endl;
 	}
 }
+
+/*
+ * Used to sensorfuse gyro and acc and get angles, and linear acc.
+ * Needs to be rewritten.
+ */
 
 void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 		float gyrox, float gyroy, float gyroz) {
@@ -334,10 +334,6 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 
 	imupack.setSensorDataValue(YAW,0);  // Use gyroz ?
 
-	/* To be implemented... use highpass filter
-	 *acc_vectors - g_vectors might work according to BSON?
-	 */
-	// ????????????????????? Must test max of rigg ?????????????????????
 	linear_accx = (raccxn - rest[R_X]);
 	linear_accy = linear_accx*LIN_FILT + (raccyn - rest[R_Y])*(1-LIN_FILT);
 	linear_accz = linear_accx*LIN_FILT + (racczn - rest[R_Z])*(1-LIN_FILT);
@@ -366,35 +362,15 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	//printf("accx:%f  accy:%f accz:%f\n",accx,accy,accz);
 
 	//Trace: IMUPack data
-	printf("ROLL: %f PITCH: %f \n",imupack.getSensorDataValue(ROLL),imupack.getSensorDataValue(PITCH));
+	//printf("ROLL: %f PITCH: %f \n",imupack.getSensorDataValue(ROLL),imupack.getSensorDataValue(PITCH));
 
 	//Used for simulator test
-	sendData();
+	//sendData();
 }
 
-void IMU::IMUManager::filterData() {
-
-	float accx = (imudata.accx*FILTER_RATIO_A)+(old.accx*(1-FILTER_RATIO_A));
-	float accy = (imudata.accy*FILTER_RATIO_A)+(old.accy*(1-FILTER_RATIO_A));
-	float accz = (imudata.accz*FILTER_RATIO_A)+(old.accz*(1-FILTER_RATIO_A));
-	float gyrox= (imudata.gyrox*(FILTER_RATIO_G))+(old.gyrox*(1-FILTER_RATIO_G));
-	float gyroy= (imudata.gyroy*(FILTER_RATIO_G))+(old.gyroy*(1-FILTER_RATIO_G));
-	float gyroz= (imudata.gyroz*(FILTER_RATIO_G))+(old.gyroz*(1-FILTER_RATIO_G));
-
-	imudata.accx = accx;
-	imudata.accy = accy;
-	imudata.accz = accz;
-	imudata.gyrox= gyrox;
-	imudata.gyroy= gyroy;
-	imudata.gyroz= gyroz;
-
-	old.accx = imudata.accx;
-	old.accy = imudata.accy;
-	old.accz = imudata.accz;
-	old.gyrox =imudata.gyrox;
-	old.gyroy =imudata.gyroy;
-	old.gyroz =imudata.gyroz;
-}
+/*
+ * Used to send data to Oryx platform in testing purposes
+ */
 
 void IMU::IMUManager::sendData() {
 	sendto(simsock, (char*)&imupack.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));

@@ -38,7 +38,7 @@
 #define PACKET_ID 2001
 #define PACKET_SIZE 32
 
-namespace Simulator{
+namespace Ground_control{
 /*	The Simulator class Sim is responsible for the communication from (to the motion server later) the simulator.
  * 	Packages from the simulator are received with UDP and will be put into a SimPacket which contains the struct
  * 	for the data received.
