@@ -58,7 +58,7 @@ Netapi::cawl::cawl(int socket) {
 	if(setsockopt(socket, SOL_SCTP, SCTP_ASSOCINFO , &assoc, sizeof(assoc)) != 0){
 		::exit(EXIT_FAILURE);
 	}
-	printf("hej±n");
+
 	/*
 	 * PF_RETRANS, Not available through socket or sysctl.h
 	 * need to recompile sctp with new source update kernel etc.
