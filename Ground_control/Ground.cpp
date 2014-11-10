@@ -17,6 +17,12 @@ Ground::Ground(bool sctpStatus) {
 	sp 				=  SimPack();
 	simulator 		= new Sim();
 	if(sctpIsOn){
+		//------------------------------------SCTP------------------------------------------
+		//		sockaddr_in addrSCTP = {0};
+		//		sctp_sndrcvinfo sinfoSCTP = {0};
+		//		sctp_event_subscribe eventSCTP = {0};
+		//		pRecvBuffer[RECVBUFSIZE + 1] = {0};
+		//		//MORE
 
 	}else{
 		//-------------------------------------UDP------------------------------------------
@@ -67,13 +73,16 @@ void Ground::receiveSim(){
  */
 void Ground::receiveImuPacket(){
 	char buffer[255];
-	try{
-		ImuPack imp = ImuPack();
-		recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen);
-		memcpy(&imp.sens, buffer, sizeof(imp.sens));
-	}catch(int e){
-		throw e;
+	while(true){
+		try{
+			ImuPack imp = ImuPack();
+			recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen);
+			memcpy(&imp.sens, buffer, sizeof(imp.sens));
+		}catch(int e){
+			perror("Ground:receiveImuPacket");
+		}
 	}
+
 }
 
 

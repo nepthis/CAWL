@@ -15,37 +15,41 @@ mutex m_Sendstate;
  * 	For now sending data back over the CawlSocket is not performed but when it
  * 	is a separate socket for sending the data will be used.
  */
-Mobile::Mobile() {
+Mobile::Mobile(bool sctp) {
+	sctpIsOn = sctp;
 	et = EBU::EBUTranslator();
-	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
 	slen = sizeof(mobAddr);
-	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){throw 13;}
-	memset((char *)&mobAddr, 0, slen);
-	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){throw 13;}
-	mobAddr.sin_port = htons(REC_PORT);
-	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {throw 13;}
-	struct timeval tv;
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {throw 13;}
+	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
+	if (sctpIsOn){
 
+	}else{
+		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){perror("Mobile:Constructor");throw 13;}
+		memset((char *)&mobAddr, 0, slen);
+		if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");throw 13;}
+		mobAddr.sin_port = htons(REC_PORT);
+		if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {perror("Mobile:Constructor");throw 13;}
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {perror("Mobile:Constructor");throw 13;}
+	}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
-	//	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-	//		perror("socket error");
-	//		printf ("Error number is: %s\n",strerror(errno));
-	//		throw sndImuSocket; //TBD
-	//	}
-	//	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
-	//	inet_pton(AF_INET, GND_ADDR, &(sndImuAddr.sin_addr));
-	//	sndImuAddr.sin_port = htons(IMU_PORT);
+	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		exit(1); //instead count error flag up, if > than certain level exit
+	}
+	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
+	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
+	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	pleased = false;
 
 }
-bool Mobile::startUp(bool sctp){
+bool Mobile::startUp(){
 	bool check = true;
-	sctpIsOn = sctp;
+
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
 		rPackOne.er.channel[i] = 0;
@@ -91,11 +95,12 @@ bool Mobile::startUp(bool sctp){
 //This function receives UDP packets and puts them in a buffer
 void Mobile::recvGround() {
 	//TODO: IF this one fails send a STOP and BRAKE to the wheel loader and then exit.
+	//DON'T FORGET TO MAKE A SAFE-CHECK ON THE RECEIVED DATA!!!
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
 		if(sctpIsOn){
-
+			//DO SCTP STUFF
 		}else{
 			if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
 				sendAllStop();
@@ -116,6 +121,16 @@ void Mobile::recvGround() {
 /*	Receives data from an IMUHandler and puts it into a state.
  */
 void Mobile::recvIMU() {
+	IMU::IMUManager imm = IMU::IMUManager(true, false);
+	ImuPack imp;
+	while(not pleased){
+		usleep(1000);
+		imp = imm.getImuPack();
+		if(sendto(sndImuSocket, (char*)&imp.sens, sizeof(imp.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
+			perror("Ground:sendMobile");
+			exit(0);
+		}
+	}
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
  * 	the ebuManager. This method is designed to be started as a thread.
@@ -141,6 +156,8 @@ void Mobile::sendEBUOne() {
 		}catch(int e){
 			perror("sendEBUOne error");
 			throw e;
+			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
+			//operations
 		}
 
 	}
@@ -164,20 +181,24 @@ void Mobile::sendEBUTwo() {
 		}catch(int e){
 			perror("sendEBUTwo error");
 			throw e;
+			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
+			//operations
 		}
 
 	}
 }
 
 Mobile::~Mobile() {
-	em.sendAnalogCommand(stopPacket.getChannel(), 1);
-	rPackOne = RelayOut();
-	rPackTwo = RelayOut();
-	em.sendRelayCommand(rPackOne, 1);
-	em.sendRelayCommand(rPackTwo, 2);
+	//	em.sendAnalogCommand(stopPacket.getChannel(), 1);
+	//	rPackOne = RelayOut();
+	//	rPackTwo = RelayOut();
+	sendAllStop();
+	//em.sendRelayCommand(rPackOne, 1);
+	//em.sendRelayCommand(rPackTwo, 2);
 }
 
 void Major_Tom::Mobile::recvEBUOne() {
+
 }
 
 void Major_Tom::Mobile::recvEBUTwo() {

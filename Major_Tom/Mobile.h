@@ -12,6 +12,7 @@
 #define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
 #define GND_ADDR "192.168.2.100"
+#define DESTI_ADDR "10.0.0.199"
 
 #include <mutex>
 #include <chrono>
@@ -26,6 +27,7 @@
 #include"EBUManager.h"
 #include "../Packets/AllPackets.h"
 #include "EBUTranslator.h"
+#include "../IMU/IMUManager.h"
 
 
 namespace Major_Tom {
@@ -40,8 +42,8 @@ class Mobile {
 public:
 	bool pleased;
 
-	Mobile();	//Constructor
-	bool startUp(bool sctp);
+	Mobile(bool sctp);	//Constructor
+	bool startUp();
 	void recvGround(); 				//Receiving data from an UDP socket, port 65656
 	void sendEBUOne();
 	void sendEBUTwo();
@@ -49,13 +51,14 @@ public:
 	void recvEBUTwo();	//Kind of, sendEBUX actualy does the receiving in order to sync data with EBUs...
 	void recvIMU();
 	void setSCTP();
+	void sendAllStop();
 	virtual ~Mobile();							//Destructor
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
-	void sendAllStop();
+
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs
 	socklen_t slen;
 	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565

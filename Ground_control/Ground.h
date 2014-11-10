@@ -10,7 +10,8 @@
 #define GROUND_H_
 
 #define DEST_PORT 56565
-#define DEST_ADDR "192.168.2.199"
+#define DEST_ADDR		"192.168.2.199"
+#define RECVBUFSIZE	255
 
 
 #include <chrono>
@@ -34,23 +35,32 @@
 
 
 namespace Ground_control {
-/*	The class ground is responsible for maintaining a connection with the simulator (sim.h)
- * 	and to translate packages from the simulator into packets for the EBU and then to send
- * 	them to the Mobile gateway using a CawlSocket.
+/*	The class ground is responsible for maintaining a connection with the simulator (sim.h).
  * 	The methods startReceive and startSend are started are made for being started in threads
- * 	and will keep on receiving packages from the simulator and sending them over the cawlsocket.
+ * 	and will keep on receiving packages from the simulator and sending them over the cawlsocket or an UDP socket.
  */
 class Ground {
 private:
+	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;
 	bool sctpIsOn;
 	socklen_t slen;
+	//------------------UDP------------------
 	struct sockaddr_in grAddr;
 	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
 	Packets::ImuPack imuState;
+	//----------------------SCTP---------------------
+//	char pRecvBuffer[RECVBUFSIZE + 1];
+//	struct sockaddr_in addrSCTP;
+//	struct sctp_sndrcvinfo sinfoSCTP;
+//	struct sctp_event_subscribe eventSCTP;
+//	char * szAddress;
+//	int sctpPort;
+//	char * szMsg;
+//	int iMsgSize;
 
 public:
 	Ground_control::Sim* simulator;

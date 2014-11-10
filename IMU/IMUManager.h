@@ -84,11 +84,11 @@ public:
 	IMUManager(bool imu_rec, bool sim_snd);
 	virtual ~IMUManager();
 
-	void setImuPack(Packets::ImuPack imu){imupack = imu;}
-	Packets::ImuPack getImuPack(){return imupack;}
+	void setImuPack(Packets::ImuPack imu);
+	Packets::ImuPack getImuPack();
 
 
-	bool connected(){return conn;}
+	bool isConnected();
 	bool 			conn;
 
 private:

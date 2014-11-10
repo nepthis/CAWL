@@ -115,7 +115,9 @@ int IMU::IMUManager::getDev() {
 	}
 }
 
-
+void IMU::IMUManager::setImuPack(Packets::ImuPack imu){imupack = imu;}
+Packets::ImuPack IMU::IMUManager::getImuPack(){return imupack;}
+bool IMU::IMUManager::isConnected(){return conn;}
 /*
  * Used to get a 22 byte command from the IMU
  */

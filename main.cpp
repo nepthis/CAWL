@@ -38,7 +38,7 @@ bool checkIP(char *ipAddress){
 	if( inet_pton(AF_INET, ipAddress, &(temp.sin_addr))){return true;}
 	else{return false;}
 }
-int setInput(int argc, char * args[], State * s){
+int checkInput(int argc, char * args[], State * s){
 	for(int i = 1; i < argc; i++){
 		if ((((std::string)args[i] == "ground") ||((std::string)args[i] == "mobile") ) && (s->mode == "empty"))
 		{s->mode = (std::string)args[i];continue;}
@@ -56,7 +56,7 @@ void start(State * s){
 	int retr = RETRIES;
 	int rtGround = RETRIES;
 	if(s->mode == "ground"){
-		Ground* gc =  new  Ground(); //(char*)"192.168.2.5",(char*) "192.168.2.100"
+		Ground* gc =  new  Ground(s->sctp); //(char*)"192.168.2.5",(char*) "192.168.2.100"
 		while(retr){
 			if (gc->simulator->connectToSim() != connected){
 				printf("Socket for simulator failed, retrying in %i seconds\n", TIMEOUT);
@@ -80,12 +80,12 @@ void start(State * s){
 		}
 	}
 	if(s->mode=="mobile"){
-		Major_Tom::Mobile *major = new Major_Tom::Mobile(); //make into input args later
+		Major_Tom::Mobile *major = new Major_Tom::Mobile(s->sctp); //make into input args later
 		while(retr){
 			if(not major->em.socketsAreChecked()){	//I know, nested if is ugly but meh. I am lazy with this thing.
 				if(not major->em.setUpSockets()){printf("Error setting up sockets...Exiting\n");exit(1);}
 			}else
-				if(not major->startUp(false)){ //The bool should be sctp variable in status.
+				if(not major->startUp()){ //The bool should be sctp variable in status.
 					printf("Sending relay data failed, retrying in %i seconds\n", TIMEOUT);
 					retr--;
 					sleep(TIMEOUT);
@@ -101,8 +101,10 @@ void start(State * s){
 						m2.join();
 						m3.join();
 					}catch(int e){
+						major->sendAllStop();
 						major->pleased = true;
-						perror("Description");
+						perror("Main: Mobile");
+						printf("Exiting\n");
 						exit(-1);
 					}
 				}
@@ -112,11 +114,11 @@ void start(State * s){
 int main(int argc, char * args[]){
 	signal(SIGINT, INT_handler);	//When exiting with ctrl+c
 	State s;
-	if(not (setInput(argc, args,& s) == 0)){
+	if(not (checkInput(argc, args,& s) == 0)){
 		printf("ERROR parsing input\n");
 		exit(1);
+	}else{
+		start(&s);
 	}
-	start(&s);
-
 	return 1;
 }
