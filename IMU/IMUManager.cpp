@@ -8,6 +8,7 @@
 
 
 std::mutex data_lock;
+std::mutex imupack_lock;
 
 IMU::IMUManager::IMUManager(bool imu_rec, bool sim_snd) {
 	imuinit = true;
@@ -328,26 +329,31 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	double pitch= acos(rest[R_Y]) - M_PI / 2;
 
 	// set imupack
-	imupack.setSensorDataValue(ROLL,
+	temppack.setSensorDataValue(ROLL,
 			fabs(roll) > M_PI/6 ?
 					copysign(M_PI/6,roll) :
 					roll);
 
-	imupack.setSensorDataValue(PITCH,
+	temppack.setSensorDataValue(PITCH,
 			fabs(pitch)>M_PI/6 ?
 					copysign(M_PI/6,pitch) :
 					pitch);
 
-	imupack.setSensorDataValue(YAW,0);  // Use gyroz ?
+	temppack.setSensorDataValue(YAW,0);  // Use gyroz ?
 
 	linear_accx = (raccxn - rest[R_X]);
 	linear_accy = linear_accx*LIN_FILT + (raccyn - rest[R_Y])*(1-LIN_FILT);
 	linear_accz = linear_accx*LIN_FILT + (racczn - rest[R_Z])*(1-LIN_FILT);
 
-	imupack.setSensorDataValue(HEAVE,0);
-	imupack.setSensorDataValue(SWAY,0);
-	imupack.setSensorDataValue(SURGE,0);
-	imupack.stampTime();
+	temppack.setSensorDataValue(HEAVE,0);
+	temppack.setSensorDataValue(SWAY,0);
+	temppack.setSensorDataValue(SURGE,0);
+	temppack.stampTime();
+
+	imupack_lock.lock();
+	imupack = temppack;
+	imupack_lock.unlock();
+
 
 	//Trace: Data from IMU in deg. (acc + gyro)
 	//printf("%f   %f   %f \n", (acos(rest[R_X])*57.3),(acos(rest[R_Y])*57.3),acos(rest[R_Z])*57.3);
@@ -378,10 +384,15 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 
 void IMU::IMUManager::sendData() {
 	// Wait for first data
+	Packets::ImuPack temp;
 	sleep(5);
 
 	while(1){
-		sendto(simsock, (char*)&imupack.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
+		imupack_lock.lock();
+		temp = imupack;
+		imupack_lock.unlock();
+
+		sendto(simsock, (char*)&temp.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
 
 		// Busy wait, SIM_FREQ frequency platform recieves packages
 		usleep(1000000/SIM_FREQ);

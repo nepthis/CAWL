@@ -81,12 +81,18 @@ class IMUManager{
 public:
 	IMUManager(bool imu_rec, bool sim_snd);
 	virtual ~IMUManager();
-	Packets::ImuPack imupack;
+
+	void setImuPack(Packets::ImuPack imu){imupack = imu;}
+	Packets::ImuPack getImuPack(){return imupack;}
+
 
 	bool connected(){return conn;}
 	bool 			conn;
 
 private:
+	Packets::ImuPack imupack;
+	Packets::ImuPack temppack;
+
 	int 			devid;
 	int 			offset_accx;
 	int 			offset_accy;
