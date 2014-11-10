@@ -325,8 +325,8 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	rest[R_Y] = rest[R_Y]/r;
 	rest[R_Z] = rest[R_Z]/r;
 
-	double roll = acos(rest[R_X]) - M_PI / 2;
-	double pitch= acos(rest[R_Y]) - M_PI / 2;
+	double roll = (acos(rest[R_X]) - M_PI / 2)*DAMPER;
+	double pitch= (acos(rest[R_Y]) - M_PI / 2)*DAMPER;
 
 	// set imupack
 	temppack.setSensorDataValue(ROLL,

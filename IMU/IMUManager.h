@@ -31,6 +31,8 @@
 #include <arpa/inet.h>
 #include <cstring>
 
+#define DAMPER 0.1
+
 #define BAUD 500000
 #define PATH "/dev/serial/by-id/"
 #define BUFFER_SIZE 1024
