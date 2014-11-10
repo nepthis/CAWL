@@ -28,6 +28,7 @@
 #include "../Packets/AllPackets.h"
 #include "EBUTranslator.h"
 #include "../IMU/IMUManager.h"
+#include "../logger.h"
 
 
 namespace Major_Tom {
@@ -41,7 +42,6 @@ namespace Major_Tom {
 class Mobile {
 public:
 	bool pleased;
-
 	Mobile(bool sctp);	//Constructor
 	bool startUp();
 	void recvGround(); 				//Receiving data from an UDP socket, port 65656

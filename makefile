@@ -1,7 +1,7 @@
 CC=c++
 CFLAGS=-c -Wall
 LDFLAGS=-lmysqlcppconn -L/usr/local/lib -lsctp -pthread -std=c++11
-SOURCES=main.cpp Major_Tom/*.cpp Ground_control/*.cpp Packets/*.cpp Netapi/*.cpp Ground_control/*.c IMU/*.cpp
+SOURCES=main.cpp Major_Tom/*.cpp Ground_control/*.cpp Packets/*.cpp Netapi/*.cpp Ground_control/*.c IMU/*.cpp logger.cpp
 EXECUTABLE=cawl
 
 all: cawl

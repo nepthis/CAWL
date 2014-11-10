@@ -32,6 +32,8 @@
 //Own classes are included here
 #include "Sim.h"
 #include "../Packets/AllPackets.h"
+#include "../IMU/IMUManager.h"
+#include "../logger.h"
 
 
 namespace Ground_control {
@@ -51,7 +53,6 @@ private:
 	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
-	Packets::ImuPack imuState;
 	//----------------------SCTP---------------------
 //	char pRecvBuffer[RECVBUFSIZE + 1];
 //	struct sockaddr_in addrSCTP;
@@ -68,6 +69,7 @@ public:
 	void receiveImuPacket();
 	void sendMobile();
 	void receiveSim();
+	void sendImuPacket();
 	virtual ~Ground();
 };
 }

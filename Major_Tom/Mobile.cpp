@@ -23,21 +23,22 @@ Mobile::Mobile(bool sctp) {
 	if (sctpIsOn){
 
 	}else{
-		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){perror("Mobile:Constructor");throw 13;}
+		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
 		memset((char *)&mobAddr, 0, slen);
-		if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");throw 13;}
+		if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
 		mobAddr.sin_port = htons(REC_PORT);
-		if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {perror("Mobile:Constructor");throw 13;}
+		if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
 		struct timeval tv;
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
-		if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {perror("Mobile:Constructor");throw 13;}
+		if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
 	}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
 	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
+		logError(strerror(errno));
+
 		exit(1); //instead count error flag up, if > than certain level exit
 	}
 	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
@@ -85,7 +86,8 @@ bool Mobile::startUp(){
 		em.recvDigitalEBUTwo();
 		em.sendRelayCommand(rPackTwo, 2);
 	}catch(int e){
-		perror("Error with sending relay commands");
+		//perror("Error with sending relay commands");
+		logError(strerror(errno));
 		check = false;
 	}
 
@@ -99,16 +101,16 @@ void Mobile::recvGround() {
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
-		if(sctpIsOn){
-			//DO SCTP STUFF
-		}else{
-			if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
-				sendAllStop();
-				errno = ENODATA;
-				perror("recvGround");
-			}
-			memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
+		//if(sctpIsOn){
+		//DO SCTP STUFF
+		//}else{
+		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
+			sendAllStop();
+			errno = ENODATA;
+			logError(strerror(errno));
 		}
+		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
+		//}
 		//	printf("ID received: %i %tvalue received: %f\n", simpack.fs.packetId, simpack.getAnalog(LIFTSTICK));
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
 		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) || (simpack.fs.packetId < 200)){
@@ -126,8 +128,10 @@ void Mobile::recvIMU() {
 	while(not pleased){
 		usleep(1000);
 		imp = imm.getImuPack();
+		logVerbose("IMUdata received");
 		if(sendto(sndImuSocket, (char*)&imp.sens, sizeof(imp.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
 			perror("Ground:sendMobile");
+			logError(strerror(errno));
 			exit(0);
 		}
 	}
@@ -155,6 +159,7 @@ void Mobile::sendEBUOne() {
 			//printf("State being sent value: %f\n", tempState.getAnalog(LIFTSTICK));
 		}catch(int e){
 			perror("sendEBUOne error");
+			logError(strerror(errno));
 			throw e;
 			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
 			//operations
@@ -180,6 +185,7 @@ void Mobile::sendEBUTwo() {
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 		}catch(int e){
 			perror("sendEBUTwo error");
+			logError(strerror(errno));
 			throw e;
 			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
 			//operations

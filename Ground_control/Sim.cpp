@@ -5,6 +5,7 @@
  *      Author: Robin Bond
  */
 #include "Sim.h"
+#include "../logger.h"
 using namespace Ground_control;
 Sim::Sim() {
 	slen = sizeof(simAddr);
@@ -23,7 +24,7 @@ Packets::SimPack Sim::recvSim(void) {
 	char recbuf[255];
 	Packets::SimPack simpack;
 	if(recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen)<0){
-		//logga fel
+		logError("Sim -> recvSim: could not receive data");
 		exit(1);
 	}
 	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
