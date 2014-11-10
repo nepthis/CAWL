@@ -9,7 +9,7 @@
 
 std::mutex data_lock;
 
-IMU::IMUManager::IMUManager() {
+IMU::IMUManager::IMUManager(bool imu_rec, bool sim_snd) {
 	imuinit = true;
 	conn = false;
 
@@ -21,13 +21,13 @@ IMU::IMUManager::IMUManager() {
 
 	devid = -1;
 
-	init();
+	init(imu_rec,sim_snd);
 }
 
 /*
  * Start interfacing the IMU using rs232
  */
-int IMU::IMUManager::init() {
+int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
 	while(devid<0){
 		devid = getDev();
 		if(devid == -1){sleep(5);}
@@ -40,22 +40,29 @@ int IMU::IMUManager::init() {
 	}
 
 	// Used for testing simulator!!
-//	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-//		perror("socket error");
-//		printf ("Error number is: %s\n",strerror(errno));
-//		return 1;
-//	}
-//
-//	memset((char *)&simAddr, 0, sizeof(simAddr));
-//	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
-//	simAddr.sin_port = htons(SIM_PORTEN);
-	//end
+	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		perror("socket error");
+		printf ("Error number is: %s\n",strerror(errno));
+		return 1;
+	}
 
-	std::thread t1 (&IMU::IMUManager::readImu, this);
-	std::thread t2 (&IMU::IMUManager::getControl , this);
+	memset((char *)&simAddr, 0, sizeof(simAddr));
+	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
+	simAddr.sin_port = htons(SIM_PORTEN);
 
-	t1.detach();
-	t2.detach();
+
+	if(imu_rec){
+		std::thread t1 (&IMU::IMUManager::readImu, this);
+		std::thread t2 (&IMU::IMUManager::getControl , this);
+
+		t1.detach();
+		t2.detach();
+	}
+	if(sim_snd){
+		std::thread t3 (&IMU::IMUManager::sendData, this);
+
+		t3.detach();
+	}
 
 	return -1;
 }
@@ -249,7 +256,7 @@ void IMU::IMUManager::getControl() {
 		}else{
 			setAngles(accx,accy,accz,gyrox,gyroy,gyroz);
 		}
-		usleep(1000000/100);
+		usleep(1000000/T);
 	}
 }
 
@@ -257,7 +264,6 @@ void IMU::IMUManager::getControl() {
  * Used to sensorfuse gyro and acc and get angles, and linear acc.
  * Needs to be rewritten.
  */
-
 void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 		float gyrox, float gyroy, float gyroz) {
 
@@ -296,8 +302,8 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 		double axz_prev = atan2(rest[R_X],rest[R_Z]);
 		double ayz_prev = atan2(rest[R_Y],rest[R_Z]);
 
-		double axz = axz_prev + rgyro[R_X]*T;
-		double ayz = ayz_prev + rgyro[R_Y]*T;
+		double axz = axz_prev + rgyro[R_X]*(1/T);
+		double ayz = ayz_prev + rgyro[R_Y]*(1/T);
 
 		rxgyro = sin(axz) / sqrt(1 + pow(cos(axz),2.0) * pow(tan(ayz),2.0));
 		rygyro = sin(ayz) / sqrt(1 + pow(cos(ayz),2.0) * pow(tan(axz),2.0));
@@ -338,7 +344,7 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	linear_accy = linear_accx*LIN_FILT + (raccyn - rest[R_Y])*(1-LIN_FILT);
 	linear_accz = linear_accx*LIN_FILT + (racczn - rest[R_Z])*(1-LIN_FILT);
 
-	imupack.setSensorDataValue(HEAVE,0.3);
+	imupack.setSensorDataValue(HEAVE,0);
 	imupack.setSensorDataValue(SWAY,0);
 	imupack.setSensorDataValue(SURGE,0);
 	imupack.stampTime();
@@ -364,8 +370,6 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
 	//Trace: IMUPack data
 	//printf("ROLL: %f PITCH: %f \n",imupack.getSensorDataValue(ROLL),imupack.getSensorDataValue(PITCH));
 
-	//Used for simulator test
-	//sendData();
 }
 
 /*
@@ -373,7 +377,15 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
  */
 
 void IMU::IMUManager::sendData() {
-	sendto(simsock, (char*)&imupack.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
+	// Wait for first data
+	sleep(5);
+
+	while(1){
+		sendto(simsock, (char*)&imupack.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
+
+		// Busy wait, SIM_FREQ frequency platform recieves packages
+		usleep(1000000/SIM_FREQ);
+	}
 }
 
 IMU::IMUManager::~IMUManager() {

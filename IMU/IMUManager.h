@@ -25,6 +25,12 @@
 #include "rs232.h"
 #include "../Packets/ImuPack.h"
 
+#include <sys/socket.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <cstring>
+
 #define BAUD 500000
 #define PATH "/dev/serial/by-id/"
 #define BUFFER_SIZE 1024
@@ -39,13 +45,9 @@
 
 //SIM SEND INCLUDES/PARAMS
 //following includes are temporary for testing
-#include <sys/socket.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <cstring>
 #define SIM_ADDR "192.168.2.97"
 #define SIM_PORTEN 12345
+#define SIM_FREQ 100
 
 //ACC PARAMS
 #define MAX_VOLTAGE 3.3
@@ -60,7 +62,7 @@
 #define GYRO_SCALE 80
 #define NEG_GYRO_Y -1
 #define FILTER_WEIGHT 18		//Value between 5-20 as per description of filter
-#define T 1/100				    //frequency for IMU
+#define T 100				    //frequency for IMU
 #define DEG_TO_RAD 0.0174532925
 
 namespace IMU{
@@ -77,7 +79,7 @@ typedef struct imud{
 class IMUManager{
 
 public:
-	IMUManager();
+	IMUManager(bool imu_rec, bool sim_snd);
 	virtual ~IMUManager();
 	Packets::ImuPack imupack;
 
@@ -149,7 +151,7 @@ private:
 			{"/dev/ttyUSB4",20},
 			{"/dev/ttyUSB5",21},};
 
-	int init();
+	int init(bool imu_rec, bool sim_snd);
 	int getDev();
 	int getxoffset(){return offset_accx;}
 	int getyoffset(){return offset_accy;}
