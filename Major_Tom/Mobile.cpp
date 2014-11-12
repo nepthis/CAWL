@@ -111,9 +111,10 @@ void Mobile::recvGround() {
 		}
 		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 		//}
+
 		//	printf("ID received: %i %tvalue received: %f\n", simpack.fs.packetId, simpack.getAnalog(LIFTSTICK));
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
-		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) || (simpack.fs.packetId < 200)){
+		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) && (simpack.fs.packetSize == state.fs.packetSize)){
 			state = simpack;
 			//printf("state changed");
 		}

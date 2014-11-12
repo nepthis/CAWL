@@ -11,7 +11,7 @@ namespace Packets {
 
 SimPack::SimPack() {
 	fs.packetId = 0;
-	fs.packetSize = 0;
+	fs.packetSize = 44;
 	fs.analog[8]= ((float)0);
 	fs.digital = 0;
 }

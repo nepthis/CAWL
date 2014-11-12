@@ -14,6 +14,13 @@ Hasher::Hasher() {
 
 }
 
+bool Hasher::checkHash(std::hash<int> hash,  int data) {
+	bool match = false;
+	std::hash<int> int_hash(data);
+
+	return match;
+}
+
 Hasher::~Hasher() {
 	// TODO Auto-generated destructor stub
 }

@@ -28,7 +28,7 @@
 
 #include "../Packets/SimPack.h"
 #include "../Packets/ImuPack.h"
-#include "../Ground_control/serSend.h"
+
 
 #define OWN_IP "192.168.2.100"	//This is the IP address that the Ground Gateway must have on the network for the simulator
 #define SIM_IP "192.168.2.97"	//The Simulators IP address, movement packages does not go here.
