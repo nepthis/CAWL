@@ -35,6 +35,7 @@ int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
 	}
 
 	if(RS232_OpenComport(devid, BAUD)) {
+		logError("Could not connect to comport ");
 		return 1;
 	}else{
 		conn = true;
@@ -42,8 +43,8 @@ int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
 
 	// Used for testing simulator!!
 	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		perror("socket error");
-		printf ("Error number is: %s\n",strerror(errno));
+		logError("socket error");
+		logError(strerror(errno));
 		return 1;
 	}
 
@@ -393,7 +394,6 @@ void IMU::IMUManager::sendData() {
 		imupack_lock.lock();
 		temp = imupack;
 		imupack_lock.unlock();
-
 		sendto(simsock, (char*)&temp.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
 
 		// Busy wait, SIM_FREQ frequency platform recieves packages
