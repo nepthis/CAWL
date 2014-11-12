@@ -45,7 +45,6 @@ extern "C" {
 #include <string.h>
 
 
-
 #ifdef __linux__
 
 #include <termios.h>
@@ -55,6 +54,10 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <cstring>
+#include <errno.h>
+#include "../logger.h"
+
 
 #else
 
