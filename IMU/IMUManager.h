@@ -30,6 +30,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include "../logger.h"
 
 #define DAMPER 0.1
 
