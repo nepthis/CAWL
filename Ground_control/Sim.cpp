@@ -24,8 +24,9 @@ Packets::SimPack Sim::recvSim(void) {
 	char recbuf[255];
 	Packets::SimPack simpack;
 	if(recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen)<0){
-		logError("Sim -> recvSim: could not receive data");
-		exit(1);
+		logError("Sim -> recvSim");
+		logError(strerror(errno));
+		throw errno;
 	}
 	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 	simpack.stampTime();
@@ -41,16 +42,22 @@ void Sim::sendSim(Packets::ImuPack imudata) {
 
 bool Sim::connectToSim() {
 	//Create socket for the simulator
-	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){return false;}
+	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	memset((char *)&simAddr, 0, slen);
-	if(inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr)) < 0){return false;}
+	if(inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	simAddr.sin_port = htons(65400);
-	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0) {return false;}
+	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	//---------------------------------------------------------------------------------------------
-	if ((motionSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){return false;}
+	if ((motionSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	memset((char *)&motAddr, 0, slen);
-	if(inet_pton(AF_INET, MOV_IP, &(motAddr.sin_addr)) < 0){return false;}
+	if(inet_pton(AF_INET, MOV_IP, &(motAddr.sin_addr)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	motAddr.sin_port = htons(MOV_PORT);
-	if (setsockopt(simulatorSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {return false;} //Timeout for recvfrom
+	if (setsockopt(simulatorSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
+	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
 	return true;
 }

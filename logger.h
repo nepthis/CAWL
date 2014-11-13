@@ -13,7 +13,7 @@
 #include <ctime>
 #include <string>
 #include <iostream>
-#define LOGFILE "./cawl_logfile.txt"
+#define LOGFILE "./file.log"
 
 extern std::string logLevel;
 void  logError( const std::string &text );

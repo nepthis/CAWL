@@ -12,6 +12,7 @@ using namespace Ground_control;
 mutex m_state;
 
 Ground::Ground(bool sctpStatus) {
+	IMU::IMUManager im = IMU::IMUManager(false, true);
 	sctpIsOn = sctpStatus;
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
@@ -27,12 +28,12 @@ Ground::Ground(bool sctpStatus) {
 	//}else{
 	//-------------------------------------UDP------------------------------------------
 	if ((grSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		perror("socket error");
 		logError(strerror(errno));
-		exit(0);}
+		exit(1);}
 	memset((char *)&grAddr, 0, sizeof(grAddr));
 	inet_pton(AF_INET, DEST_ADDR, &(grAddr.sin_addr));
 	grAddr.sin_port = htons(DEST_PORT);
+	logVerbose("UDP socket for remote commands is set up");
 	//----------------------------------------------------------------------------------
 	//	}
 
@@ -43,6 +44,8 @@ Ground::Ground(bool sctpStatus) {
  * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
 void Ground::sendMobile() {
+	int errorMobile = 0;
+	logVerbose("Ground -> sendMobile: starting");
 	while(true){
 		usleep(1000);
 		SimPack temp;
@@ -51,50 +54,76 @@ void Ground::sendMobile() {
 		m_state.unlock();
 		//if(sctpIsOn){
 
-	//	}else{
-			if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
-				perror("Ground:sendMobile");
-				logError(strerror(errno));
-				throw 11;
-			}
+		//	}else{
+		if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
+			logWarning("Ground:sendMobile: ");
+			logWarning(strerror(errno));
+			errorMobile++;
+			continue;
+		}else{
+			errorMobile = 0;
+		}
+		if(errorMobile == 1000){
+			errno = ECOMM;
+			logError("Fatal: cannot send to Mobile: "+strerror(errno));
+			exit(1);
+		}
 		//}
 
 	}
 }
 void Ground::receiveSim(){
-	while(true){
-		sp = simulator->recvSim();
+	int errorsSim = 0;
+	logVerbose("Ground -> receiveSim: starting");
+	while(errorsSim <= 50){
+		try{
+			sp = simulator->recvSim();
+			errorsSim = 0;
+		}
+		catch(int e){
+			logWarning("Ground -> receiveSim");
+			logWarning(strerror(errno));
+			errorsSim ++;
+			continue;
+		}
 		m_state.lock();
 		if(not (sp == state)){state = sp;}
 		m_state.unlock();
+		continue;
 	}
+	errno = ENETUNREACH;
+	logError("Fatal: Ground -> receiveSim");
+	logError(strerror(errno));
+	exit(1);
 }
 
-/* This function also needs a state for the IMU data and then anoher function can call sim and send
+/* This function also needs a state for the IMU data and then another function can call sim and send
  * 	the state
  */
 void Ground::receiveImuPacket(){
 	char buffer[255];
-	IMU::IMUManager im = IMU::IMUManager(false, true);
 	Packets::ImuPack impa = Packets::ImuPack();
+	logVerbose("Ground -> receiveImuPacket: starting");
 	while(true){
 		try{
 			if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
-				printf("ERROR\n");
-				logError("ERROR");
+				logWarning("Ground -> receiveImuPacket");
+				logWarning(strerror(errno));
+				//im.setImuPack(Packets::ImuPack());
+				continue;
 			}
 			memcpy(&impa.sens, buffer, sizeof(impa.sens));
 			im.setImuPack(impa);
 		}catch(int e){
-			perror("Ground:receiveImuPacket");
+			logError("Fatal: Ground -> receiveImuPacket");
 			logError(strerror(errno));
-			throw 11;
+			delete &im;
+			sleep(5);
+			exit(1);
 		}
 	}
 }
-void Ground_control::Ground::sendImuPacket() {
 
-}
 
 
 Ground::~Ground() {

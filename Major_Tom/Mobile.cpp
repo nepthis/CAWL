@@ -17,6 +17,7 @@ mutex m_Sendstate;
  */
 Mobile::Mobile(bool sctp) {
 	sctpIsOn = sctp;
+	errors = 0;
 	et = EBU::EBUTranslator();
 	slen = sizeof(mobAddr);
 	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
@@ -50,7 +51,6 @@ Mobile::Mobile(bool sctp) {
 }
 bool Mobile::startUp(){
 	bool check = true;
-
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
 		rPackOne.er.channel[i] = 0;
@@ -77,27 +77,28 @@ bool Mobile::startUp(){
 	rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
 	rPackTwo.setRelayValue(R_D12,1);		//CDC_Activation
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
-	printf("Trying to sync up for the relay packets\n");
+	logVerbose("Trying to sync up for the relay packets");
 	try{
 		em.recvAnalogEBUOne();
 		em.recvDigitalEBUOne();
 		em.sendRelayCommand(rPackOne, 1);
+		logVerbose("Relay packets sent to EBU 1");
 		em.recvAnalogEBUTwo();
 		em.recvDigitalEBUTwo();
 		em.sendRelayCommand(rPackTwo, 2);
+		logVerbose("Relay packets sent to EBU 2");
 	}catch(int e){
 		//perror("Error with sending relay commands");
-		logError(strerror(errno));
+		logWarning("Mobile - > startUp");
+		logWarning(strerror(errno));
 		check = false;
 	}
-
 	return check;
 }
 
-//This function receives UDP packets and puts them in a buffer
+//This function receives UDP packets from Ground and puts them in a state if they are changed
+//If enough errors are detected
 void Mobile::recvGround() {
-	//TODO: IF this one fails send a STOP and BRAKE to the wheel loader and then exit.
-	//DON'T FORGET TO MAKE A SAFE-CHECK ON THE RECEIVED DATA!!!
 	while(not pleased){
 		SimPack simpack;
 		char recbuf[255];
@@ -106,19 +107,29 @@ void Mobile::recvGround() {
 		//}else{
 		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
 			sendAllStop();
-			errno = ENODATA;
-			logError(strerror(errno));
+			logWarning("No data received from Ground");
+			logWarning(strerror(errno));
+			errors++;
+		}else{
+			errors = 0;
 		}
 		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 		//}
-
-		//	printf("ID received: %i %tvalue received: %f\n", simpack.fs.packetId, simpack.getAnalog(LIFTSTICK));
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
 		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) && (simpack.fs.packetSize == state.fs.packetSize)){
 			state = simpack;
-			//printf("state changed");
+		}else{
+			errors ++;
+			logWarning("Could not set state in Mobile");
 		}
 		m_State.unlock();
+		if(errors == 1000){
+			errno = ENETDOWN;
+			logError("Fatal: Mobile -> recvGround");
+			logError(strerror(errno));
+			exit(1);
+		}
+
 	}
 }
 /*	Receives data from an IMUHandler and puts it into a state.
@@ -157,7 +168,6 @@ void Mobile::sendEBUOne() {
 			analogdummy = em.recvAnalogEBUOne();
 			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
-			//printf("State being sent value: %f\n", tempState.getAnalog(LIFTSTICK));
 		}catch(int e){
 			perror("sendEBUOne error");
 			logError(strerror(errno));
@@ -187,7 +197,7 @@ void Mobile::sendEBUTwo() {
 		}catch(int e){
 			perror("sendEBUTwo error");
 			logError(strerror(errno));
-			throw e;
+			exit(1);
 			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
 			//operations
 		}

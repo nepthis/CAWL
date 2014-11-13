@@ -43,6 +43,7 @@ namespace Ground_control {
  */
 class Ground {
 private:
+	IMU::IMUManager im;
 	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;
@@ -69,7 +70,6 @@ public:
 	void receiveImuPacket();
 	void sendMobile();
 	void receiveSim();
-	void sendImuPacket();
 	virtual ~Ground();
 };
 }

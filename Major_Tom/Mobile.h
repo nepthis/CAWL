@@ -57,6 +57,7 @@ public:
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
+	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs

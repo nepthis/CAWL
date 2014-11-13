@@ -10,7 +10,6 @@
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
 
-
 #include <cstring> //Allows the usage of std::strings
 #include <string> //Allows the usage of std::strings
 #include <cstdint> //To access all types of ints
@@ -20,9 +19,10 @@
 #include <errno.h>		//Is used for raising errors
 #include <netinet/in.h>	//Network address structs
 #include <arpa/inet.h>	//defenitions for internet options
+#include <errno.h>
 
 #include "../Packets/AllPackets.h"
-
+#include "../logger.h"
 
 namespace EBU{
 

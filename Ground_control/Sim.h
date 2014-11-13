@@ -32,7 +32,7 @@
 
 #define OWN_IP "192.168.2.100"	//This is the IP address that the Ground Gateway must have on the network for the simulator
 #define SIM_IP "192.168.2.97"	//The Simulators IP address, movement packages does not go here.
-#define MOV_IP "192.168.2.102"	//Movement packages goes here
+#define MOV_IP "192.168.2.102"	//Movement packages goes here if we want to control the RexRoth platform
 #define MOV_PORT 12345
 #define SIM_PORT 65400
 #define PACKET_ID 2001
