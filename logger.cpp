@@ -41,13 +41,12 @@ void logVerbose( const std::string &text )
 		m_logError.lock();
 		std::time_t result = std::time(NULL);
 		std::string t(std::ctime(&result));
-
 		std::ofstream log_file(
 				LOGFILE, std::ios_base::out | std::ios_base::app );
 		if(logLevel == "verbose"){
 			std::cout << logLevel <<": "<< text << std::endl;
 		}
-		log_file << t.substr(0, t.length()-1)  << ": "<<logLevel << ": "<< text << std::endl;
+		log_file << t.substr(0, t.length()-1)  << ": "<< "info" << ": "<< text << std::endl;
 		m_logError.unlock();
 	}
 

@@ -10,25 +10,24 @@
 std::mutex data_lock;
 std::mutex imupack_lock;
 
-IMU::IMUManager::IMUManager(bool imu_rec, bool sim_snd) {
+namespace IMU{
+IMUManager::IMUManager() {
 	imuinit = true;
 	conn = false;
-
 	bufsize = imuinitn = 0;
-
 	offset_accx = offset_accy = offset_accz = 0;
 	old.accx = old.accy = old.accz = 0;
 	old.gyrox = old.gyroy = old.gyroz = 0;
 
 	devid = -1;
 
-	init(imu_rec,sim_snd);
+	//init(imu_rec,sim_snd);
 }
 
 /*
  * Start interfacing the IMU using rs232
  */
-int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
+int IMUManager::init(bool imu_rec, bool sim_snd) {
 	while(devid<0){
 		devid = getDev();
 		if(devid == -1){sleep(5);}
@@ -54,14 +53,14 @@ int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
 
 
 	if(imu_rec){
-		std::thread t1 (&IMU::IMUManager::readImu, this);
-		std::thread t2 (&IMU::IMUManager::getControl , this);
+		std::thread t1 (&IMUManager::readImu, this);
+		std::thread t2 (&IMUManager::getControl , this);
 
 		t1.detach();
 		t2.detach();
 	}
 	if(sim_snd){
-		std::thread t3 (&IMU::IMUManager::sendData, this);
+		std::thread t3 (&IMUManager::sendData, this);
 
 		t3.detach();
 	}
@@ -76,7 +75,7 @@ int IMU::IMUManager::init(bool imu_rec, bool sim_snd) {
  * for IMU
  *
  */
-int IMU::IMUManager::getDev() {
+int IMUManager::getDev() {
 
 	DIR           *d;
 	struct dirent *dir;
@@ -116,13 +115,13 @@ int IMU::IMUManager::getDev() {
 	}
 }
 
-void IMU::IMUManager::setImuPack(Packets::ImuPack imu){imupack = imu;}
-Packets::ImuPack IMU::IMUManager::getImuPack(){return imupack;}
-bool IMU::IMUManager::isConnected(){return conn;}
+void IMUManager::setImuPack(Packets::ImuPack imu){imupack = imu;}
+Packets::ImuPack IMUManager::getImuPack(){return imupack;}
+bool IMUManager::isConnected(){return conn;}
 /*
  * Used to get a 22 byte command from the IMU
  */
-void IMU::IMUManager::readImu() {
+void IMUManager::readImu() {
 	int n,t=0;
 	unsigned char b;
 	unsigned char buf[22];
@@ -174,7 +173,7 @@ void IMU::IMUManager::readImu() {
 }
 
 
-void IMU::IMUManager::setData(char* command) {
+void IMUManager::setData(char* command) {
 
 	//Set gyrox,y,z from command (Gyros)
 	memmove(&gytemp,command,4);
@@ -212,7 +211,7 @@ void IMU::IMUManager::setData(char* command) {
 
 
 
-void IMU::IMUManager::filterData(double ax, double ay, double az,
+void IMUManager::filterData(double ax, double ay, double az,
 		double gx, double gy, double gz) {
 
 	double accx = (ax*FILTER_RATIO_A)+(old.accx*(1-FILTER_RATIO_A));
@@ -243,7 +242,7 @@ void IMU::IMUManager::filterData(double ax, double ay, double az,
 /*
  * Reads data and calls filter
  */
-void IMU::IMUManager::getControl() {
+void IMUManager::getControl() {
 	while(1){
 		data_lock.lock();
 		float accx = imudata.accx;
@@ -268,7 +267,7 @@ void IMU::IMUManager::getControl() {
  * Used to sensorfuse gyro and acc and get angles, and linear acc.
  * Needs to be rewritten.
  */
-void IMU::IMUManager::setAngles(float accx, float accy, float accz,
+void IMUManager::setAngles(float accx, float accy, float accz,
 		float gyrox, float gyroy, float gyroz) {
 
 	double raccxn, raccyn, racczn;
@@ -385,7 +384,7 @@ void IMU::IMUManager::setAngles(float accx, float accy, float accz,
  * Used to send data to Oryx platform in testing purposes
  */
 
-void IMU::IMUManager::sendData() {
+void IMUManager::sendData() {
 	// Wait for first data
 	Packets::ImuPack temp;
 	sleep(5);
@@ -401,5 +400,6 @@ void IMU::IMUManager::sendData() {
 	}
 }
 
-IMU::IMUManager::~IMUManager() {
+IMUManager::~IMUManager() {
+}
 }

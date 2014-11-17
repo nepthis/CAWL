@@ -24,8 +24,9 @@ Packets::SimPack Sim::recvSim(void) {
 	char recbuf[255];
 	Packets::SimPack simpack;
 	if(recvfrom(simulatorSocket, recbuf, 255, 0, (struct sockaddr *)&simAddr, &slen)<0){
-		logError("Sim -> recvSim");
+		errno = EHOSTUNREACH;
 		logError(strerror(errno));
+		logError("Sim -> recvSim:  Could not receive data from simulator");
 		throw errno;
 	}
 	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));

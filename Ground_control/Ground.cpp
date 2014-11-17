@@ -12,7 +12,8 @@ using namespace Ground_control;
 mutex m_state;
 
 Ground::Ground(bool sctpStatus) {
-	IMU::IMUManager im = IMU::IMUManager(false, true);
+
+
 	sctpIsOn = sctpStatus;
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
@@ -65,7 +66,8 @@ void Ground::sendMobile() {
 		}
 		if(errorMobile == 1000){
 			errno = ECOMM;
-			logError("Fatal: cannot send to Mobile: "+strerror(errno));
+			logError(strerror(errno));
+			logError("Fatal: cannot send to Mobile: ");
 			exit(1);
 		}
 		//}
@@ -81,8 +83,7 @@ void Ground::receiveSim(){
 			errorsSim = 0;
 		}
 		catch(int e){
-			logWarning("Ground -> receiveSim");
-			logWarning(strerror(errno));
+			logWarning("Ground -> receiveSim: could not receive packet from the simulator");
 			errorsSim ++;
 			continue;
 		}
@@ -104,19 +105,23 @@ void Ground::receiveImuPacket(){
 	char buffer[255];
 	Packets::ImuPack impa = Packets::ImuPack();
 	logVerbose("Ground -> receiveImuPacket: starting");
+	IMU::IMUManager im = IMU::IMUManager();
+	im.init(false, true);
 	while(true){
 		try{
 			if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
-				logWarning("Ground -> receiveImuPacket");
-				logWarning(strerror(errno));
+				logWarning("Ground -> receiveImuPacket: could not receive imuPacket");
 				//im.setImuPack(Packets::ImuPack());
 				continue;
 			}
-			memcpy(&impa.sens, buffer, sizeof(impa.sens));
+			if(memcpy(&impa.sens, buffer, sizeof(impa.sens)) <0){
+				logError(strerror(errno));
+				logError("Fatal: Ground -> receiveImuPacket: memcpy");
+			}
 			im.setImuPack(impa);
 		}catch(int e){
-			logError("Fatal: Ground -> receiveImuPacket");
 			logError(strerror(errno));
+			logError("Fatal: Ground -> receiveImuPacket");
 			delete &im;
 			sleep(5);
 			exit(1);

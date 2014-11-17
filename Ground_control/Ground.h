@@ -43,7 +43,7 @@ namespace Ground_control {
  */
 class Ground {
 private:
-	IMU::IMUManager im;
+
 	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;

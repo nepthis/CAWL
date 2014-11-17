@@ -82,13 +82,11 @@ typedef struct imud{
 class IMUManager{
 
 public:
-	IMUManager(bool imu_rec, bool sim_snd);
+	IMUManager();//bool imu_rec, bool sim_snd
+	int init(bool imu_rec, bool sim_snd);
 	virtual ~IMUManager();
-
 	void setImuPack(Packets::ImuPack imu);
 	Packets::ImuPack getImuPack();
-
-
 	bool isConnected();
 	bool 			conn;
 
@@ -160,7 +158,7 @@ private:
 			{"/dev/ttyUSB4",20},
 			{"/dev/ttyUSB5",21},};
 
-	int init(bool imu_rec, bool sim_snd);
+
 	int getDev();
 	int getxoffset(){return offset_accx;}
 	int getyoffset(){return offset_accy;}

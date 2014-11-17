@@ -21,26 +21,44 @@ Mobile::Mobile(bool sctp) {
 	et = EBU::EBUTranslator();
 	slen = sizeof(mobAddr);
 	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
-	if (sctpIsOn){
+	//if (sctpIsOn){
 
-	}else{
-		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
-		memset((char *)&mobAddr, 0, slen);
-		if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
-		mobAddr.sin_port = htons(REC_PORT);
-		if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0) {perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-		if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	//}else{
+	for (int gnd = 0; gnd < RETRIES; gnd++){
+		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
+			sleep(1);
+			logVerbose("Mobile -> Mobile: Retrying to set up mobSocket");
+			continue;
+		}else{
+			logVerbose("Mobile -> Mobile: Set up of mobSocket done...");
+			break;
+		}
+		logError(strerror(errno));
+		logError("Fatal: Mobile -> Mobile: Could not set up the mobile socket");
 	}
+	memset((char *)&mobAddr, 0, slen);
+	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	mobAddr.sin_port = htons(REC_PORT);
+	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0){
+		logError("Mobile -> Mobile: bind for mobSocket");logError(strerror(errno));exit(1);}
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
+		logError(strerror(errno));logError("Mobile -> Mobile: mobSocket options");exit(1);}
+	//}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
-	if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		perror("socket error");
+	for (int imu = 0; imu < RETRIES; imu++){
+		if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning("Mobile -> Mobile: sndImuSocket, could not set up socket.");
+			continue;
+		}else{
+			break;
+		}
 		logError(strerror(errno));
-
-		exit(1); //instead count error flag up, if > than certain level exit
+		logError("Fatal: Mobile -> Mobile: Could not set up the IMU socket");
 	}
 	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
 	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
@@ -89,8 +107,7 @@ bool Mobile::startUp(){
 		logVerbose("Relay packets sent to EBU 2");
 	}catch(int e){
 		//perror("Error with sending relay commands");
-		logWarning("Mobile - > startUp");
-		logWarning(strerror(errno));
+		logWarning("Mobile - > startUp: Error while syncing up EBUs for relay packets");
 		check = false;
 	}
 	return check;
@@ -135,7 +152,8 @@ void Mobile::recvGround() {
 /*	Receives data from an IMUHandler and puts it into a state.
  */
 void Mobile::recvIMU() {
-	IMU::IMUManager imm = IMU::IMUManager(true, false);
+	IMU::IMUManager imm = IMU::IMUManager();
+	imm.init(true, false);
 	ImuPack imp;
 	while(not pleased){
 		usleep(1000);
@@ -184,6 +202,7 @@ void Mobile::sendEBUTwo() {
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
 	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
+	logVerbose("Mobile -> sendEBUTro: starting.");
 	while(not pleased){
 		m_State.lock();
 		tempState = state;
@@ -195,8 +214,8 @@ void Mobile::sendEBUTwo() {
 			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 		}catch(int e){
-			perror("sendEBUTwo error");
 			logError(strerror(errno));
+			logError("Fatal: Mobile -> sendEBUTwo: could not send any data to EBU 2.");
 			exit(1);
 			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
 			//operations
@@ -209,7 +228,7 @@ Mobile::~Mobile() {
 	//	em.sendAnalogCommand(stopPacket.getChannel(), 1);
 	//	rPackOne = RelayOut();
 	//	rPackTwo = RelayOut();
-	sendAllStop();
+	//sendAllStop();
 	//em.sendRelayCommand(rPackOne, 1);
 	//em.sendRelayCommand(rPackTwo, 2);
 }
@@ -226,6 +245,7 @@ void Major_Tom::Mobile::setSCTP() {
 }
 
 void Major_Tom::Mobile::sendAllStop() {
+	logWarning("Mobile -> sendAllstop: changing state for full stop.");
 	Packets::SimPack stop;
 	stop.setAnalog(BRAKEPEDAL, 3.0);
 	stop.setAnalog(LIFTSTICK, 0.0);

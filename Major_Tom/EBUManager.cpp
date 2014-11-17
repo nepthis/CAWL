@@ -33,17 +33,11 @@ void EBUManager::sendAnalogCommand(ebuAnOut data, int ebuNum){
 	switch(ebuNum){
 	case 1:
 		if(sendto(oneAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneAnalogOut, slen)< 0){
-			errno = ECOMM;
-			logError(strerror(errno)+" analog to EBU one");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError(" analog to EBU one");throw errno;}
 		break;
 	case 2:
 		if(sendto(twoAnalogOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoAnalogOut, slen)<0){
-			errno = ECOMM;
-			logError(strerror(errno)+" analog to EBU two");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError(" analog to EBU two");throw errno;}
 		break;
 	}
 }
@@ -54,21 +48,19 @@ void EBUManager::sendAnalogCommand(ebuAnOut data, int ebuNum){
 void EBUManager::sendRelayCommand(RelayOut rPack, int ebuNum) {
 	EBUrelays data = rPack.getRelays();
 	char * buffer[14];
-	memcpy(buffer, &data, 14);
+	if(memcpy(buffer, &data, 14) <0){
+		logError(strerror(errno));
+		logError("Fatal: EBUManager -> sendRelayCommand: memcpy");
+		throw errno;
+	}
 	switch(ebuNum){
 	case 1:
 		if (sendto(oneRelay,buffer, 14, 0, (struct sockaddr*) &addrOneRelay, slen) <0 ){
-			errno = ECOMM;
-			logError(strerror(errno)+" relay to EBU one");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError(" relay to EBU one");throw errno;}
 		break;
 	case 2:
 		if(sendto(twoRelay, buffer, 14, 0, (struct sockaddr*) &addrTwoRelay, slen)<0){
-			errno = ECOMM;
-			logError(strerror(errno)+" relay to EBU two");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError(" relay to EBU two");throw errno;}
 		break;
 	}
 }
@@ -77,17 +69,11 @@ void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
 	switch(ebuNum){
 	case 1:
 		if(sendto(oneDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrOneDigitalOut, slen)<0){
-			errno = ECOMM;
-			logError(strerror(errno)+" digital to EBU one");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError("EBUManager-> sendDigitalCommand: EBU one");throw errno;}
 		break;
 	case 2:
 		if(sendto(twoDigitalOut, (char*)&data, sizeof(data), 0, (struct sockaddr*) &addrTwoDigitalOut, slen) <0){
-			errno = ECOMM;
-			logError(strerror(errno)+" digital to EBU two");
-			throw errno;
-		}
+			errno = ECOMM;logError(strerror(errno));logError("EBUManager -> sendDigitalCommand: EBU two");throw errno;}
 		break;
 	}
 
@@ -99,36 +85,36 @@ bool EBU::EBUManager::setUpSockets() {
 		//----------------------------------Sockets------------------------------------------------
 		//------------------------------------EBU 1--------------------------------------------------
 		//--------------------------------AnalogOut----------------------------------------------
-		if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((oneAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockOneAnalogOut");return false;}
 		//--------------------------------DigitalOut----------------------------------------------
-		if ((oneDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((oneDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockOneDigitalOut");return false;}
 		//----------------------------------Relays--------------------------------------------------
-		if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((oneRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: oneRelay");return false;}
 		//---------------------------------AnalogIn-----------------------------------------------
-		if ((sockOneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((sockOneAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockOneAnalogIn");return false;}
 		//---------------------------------DigitalIn-----------------------------------------------
-		if ((sockOneDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((sockOneDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockOneDigitalIn");return false;}
 		//------------------------------------EBU 2--------------------------------------------------
 		//--------------------------------AnalogOut----------------------------------------------
-		if ((twoAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((twoAnalogOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: twoAnalogOut");return false;}
 		//--------------------------------DigitalOut----------------------------------------------
-		if ((twoDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((twoDigitalOut = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: twoDigitalOut");return false;}
 		//----------------------------------Relays--------------------------------------------------
-		if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((twoRelay = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: twoRelay");return false;}
 		//---------------------------------AnalogIn-----------------------------------------------
-		if ((sockTwoAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((sockTwoAnalogIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockTwoAnalogIn");return false;}
 		//---------------------------------DigitalIn-----------------------------------------------
-		if ((sockTwoDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-		{logError(strerror(errno));return false;}
+		if ((sockTwoDigitalIn = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets: sockTwoDigitalIn");return false;}
 		//------------------------------------------------------------------------------------------------
 		//-----------------------------------------ADRESSES-------------------------------------
 		//-------------------------------EBUAnalogOut for EBU 1-----------------------
@@ -174,33 +160,34 @@ bool EBU::EBUManager::setUpSockets() {
 		//------------------------------------------------------------------------------------------
 		//------------------------------------Bind----------------------------------------------
 		//------------------------------Bind for EBU 1------------------------------------
-		if (bind(sockOneDigitalIn, (struct sockaddr *)&addrOneDigitalIn, sizeof(addrOneDigitalIn)) < 0)
-		{logError(strerror(errno));return false;}
-		if (bind(sockOneAnalogIn, (struct sockaddr *)&addrOneAnalogIn, sizeof(addrOneAnalogIn)) < 0)
-		{logError(strerror(errno));return false;}
+		if (bind(sockOneDigitalIn, (struct sockaddr *)&addrOneDigitalIn, sizeof(addrOneDigitalIn)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
+		if (bind(sockOneAnalogIn, (struct sockaddr *)&addrOneAnalogIn, sizeof(addrOneAnalogIn)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
 		//--------------------------------Bind for EBU 2-------------------------------------
-		if (bind(sockTwoDigitalIn, (struct sockaddr *)&addrTwoDigitalIn, sizeof(addrTwoDigitalIn)) < 0)
-		{logError(strerror(errno));return false;}
-		if (bind(sockTwoAnalogIn, (struct sockaddr *)&addrTwoAnalogIn, sizeof(addrTwoAnalogIn)) < 0)
-		{logError(strerror(errno));return false;}
+		if (bind(sockTwoDigitalIn, (struct sockaddr *)&addrTwoDigitalIn, sizeof(addrTwoDigitalIn)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
+		if (bind(sockTwoAnalogIn, (struct sockaddr *)&addrTwoAnalogIn, sizeof(addrTwoAnalogIn)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
 		//-------------------------------------------------------------------------------------------------
 		//-------------------------------Socket options------------------------------------------
 		//-----------------------------Options for EBU 1----------------------------------------
-		if (setsockopt(sockOneDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
-		{logError(strerror(errno));return false;} //Timeout for recvfrom
-		if (setsockopt(sockOneAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
-		{logError(strerror(errno));return false;}
+		if (setsockopt(sockOneDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
+		if (setsockopt(sockOneAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
 		//-----------------------------Options for EBU 2----------------------------------------
-		if (setsockopt(sockTwoDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
-		{logError(strerror(errno));return false;}//Timeout for recvfrom
-		if (setsockopt(sockTwoAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
-		{logError(strerror(errno));return false;}
+		if (setsockopt(sockTwoDigitalIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
+		if (setsockopt(sockTwoAnalogIn, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
+			logWarning(strerror(errno));logWarning("EBUManager -> setUpSockets");return false;}
 		//--------------------------------------------------------------------------------------------
 		socketCheck = true;
+		logVerbose(" EBUManager -> setUpSockets: Sockets for the EBU established");
 		return true; //If everything has been set up successfully return true.
 	}catch (int e){
-		logWarning("Connecting to EBUs failed");
-		throw e;
+		logError("Fatal: EBUManager -> setUpSockets");
+		exit(1);
 	}
 }
 //not complete, needs to handle errors, 4 functions not needed. maybe could make it into one or two similar to "send"
@@ -209,10 +196,11 @@ AnalogIn EBUManager::recvAnalogEBUOne() {
 	Packets::AnalogIn inData;
 	struct sockaddr_in ebuAddr; //This struct stores the senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
-	if(recvfrom(sockOneAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){throw 14;}
+	if(recvfrom(sockOneAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){
+		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUOne: recvfrom");throw errno;}
 	char str[INET_ADDRSTRLEN];
 	if(inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN) <0){//Gets senders IP into readable
-		logError(strerror(errno));throw errno;}
+		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUOne: inet_ntop");throw errno;}
 	if((string)str == EBU_IP_1){inData.setSource(1);return inData;}	//Verifies that it's the correct sender IP
 	inData.setSource(0); //0 means unvalid
 	return inData;
@@ -223,9 +211,10 @@ AnalogIn EBUManager::recvAnalogEBUTwo() {
 	struct sockaddr_in ebuAddr; //This struct stores the senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
 	if(recvfrom(sockTwoAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){
-		logError(strerror(errno));throw errno;}
+		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUTwo: recvfrom");throw errno;}
 	char str[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN); 	//Gets senders IP into readable
+	if(inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN) <0){//Gets senders IP into readable
+		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUTwo: inet_ntop");throw errno;}
 	if((string)str == EBU_IP_2){
 		inData.setSource(2);return inData;}				//Verifies that it's the correct sender IP
 	inData.setSource(0); //0 means unvalid
@@ -237,7 +226,7 @@ Packets::DigitalIn EBUManager::recvDigitalEBUOne() {
 	struct sockaddr_in ebuAddr;	//Stores senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
 	if(recvfrom(sockOneDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){
-		logError(strerror(errno));throw errno;}
+		logError(strerror(errno));logError("EBUManager -> recvDigitalEBUOne: recvfrom");throw errno;}
 	return digidata;
 }
 Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
@@ -246,7 +235,7 @@ Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
 	struct sockaddr_in ebuAddr;	//Stores senders IP
 	memset(&(ebuAddr.sin_zero), '\0', 8);
 	if(recvfrom(sockTwoDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){
-		logError(strerror(errno));throw errno;}
+		logError(strerror(errno));logError("EBUManager -> recvDigitalEBUTwo: recvfrom");throw errno;}
 	return digidata;
 }
 
