@@ -37,7 +37,18 @@ Ground::Ground(bool sctpStatus) {
 	logVerbose("UDP socket for remote commands is set up");
 	//----------------------------------------------------------------------------------
 	//	}
-
+	if ((recImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		logWarning("Mobile -> Mobile: recImuSocket, could not set up socket.");
+		sleep(1);
+		logVerbose("Mobile -> Mobile: Retrying to set up recImuSocket");
+	}else{
+		logVerbose("Mobile -> Mobile: Set up of recImuSocket done...");
+	}
+	memset((char *)&recImuAddr, 0, slen);
+	if(inet_pton(AF_INET, "0.0.0.0", &(recImuAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	recImuAddr.sin_port = htons(REC_IMU_PORT);
+	if (bind(recImuSocket, (struct sockaddr *)&recImuAddr, sizeof(recImuAddr)) < 0){
+		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);}
 }
 /*	Written by Robin Bond and modified by Håkan
  * The sendPacket method receives a packet from the simulator containing data
