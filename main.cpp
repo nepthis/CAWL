@@ -75,11 +75,11 @@ void start(State * s){
 					printf("Main: thread starting\n");
 					std::thread g1(&Ground::sendMobile, gc);	//For simulator data to Mobile
 					std::thread g2(&Ground::receiveSim, gc);	//For receiving data from simulator
-					std::thread g3(&Ground::receiveImuPacket, gc);
+					//std::thread g3(&Ground::receiveImuPacket, gc);
 					printf("Main: thread started, joining\n");
 					g1.join();
 					g2.join();
-					g3.join();
+					//g3.join();
 					printf("Main: thread started, joined\n");
 				}catch(int e){
 					logError(strerror(errno));
@@ -107,11 +107,11 @@ void start(State * s){
 						std::thread m1(&Major_Tom::Mobile::recvGround, major);
 						std::thread m2(&Major_Tom::Mobile::sendEBUOne, major);
 						std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
-						std::thread m4(&Major_Tom::Mobile::recvIMU, major);
+						//std::thread m4(&Major_Tom::Mobile::recvIMU, major);
 						m1.join();
 						m2.join();
 						m3.join();
-						m4.join();
+						//m4.join();
 					}catch(int e){
 						major->sendAllStop();
 						major->pleased = true;

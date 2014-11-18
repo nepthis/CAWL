@@ -10,7 +10,7 @@
 #define GROUND_H_
 
 #define DEST_PORT 56565
-#define DEST_ADDR		"192.168.2.199"
+#define DEST_ADDR		"192.168.2.100"
 #define RECVBUFSIZE	255
 
 
