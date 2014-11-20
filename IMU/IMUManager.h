@@ -32,7 +32,7 @@
 #include <cstring>
 #include "../logger.h"
 
-#define DAMPER 0.1
+#define DAMPER 0.5
 
 #define BAUD 500000
 #define PATH "/dev/serial/by-id/"

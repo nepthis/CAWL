@@ -55,7 +55,7 @@ Ground::Ground(bool sctpStatus) {
  * 	on how the current position on controls are. This packet is then transferred to Mobile.
  * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
-void Ground::sendMobile() {
+void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 	int errorMobile = 0;
 	logVerbose("Ground -> sendMobile: starting");
 	while(true){
@@ -64,9 +64,6 @@ void Ground::sendMobile() {
 		m_state.lock();
 		temp = state;
 		m_state.unlock();
-		//if(sctpIsOn){
-
-		//	}else{
 		if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
 			logWarning("Ground:sendMobile: ");
 			logWarning(strerror(errno));
@@ -81,7 +78,6 @@ void Ground::sendMobile() {
 			logError("Fatal: cannot send to Mobile: ");
 			exit(1);
 		}
-		//}
 
 	}
 }
@@ -114,25 +110,36 @@ void Ground::receiveSim(){
  */
 void Ground::receiveImuPacket(){
 	char buffer[255];
+	int imuErrors = 0;
 	Packets::ImuPack impa = Packets::ImuPack();
 	logVerbose("Ground -> receiveImuPacket: starting");
 	IMU::IMUManager im = IMU::IMUManager();
 	im.init(false, true);
 	while(true){
-		try{
-			if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
-				logWarning("Ground -> receiveImuPacket: could not receive imuPacket");
-				//im.setImuPack(Packets::ImuPack());
+		if(imuErrors < 100){
+			try{
+				if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
+					logWarning("Ground -> receiveImuPacket: could not receive imuPacket");
+					imuErrors++;
+					continue;
+				}
+				if(memcpy(&impa.sens, buffer, sizeof(impa.sens)) <0){
+					logWarning("Ground -> receiveImuPacket: memcpy");
+					imuErrors++;
+					continue;
+				}
+				imuErrors = 0;
+				im.setImuPack(impa);
+			}catch(int e){
+				logError(strerror(errno));
+				logError("Fatal: Ground -> receiveImuPacket");
+				imuErrors = 100;
 				continue;
 			}
-			if(memcpy(&impa.sens, buffer, sizeof(impa.sens)) <0){
-				logError(strerror(errno));
-				logError("Fatal: Ground -> receiveImuPacket: memcpy");
-			}
-			im.setImuPack(impa);
-		}catch(int e){
+		}else{
+			errno = ENOLINK;
 			logError(strerror(errno));
-			logError("Fatal: Ground -> receiveImuPacket");
+			logError("Fatal: Failed to receive imuPackets for an extended period");
 			delete &im;
 			sleep(5);
 			exit(1);
