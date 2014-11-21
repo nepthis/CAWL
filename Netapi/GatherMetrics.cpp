@@ -25,7 +25,7 @@ int GatherMetrics::setMeasure(int measurement, float value) {
 
 	if(db_init == false)return -1;
 
-	if (measurement == SRTT){
+	if (measurement == STATUS){
 		measurementData data;
 		std::time_t tim = std::time(nullptr);
 		std::string timt = asctime(std::localtime(&tim));

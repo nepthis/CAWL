@@ -17,10 +17,10 @@
 #include <stdexcept> //used for exceptions
 #include <iostream> //for printing
 #include <cstdio>
-//#include "MeasurementData.h"
+#include <map>
 #include "mysqlconnector.h"
 
-#define SRTT 0
+#define STATUS 0
 
 
 

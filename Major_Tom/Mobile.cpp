@@ -43,8 +43,8 @@ Mobile::Mobile(bool sctp) {
 	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0){
 		logError("Mobile -> Mobile: bind for mobSocket");logError(strerror(errno));exit(1);}
 	struct timeval tv;
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	tv.tv_sec = 0;
+	tv.tv_usec = 100000;
 	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
 		logError(strerror(errno));logError("Mobile -> Mobile: mobSocket options");exit(1);}
 	//}
@@ -117,16 +117,23 @@ bool Mobile::startUp(){
 //If enough errors are detected
 void Mobile::recvGround() {
 	while(not pleased){
+		if(errors == 10){
+			sendAllStop();
+			errno = ENETDOWN;
+			logError("Fatal: Mobile -> recvGround");
+			logError(strerror(errno));
+			sleep(1);
+			exit(1);
+		}
 		SimPack simpack;
 		char recbuf[255];
 		//if(sctpIsOn){
 		//DO SCTP STUFF
 		//}else{
 		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
-			sendAllStop();
 			logWarning("No data received from Ground");
-			logWarning(strerror(errno));
 			errors++;
+			continue;
 		}else{
 			errors = 0;
 		}
@@ -137,15 +144,9 @@ void Mobile::recvGround() {
 			state = simpack;
 		}else{
 			errors ++;
-			logWarning("Could not set state in Mobile");
 		}
 		m_State.unlock();
-		if(errors == 1000){
-			errno = ENETDOWN;
-			logError("Fatal: Mobile -> recvGround");
-			logError(strerror(errno));
-			exit(1);
-		}
+
 
 	}
 }

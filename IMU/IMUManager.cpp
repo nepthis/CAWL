@@ -28,12 +28,12 @@ IMUManager::IMUManager() {
  * Start interfacing the IMU using rs232
  */
 int IMUManager::init(bool imu_rec, bool sim_snd) {
-	while(devid<0){
+	while(devid<0 && imu_rec){
 		devid = getDev();
 		if(devid == -1){sleep(5);}
 	}
 
-	if(RS232_OpenComport(devid, BAUD)) {
+	if(RS232_OpenComport(devid, BAUD) && imu_rec) {
 		logError("Could not connect to comport ");
 		return 1;
 	}else{

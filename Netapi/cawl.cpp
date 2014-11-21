@@ -15,7 +15,7 @@
 
 Netapi::cawl::cawl(int socket) {
 	value = 1;
-	metrics = GatherMetrics();
+	//metrics = GatherMetrics();
 	//-----------------------------------------------------------------------------------------------------
 	memset(&heartbeat,  0, sizeof(struct sctp_paddrparams));
 	memset(&rtoinfo,    0, sizeof(struct sctp_rtoinfo));
@@ -29,6 +29,7 @@ Netapi::cawl::cawl(int socket) {
 	rtoinfo.srto_min 			= 500;				//default value: 1000
 	rtoinfo.srto_initial		= 1500;				//default value: 3000
 	assoc.sasoc_asocmaxrxt		= 6;
+	event.sctp_data_io_event    = 1;
 	//-----------------------------------------------------------------------------------------------------
 	SctpSocket = socket;
 	/*Disable Nagles algorithm*/
@@ -43,19 +44,23 @@ Netapi::cawl::cawl(int socket) {
 		//	Logga fel
 	}
 	/*Set Heartbeats*/
-	if(setsockopt(socket, SOL_SCTP, SCTP_PEER_ADDR_PARAMS , &heartbeat, sizeof(heartbeat)) != 0){
+	if(setsockopt(socket, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS , &heartbeat, sizeof(heartbeat)) != 0){
 		perror("setsockopt");
 	}
 	/*Set srttinfo struct*/
-	if(setsockopt(socket, SOL_SCTP, SCTP_GET_PEER_ADDR_INFO , &srttinfo, sizeof(srttinfo)) != 0){
+	if(setsockopt(socket, IPPROTO_SCTP, SCTP_GET_PEER_ADDR_INFO , &srttinfo, sizeof(srttinfo)) != 0){
 		perror("setsockopt");
 	}
 	/*Set rto_max*/
-	if(setsockopt(socket, SOL_SCTP, SCTP_RTOINFO , &rtoinfo, sizeof(rtoinfo)) != 0){
+	if(setsockopt(socket, IPPROTO_SCTP, SCTP_RTOINFO , &rtoinfo, sizeof(rtoinfo)) != 0){
 		::exit(EXIT_FAILURE);
 	}
 	/*Set association_max_retransmit*/
-	if(setsockopt(socket, SOL_SCTP, SCTP_ASSOCINFO , &assoc, sizeof(assoc)) != 0){
+	if(setsockopt(socket, IPPROTO_SCTP, SCTP_ASSOCINFO , &assoc, sizeof(assoc)) != 0){
+		::exit(EXIT_FAILURE);
+	}
+	if(setsockopt(socket, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe)) < 0){
+		//printf("After setsockopt errno: %d\n", errno);
 		::exit(EXIT_FAILURE);
 	}
 
@@ -95,9 +100,30 @@ int Netapi::cawl::sctp_sendmsg(int s, const void* msg, size_t len,
 		struct sockaddr* to, socklen_t tolen, uint32_t ppid, uint32_t flags,
 		uint16_t stream_no, uint32_t timetolive, uint32_t context) {
 
-	int ret = ::sctp_sendmsg(s, msg, len, to, tolen, ppid, flags, stream_no, timetolive, context);
-	metrics.setMeasure(SRTT,srttinfo.spinfo_srtt);
+	socklen_t opt_len = (socklen_t) sizeof(struct sctp_status);
+	if(getsockopt(s, IPPROTO_SCTP, SCTP_STATUS, &status, &opt_len) < 0){
+		//What to do?
+		return 0;
+	}
+	int sstat_assoc_id 				= status.sstat_assoc_id;
+	int sstat_state					= status.sstat_state;
+	int sstat_rwnd					= status.sstat_rwnd;
+	int sstat_unackdata				= status.sstat_unackdata;
+	int sstat_penddata				= status.sstat_penddata;
+	int sstat_instrms				= status.sstat_instrms;
+	int sstat_outstrms				= status.sstat_outstrms;
+	int sstat_fragmentation_point	= status.sstat_fragmentation_point;
 
+	//std::string spinfo_address		= status.sstat_primary.spinfo_address;
+	int spinfo_state				= status.sstat_primary.spinfo_state;
+	int spinfo_cwnd					= status.sstat_primary.spinfo_cwnd;
+	int spinfo_srtt					= status.sstat_primary.spinfo_srtt;
+	int spinfo_rto					= status.sstat_primary.spinfo_rto;
+	int spinfo_mtu					= status.sstat_primary.spinfo_mtu;
+
+
+	printf("srtt: %d\n", spinfo_srtt);
+	int ret = ::sctp_sendmsg(s, msg, len, to, tolen, ppid, flags, stream_no, timetolive, context);
 	return ret;
 }
 
@@ -105,7 +131,8 @@ int Netapi::cawl::sctp_send(int s, const void* msg, size_t len,
 		const struct sctp_sndrcvinfo* sinfo, int flags) {
 
 	int ret = ::sctp_send(s, msg, len, sinfo, flags);
-	metrics.setMeasure(SRTT,srttinfo.spinfo_srtt);
+	updateStatus(s, sinfo->sinfo_assoc_id ,&status);
+	//metrics.setMeasure(STATUS,);
 
 	return ret;
 }
@@ -113,7 +140,11 @@ int Netapi::cawl::sctp_send(int s, const void* msg, size_t len,
 int Netapi::cawl::sctp_recvmsg(int s, void* msg, size_t len,
 		struct sockaddr* from, socklen_t* fromlen,
 		struct sctp_sndrcvinfo* sinfo, int* msg_flags) {
+
 	return ::sctp_recvmsg(s, msg, len, from, fromlen, sinfo, msg_flags);
+	updateStatus(s, sinfo->sinfo_assoc_id ,&status);
+	//metrics.setMeasure(STATUS,);
+
 }
 
 int Netapi::cawl::sctp_peeloff(int sd, sctp_assoc_t assoc_id) {
@@ -122,6 +153,7 @@ int Netapi::cawl::sctp_peeloff(int sd, sctp_assoc_t assoc_id) {
 
 int Netapi::cawl::sctp_opt_info(int sd, sctp_assoc_t id, int opt, void* arg,
 		socklen_t* size) {
+
 	return ::sctp_opt_info(sd, id, opt, arg, size);
 }
 
@@ -141,4 +173,14 @@ int Netapi::cawl::sctp_freeladdrs(struct sockaddr* addrs) {
 }
 int Netapi::cawl::sctp_getaddrlen(sa_family_t family) {
 	return sctp_getaddrlen(family);
+}
+
+int Netapi::cawl::updateStatus(int SctpSock, sctp_assoc_t id,
+		sctp_status* stat){
+
+	socklen_t opt_len = (socklen_t) sizeof(struct sctp_status);
+
+	int ret = sctp_opt_info(SctpSock,status.sstat_assoc_id,
+			SCTP_STATUS,&stat,&opt_len);
+	return ret;
 }
