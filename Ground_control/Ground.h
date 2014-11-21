@@ -11,7 +11,7 @@
 
 #define DEST_PORT 56565
 #define REC_IMU_PORT 45454
-#define DEST_ADDR		"192.168.2.199"
+#define DEST_ADDR	"192.168.2.199"
 #define RECVBUFSIZE	255
 
 
@@ -44,7 +44,6 @@ namespace Ground_control {
  */
 class Ground {
 private:
-
 	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;

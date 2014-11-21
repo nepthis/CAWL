@@ -45,7 +45,7 @@ Ground::Ground(bool sctpStatus) {
 		logVerbose("Mobile -> Mobile: Set up of recImuSocket done...");
 	}
 	memset((char *)&recImuAddr, 0, slen);
-	if(inet_pton(AF_INET, "0.0.0.0", &(recImuAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	if(inet_pton(AF_INET, "0.0.0.0", &(recImuAddr.sin_addr)) < 0){logError("Ground -> Constructor");logError(strerror(errno));exit(1);}
 	recImuAddr.sin_port = htons(REC_IMU_PORT);
 	if (bind(recImuSocket, (struct sockaddr *)&recImuAddr, sizeof(recImuAddr)) < 0){
 		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);}
