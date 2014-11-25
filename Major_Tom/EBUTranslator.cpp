@@ -82,18 +82,15 @@ void EBUTranslator::setBrake(float value, AnalogOut* pkt) {
 	float temp2;
 	if((value <=0.1) && (value >= 0.0)){
 		temp2 = 11.5*value;
-		printf("small\n");
 	}
 	if((value <=0.6) && (value > 0.1)){
 		temp2 = 1.15 + 1.95*pow((value/0.6), 4.0);
-		printf("medium\n");
 	}
 	if((value <=3.1) && (value > 0.6)){
 		temp2 = 3.1;
-		printf("Fruck\n");
 	}
 	//float temp = 0.0 + 9.65*value -19.9875*pow(value,2) + 15.3125*pow(value, 3) -1.875*pow(value, 4);
-	printf("VALUE: %f \tBRAKE: %f\n",value,  temp2);
+	//printf("VALUE: %f \tBRAKE: %f\n",value,  temp2);
 	pkt->setChannelValue(temp2, AO_7);
 	//}
 }

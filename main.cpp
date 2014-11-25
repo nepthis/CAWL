@@ -13,7 +13,6 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <errno.h>
-
 #include "Ground_control/Ground.h"
 #include "Major_Tom/Mobile.h"
 #include "logger.h"
