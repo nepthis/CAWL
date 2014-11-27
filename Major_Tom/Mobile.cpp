@@ -68,6 +68,10 @@ Mobile::Mobile(bool sctp) {
 
 }
 bool Mobile::startUp(){
+	std::thread t1 (&IMUManager::readImu, imm);
+	std::thread t2 (&IMUManager::getControl , imm);
+	t1.detach();
+	t2.detach();
 	bool check = true;
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
@@ -88,9 +92,9 @@ bool Mobile::startUp(){
 	rPackTwo.setRelayValue(R_A16, 1);		//Fourth Function 1st
 	rPackTwo.setRelayValue(R_A17, 1);		//CDC Steering
 	rPackTwo.setRelayValue(R_A18, 1);		//CDC Steering
-	rPackTwo.setRelayValue(R_A19, 1);		//Gas
-	rPackTwo.setRelayValue(R_A20, 1);		//Gas
-	rPackTwo.setRelayValue(R_A7, 1);		//broms
+	rPackTwo.setRelayValue(R_A19, 1);		//Gaspedal
+	rPackTwo.setRelayValue(R_A20, 1);		//Gaspedal
+	rPackTwo.setRelayValue(R_A7, 1);		//brake
 	rPackTwo.setRelayValue(R_D22,1);		//Gear_Reverse
 	rPackTwo.setRelayValue(R_D31,1);		//Gear_Forward
 	rPackTwo.setRelayValue(R_D12,1);		//CDC_Activation
@@ -116,7 +120,7 @@ bool Mobile::startUp(){
 //This function receives UDP packets from Ground and puts them in a state if they are changed
 //If enough errors are detected
 void Mobile::recvGround() {
-	while(not pleased){
+	while(not signaled){
 		if(errors == 10){
 			sendAllStop();
 			errno = ENETDOWN;
@@ -153,10 +157,8 @@ void Mobile::recvGround() {
 /*	Receives data from an IMUHandler and puts it into a state.
  */
 void Mobile::recvIMU() {
-	IMU::IMUManager imm = IMU::IMUManager();
-	imm.init(true, false);
 	ImuPack imp;
-	while(not pleased){
+	while(not signaled){
 		usleep(1000);
 		imp = imm.getImuPack();
 		logVerbose("IMUdata received");
@@ -177,7 +179,7 @@ void Mobile::sendEBUOne() {
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
 	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
-	while(not pleased){
+	while(not signaled){
 		m_State.lock();
 		tempState = state;
 		m_State.unlock();
@@ -204,7 +206,7 @@ void Mobile::sendEBUTwo() {
 	AnalogIn analogdummy;
 	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
 	logVerbose("Mobile -> sendEBUTro: starting.");
-	while(not pleased){
+	while(not signaled){
 		m_State.lock();
 		tempState = state;
 		m_State.unlock();

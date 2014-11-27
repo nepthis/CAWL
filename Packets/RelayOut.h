@@ -131,10 +131,10 @@
 #define R_CAN2 	51	//Pin 21 L - 22 H Contact A
 #define R_J1708 50	//Pin 17 A - 18 B Contact A
 //----------------------------Not used---------------------------------
-#define R_res1	5			//Pin 1 OBS! Only EBU 1, V ECU
-#define R_res2	6			//Pin 2 OBS! Only EBU 1, V ECU
-#define R_res3	7 			//Pin 3 OBS! Only EBU 1, V ECU
-#define R_res4 	95		//Pin 4 OBS! Only EBU 1, V ECU
+#define R_res1	5	//Pin 1 OBS! Only EBU 1, V ECU
+#define R_res2	6	//Pin 2 OBS! Only EBU 1, V ECU
+#define R_res3	7 	//Pin 3 OBS! Only EBU 1, V ECU
+#define R_res4 	95	//Pin 4 OBS! Only EBU 1, V ECU
 #define R_res5 	103	//Pin 5 OBS! Only EBU 1, V ECU
 #define R_res6 	110	//Pin 6 OBS! Only EBU 1, V ECU
 #define R_res7 	111	//Pin 7 OBS! Only EBU 1, V ECU

@@ -66,7 +66,6 @@ typedef struct fromSim {
 	uint32_t packetSize;
 	float analog[8];
 	uint32_t digital;
-	std::chrono::system_clock::time_point timeStamp;
 }fromSim;
 
 class SimPack {

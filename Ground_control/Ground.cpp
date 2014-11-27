@@ -12,8 +12,6 @@ using namespace Ground_control;
 mutex m_state;
 
 Ground::Ground(bool sctpStatus) {
-
-
 	sctpIsOn = sctpStatus;
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
@@ -48,7 +46,8 @@ Ground::Ground(bool sctpStatus) {
 	if(inet_pton(AF_INET, "0.0.0.0", &(recImuAddr.sin_addr)) < 0){logError("Ground -> Constructor");logError(strerror(errno));exit(1);}
 	recImuAddr.sin_port = htons(REC_IMU_PORT);
 	if (bind(recImuSocket, (struct sockaddr *)&recImuAddr, sizeof(recImuAddr)) < 0){
-		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);}
+		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);
+	}
 }
 /*	Written by Robin Bond and modified by Håkan
  * The sendPacket method receives a packet from the simulator containing data
@@ -58,7 +57,7 @@ Ground::Ground(bool sctpStatus) {
 void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 	int errorMobile = 0;
 	logVerbose("Ground -> sendMobile: starting");
-	while(true){
+	while(not signaled){
 		usleep(1000);
 		SimPack temp;
 		m_state.lock();
@@ -66,7 +65,6 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 		m_state.unlock();
 		if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
 			logWarning("Ground:sendMobile: ");
-			logWarning(strerror(errno));
 			errorMobile++;
 			continue;
 		}else{
@@ -84,7 +82,7 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 void Ground::receiveSim(){
 	int errorsSim = 0;
 	logVerbose("Ground -> receiveSim: starting");
-	while(errorsSim <= 50){
+	while((errorsSim <= 50) && not signaled){
 		try{
 			sp = simulator->recvSim();
 			errorsSim = 0;
@@ -113,9 +111,7 @@ void Ground::receiveImuPacket(){
 	int imuErrors = 0;
 	Packets::ImuPack impa = Packets::ImuPack();
 	logVerbose("Ground -> receiveImuPacket: starting");
-	IMU::IMUManager im = IMU::IMUManager();
-	im.init(false, true);
-	while(true){
+	while(not signaled){
 		if(imuErrors < 100){
 			try{
 				if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
@@ -147,7 +143,16 @@ void Ground::receiveImuPacket(){
 	}
 }
 
+void Ground_control::Ground::sendSim() {
+	while(not signaled){
+		if(im.sendData() < 0){
+			errno = 70; //ECOMM
+			throw errno;
+		}
+		usleep(1000000/SIM_FREQ);
+	}
 
+}
 
 Ground::~Ground() {
 	delete simulator;

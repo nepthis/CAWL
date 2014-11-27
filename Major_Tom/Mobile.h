@@ -42,7 +42,6 @@ namespace Major_Tom {
 
 class Mobile {
 public:
-	bool pleased;
 	Mobile(bool sctp);	//Constructor
 	bool startUp();
 	void recvGround(); 				//Receiving data from an UDP socket, port 65656
@@ -58,6 +57,7 @@ public:
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
+	IMU::IMUManager imm;
 	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 

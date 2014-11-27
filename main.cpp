@@ -20,16 +20,17 @@
 #define RETRIES 5 		//Amount of retries
 #define TIMEOUT 5	//Amount of seconds to wait before retrying
 #define connected true
+extern sig_atomic_t signaled = 0; //for exiting with ctrl+c
 
-void INT_handler(int dummy){
-	exit(EXIT_SUCCESS);
+void exit_handler(int dummy){
+	signaled = 1;
 }
 using namespace std;
-using namespace Ground_control;
+
 
 typedef struct States{
 	bool ip = false;
-	bool sctp, udp = false;
+	bool sctp, udp, changeLoggingLevel = false;
 	std::string mode = "empty";
 	std::vector<std::string>  ipAddr;
 	std::string loggingLevel = "error";
@@ -42,15 +43,25 @@ bool checkIP(char *ipAddress){
 }
 int checkInput(int argc, char * args[], State * s){
 	for(int i = 1; i < argc; i++){
-		if ((((std::string)args[i] == "ground") ||((std::string)args[i] == "mobile") ) && (s->mode == "empty"))
-		{s->mode = (std::string)args[i];continue;}
-		if(((std::string)args[i] == "-i")){s->ip = true;continue;}
+		if ((((std::string)args[i] == "ground") ||((std::string)args[i] == "mobile") ) && (s->mode == "empty")){
+			s->mode = (std::string)args[i];continue;
+		}
+		if(((std::string)args[i] == "-i")){
+			s->ip = true;continue;
+		}
 		if(checkIP(args[i])){s->ipAddr.push_back(args[i]);continue;}
-		if(((std::string)args[i] == "-s")&&(not s->udp)){s->sctp = true;continue;}
-		if(((std::string)args[i] == "-u")&&(not s->sctp)){s->udp = true;continue;}
-		if((std::string)args[i] == "-l"){s->udp = true;continue;}
-		if ((((std::string)args[i] == "warning") ||((std::string)args[i] == "info")||((std::string)args[i] == "verbose") ) && (s->loggingLevel == "error"))
-		{s->loggingLevel = (std::string)args[i];continue;}
+		if(((std::string)args[i] == "-s")&&(not s->udp)){
+			s->sctp = true;continue;
+		}
+		if(((std::string)args[i] == "-u")&&(not s->sctp)){
+			s->udp = true;continue;
+		}
+		if((std::string)args[i] == "-l"){
+			s->changeLoggingLevel = true;continue;
+		}
+		if ((((std::string)args[i] == "warning") ||((std::string)args[i] == "info")||((std::string)args[i] == "verbose") ) && (s->changeLoggingLevel)){
+			s->loggingLevel = (std::string)args[i];continue;
+		}
 
 	}
 	if(s->ip && s->ipAddr.empty()){return -1;}
@@ -62,7 +73,7 @@ void start(State * s){
 	int retr = RETRIES;
 	int rtGround = RETRIES;
 	if(s->mode == "ground"){
-		Ground* gc =  new  Ground(s->sctp); //(char*)"192.168.2.5",(char*) "192.168.2.100"
+		Ground_control::Ground* gc =  new  Ground_control::Ground(s->sctp); //(char*)"192.168.2.5",(char*) "192.168.2.100"
 		while(retr){
 			if (gc->simulator->connectToSim() != connected){
 				printf("Socket for simulator failed, retrying in %i seconds\n", TIMEOUT);
@@ -72,17 +83,19 @@ void start(State * s){
 				try{
 					//needs more threads...IMU receive
 					printf("Main: thread starting\n");
-					std::thread g1(&Ground::sendMobile, gc);	//For simulator data to Mobile
-					std::thread g2(&Ground::receiveSim, gc);	//For receiving data from simulator
-					std::thread g3(&Ground::receiveImuPacket, gc);
-					printf("Main: thread started, joining\n");
+					std::thread g1(&Ground_control::Ground::sendMobile, gc);	//For simulator data to Mobile
+					std::thread g2(&Ground_control::Ground::receiveSim, gc);	//For receiving data from simulator
+					std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
+					std::thread g4(&Ground_control::Ground::sendSim, gc);
+					logVerbose("Main: thread started, joining\n");
 					g1.join();
 					g2.join();
 					g3.join();
+					g4.join();
 					printf("Main: thread started, joined\n");
 				}catch(int e){
 					logError(strerror(errno));
-					exit(1);
+					break;
 				}
 			}
 		}
@@ -115,14 +128,14 @@ void start(State * s){
 						major->sendAllStop();
 						major->pleased = true;
 						logError(strerror(errno));
-						exit(-1);
+						break;
 					}
 				}
 		}
 	}
 }
 int main(int argc, char * args[]){
-	signal(SIGINT, INT_handler);	//When exiting with ctrl+c
+	signal(SIGINT, exit_handler);	//When exiting with ctrl+c
 	State s;
 	if(not (checkInput(argc, args,& s) == 0)){
 		printf("ERROR parsing input\n");

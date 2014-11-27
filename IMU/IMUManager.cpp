@@ -27,46 +27,38 @@ IMUManager::IMUManager() {
 /*
  * Start interfacing the IMU using rs232
  */
-int IMUManager::init(bool imu_rec, bool sim_snd) {
+int IMUManager::setupIMU(){
 	while(devid<0 && imu_rec){
 		devid = getDev();
-		if(devid == -1){sleep(5);}
+		if(devid == -1){
+			sleep(5);
+		}
 	}
 
-	if(RS232_OpenComport(devid, BAUD) && imu_rec) {
+	if(RS232_OpenComport(devid, BAUD)) {
 		logError("Could not connect to comport ");
-		return 1;
+		return -1;
 	}else{
 		conn = true;
 	}
+	return 1;
+}
 
-	// Used for testing simulator!!
+
+int IMUManager::setupSockets(){
 	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		logError("socket error");
 		logError(strerror(errno));
-		return 1;
+		return -1;
 	}
 
 	memset((char *)&simAddr, 0, sizeof(simAddr));
 	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
 	simAddr.sin_port = htons(SIM_PORTEN);
-
-
-	if(imu_rec){
-		std::thread t1 (&IMUManager::readImu, this);
-		std::thread t2 (&IMUManager::getControl , this);
-
-		t1.detach();
-		t2.detach();
-	}
-	if(sim_snd){
-		std::thread t3 (&IMUManager::sendData, this);
-
-		t3.detach();
-	}
-
-	return -1;
+	return 1;
 }
+
+
 
 /*
  * Used to see what IMU if any is connected and to recieve it's
@@ -127,7 +119,7 @@ void IMUManager::readImu() {
 	unsigned char buf[22];
 	unsigned char buftemp[22];
 
-	while(1){
+	while(not signaled){
 		usleep(IMU_TIMEOUT);
 		for(int i = 0; i < 5;++i){
 			memset(&buf,0,22);
@@ -243,7 +235,7 @@ void IMUManager::filterData(double ax, double ay, double az,
  * Reads data and calls filter
  */
 void IMUManager::getControl() {
-	while(1){
+	while(not signaled){
 		data_lock.lock();
 		float accx = imudata.accx;
 		float accy = imudata.accy;
@@ -384,20 +376,19 @@ void IMUManager::setAngles(float accx, float accy, float accz,
  * Used to send data to Oryx platform in testing purposes
  */
 
-void IMUManager::sendData() {
+int IMUManager::sendData() {
 	// Wait for first data
 	Packets::ImuPack temp;
 	sleep(5);
+	imupack_lock.lock();
+	temp = imupack;
+	imupack_lock.unlock();
 
-	while(1){
-		imupack_lock.lock();
-		temp = imupack;
-		imupack_lock.unlock();
-		sendto(simsock, (char*)&temp.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in));
-
-		// Busy wait, SIM_FREQ frequency platform recieves packages
-		usleep(1000000/SIM_FREQ);
+	if(sendto(simsock, (char*)&temp.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in)) < 0){
+		return -1;
 	}
+
+	return 1;
 }
 
 IMUManager::~IMUManager() {

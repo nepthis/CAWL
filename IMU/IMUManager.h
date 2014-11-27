@@ -86,6 +86,9 @@ public:
 	int init(bool imu_rec, bool sim_snd);
 	virtual ~IMUManager();
 	void setImuPack(Packets::ImuPack imu);
+	int setupSockets();
+	int setupIMU();
+	int sendData(); //to simulator
 	Packets::ImuPack getImuPack();
 	bool isConnected();
 	bool 			conn;
@@ -171,7 +174,7 @@ private:
 	void filterData(double ax, double ay, double az,
 			double gx, double gy, double gz);
 	void setData(char*);
-	void sendData();
+
 
 	double gyroToFloat(int value){return (value/GYRO_SCALE)*(M_PI/180);}
 	double accToFloat(int value){return value*(MAX_VOLTAGE/SENSITIVITY)/(RESOLUTION_ACC-1);}

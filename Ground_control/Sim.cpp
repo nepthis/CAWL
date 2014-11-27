@@ -44,21 +44,21 @@ void Sim::sendSim(Packets::ImuPack imudata) {
 bool Sim::connectToSim() {
 	//Create socket for the simulator
 	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	memset((char *)&simAddr, 0, slen);
 	if(inet_pton(AF_INET, "0.0.0.0", &(simAddr.sin_addr)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	simAddr.sin_port = htons(65400);
 	if (bind(simulatorSocket, (struct sockaddr *)&simAddr, sizeof(simAddr)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	//---------------------------------------------------------------------------------------------
 	if ((motionSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	memset((char *)&motAddr, 0, slen);
 	if(inet_pton(AF_INET, MOV_IP, &(motAddr.sin_addr)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	motAddr.sin_port = htons(MOV_PORT);
 	if (setsockopt(simulatorSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0)
-	{logWarning("Sim -> connectToSim");logWarning(strerror(errno));return false;}
+	{logWarning("Sim -> connectToSim");return false;}
 	return true;
 }
