@@ -55,6 +55,7 @@ private:
 	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
+	Packets::ImuPack imuStateToSim;
 	//----------------------SCTP---------------------
 //	char pRecvBuffer[RECVBUFSIZE + 1];
 //	struct sockaddr_in addrSCTP;

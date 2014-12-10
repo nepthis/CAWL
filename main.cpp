@@ -20,7 +20,10 @@
 #define RETRIES 5 		//Amount of retries
 #define TIMEOUT 5	//Amount of seconds to wait before retrying
 #define connected true
-extern sig_atomic_t signaled = 0; //for exiting with ctrl+c
+/* This
+ *
+ */
+extern sig_atomic_t signaled = 0;
 
 void exit_handler(int dummy){
 	signaled = 1;
@@ -82,7 +85,7 @@ void start(State * s){
 			}else{
 				try{
 					//needs more threads...IMU receive
-					printf("Main: thread starting\n");
+					logVerbose("Main: thread starting\n");
 					std::thread g1(&Ground_control::Ground::sendMobile, gc);	//For simulator data to Mobile
 					std::thread g2(&Ground_control::Ground::receiveSim, gc);	//For receiving data from simulator
 					std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
@@ -92,7 +95,6 @@ void start(State * s){
 					g2.join();
 					g3.join();
 					g4.join();
-					printf("Main: thread started, joined\n");
 				}catch(int e){
 					logError(strerror(errno));
 					break;

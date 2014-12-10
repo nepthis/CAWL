@@ -58,6 +58,7 @@ public:
 	EBU::EBUManager em;	//Manages EBU connections
 private:
 	IMU::IMUManager imm;
+	Packets::ImuPack imuState;
 	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 

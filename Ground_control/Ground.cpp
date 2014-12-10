@@ -10,6 +10,7 @@ using namespace std;
 using namespace Packets;
 using namespace Ground_control;
 mutex m_state;
+mutex m_ImuStateToSim;
 
 Ground::Ground(bool sctpStatus) {
 	sctpIsOn = sctpStatus;
@@ -125,7 +126,9 @@ void Ground::receiveImuPacket(){
 					continue;
 				}
 				imuErrors = 0;
-				im.setImuPack(impa);
+				m_ImuStateToSim.lock();
+				imuStateToSim = impa;
+				m_ImuStateToSim.unlock();
 			}catch(int e){
 				logError(strerror(errno));
 				logError("Fatal: Ground -> receiveImuPacket");
@@ -149,7 +152,7 @@ void Ground_control::Ground::sendSim() {
 			errno = 70; //ECOMM
 			throw errno;
 		}
-		usleep(1000000/SIM_FREQ);
+		usleep(17000);
 	}
 
 }
