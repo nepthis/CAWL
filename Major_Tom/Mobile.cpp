@@ -1,8 +1,10 @@
 /*
- * Mobile.cpp v0.2
- *
+ * Mobile.cpp
  *  Created on: Jun 23, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 #include "Mobile.h"
 using namespace  Major_Tom;

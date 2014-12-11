@@ -1,18 +1,14 @@
 /*
  * EBUTranslator.h
- *
  *  Created on: Sep 24, 2014
- *      Author: Robin Bond
- *      Description:
- *     Contains functions for translating data from the simpack back into a voltage
- *     the voltage is different from function to function and is represented by a 16-bit
- *     integer for the analog values while the digital signals just take 1 or 0.
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
-
 #ifndef EBUTRANSLATOR_H_
 #define EBUTRANSLATOR_H_
 
-//#include "FromEBU.h"
 #include "../Packets/AllPackets.h"
 #include <stdio.h>
 #include <cmath>

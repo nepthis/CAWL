@@ -18,7 +18,7 @@
 #include <sys/socket.h> //Used for the UDP socket to the EBU
 #include <errno.h>		//Is used for raising errors
 #include <netinet/in.h>	//Network address structs
-#include <arpa/inet.h>	//defenitions for internet options
+#include <arpa/inet.h>	//definitions for internet options
 #include <errno.h>
 
 #include "../Packets/AllPackets.h"
@@ -40,8 +40,8 @@ namespace EBU{
 #define RETRIES 5
 
 /*	This class will maintain the connection to the EBUs (some functions require both EBUs)
- *		It can be used for both reading and sending data to the EBUs. The translation of
- *		packets from the simulator is also performed here.
+ *	It can be used for both reading and sending data to the EBUs. The translation of
+ *	packets from the simulator is also performed here.
  */
 class EBUManager {
 	socklen_t slen;
@@ -80,7 +80,6 @@ class EBUManager {
 public:
 	EBUManager();
 	bool socketsAreChecked();
-	virtual ~EBUManager();
 	bool setUpSockets();
 	void sendAnalogCommand(Packets::ebuAnOut data, int ebuNum);
 	void sendDigitalCommand(Packets::EBUdigitalOut data, int ebuNum);
@@ -89,6 +88,7 @@ public:
 	Packets::AnalogIn recvAnalogEBUTwo();
 	Packets::DigitalIn recvDigitalEBUOne();
 	Packets::DigitalIn recvDigitalEBUTwo();
+	virtual ~EBUManager();
 };
 }
 #endif /* EBUMANAGER_H_ */
