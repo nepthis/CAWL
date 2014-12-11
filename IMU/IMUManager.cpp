@@ -6,29 +6,28 @@
  */
 #include "IMUManager.h"
 
-
-std::mutex data_lock;
 std::mutex imupack_lock;
 
 namespace IMU{
-IMUManager::IMUManager() {
+
+IMUManager::IMUManager(){
 	imuinit = true;
 	conn = false;
-	bufsize = imuinitn = 0;
+	bufsize = imuinitn = medians = 0;
 	offset_accx = offset_accy = offset_accz = 0;
-	old.accx = old.accy = old.accz = 0;
-	old.gyrox = old.gyroy = old.gyroz = 0;
-
+	linear_accx = linear_accy = linear_accz = 0;
+	d = NULL;
+	dir = NULL;
 	devid = -1;
 
-	//init(imu_rec,sim_snd);
+
 }
 
 /*
  * Start interfacing the IMU using rs232
  */
-int IMUManager::setupIMU(){
-	while(devid<0 && imu_rec){
+int IMUManager::setupImu(){
+	while(devid<0){
 		devid = getDev();
 		if(devid == -1){
 			sleep(5);
@@ -36,28 +35,14 @@ int IMUManager::setupIMU(){
 	}
 
 	if(RS232_OpenComport(devid, BAUD)) {
-		logError("Could not connect to comport ");
+		logError("IMUManager: Could not connect to comport ");
+		logVerbose("IMUManager: Be sure to start application in as root/sudo. Or make application member of dialout.");
 		return -1;
 	}else{
 		conn = true;
 	}
 	return 1;
 }
-
-
-int IMUManager::setupSockets(){
-	if ((simsock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-		logError("socket error");
-		logError(strerror(errno));
-		return -1;
-	}
-
-	memset((char *)&simAddr, 0, sizeof(simAddr));
-	inet_pton(AF_INET, SIM_ADDR, &(simAddr.sin_addr));
-	simAddr.sin_port = htons(SIM_PORTEN);
-	return 1;
-}
-
 
 
 /*
@@ -107,9 +92,26 @@ int IMUManager::getDev() {
 	}
 }
 
-void IMUManager::setImuPack(Packets::ImuPack imu){imupack = imu;}
-Packets::ImuPack IMUManager::getImuPack(){return imupack;}
-bool IMUManager::isConnected(){return conn;}
+/*
+ * Returns the imupack containing data tilt, and placement data
+ * needed by the oryx-platform
+ */
+
+Packets::ImuPack IMUManager::getImuPack(){
+	imupack_lock.lock();
+	return imupack;
+	imupack_lock.unlock();
+}
+
+
+/*
+ * return bool to check if connected to IMU
+ */
+bool IMUManager::isConnected(){
+	return conn;
+}
+
+
 /*
  * Used to get a 22 byte command from the IMU
  */
@@ -117,7 +119,6 @@ void IMUManager::readImu() {
 	int n,t=0;
 	unsigned char b;
 	unsigned char buf[22];
-	unsigned char buftemp[22];
 
 	while(not signaled){
 		usleep(IMU_TIMEOUT);
@@ -134,21 +135,17 @@ void IMUManager::readImu() {
 		}
 		memset(&buf,0,22);
 
+
+		//will poll comport until a 22 byte command is recieved
 		while(1){
 			n = RS232_PollComport(devid, buf+t, 22-t);
 			t=t+n;
-			uint32_t gyrox = 0;
 
-			/* Trace print to get command from IMU
-			const char* beg = reinterpret_cast<const char*>(&buf);
-			const char* end = beg + sizeof(buf);
-			while(beg != end){
-				std::cout << std::bitset<CHAR_BIT>(*beg++);
-			}std::cout << std::endl;
-			 */
 			if(t==22 && memcmp((char*)buf+18,(char*)"\x00\x00\x00\x00",4)==0){
 				t = n = 0;
-				setData((char*)buf);
+
+				// Used to extract acc and gyro from buffered command
+				extractGyroAcc((char*)buf);
 				memset(&buf,0,22);
 			}else if(t>22){
 				t = n = 0;
@@ -165,102 +162,124 @@ void IMUManager::readImu() {
 }
 
 
-void IMUManager::setData(char* command) {
+/*
+ * Used to ectract Gyro and acc from the 22 byte command
+ */
+void IMUManager::extractGyroAcc(char* command) {
 
-	//Set gyrox,y,z from command (Gyros)
+	uint32_t gytemp;
+	int16_t  actemp;
+
+	//Set gyrox,-y,-z from command (Gyros)
 	memmove(&gytemp,command,4);
 	gytemp = __builtin_bswap32(gytemp);
 	gytemp = (gytemp & 0x3FFFC00) >> 10;
-	gyrox = 0xffff&gytemp;
+	int16_t gyrox = 0xffff&gytemp;
 
 	memmove(&gytemp,command+4,4);
 	gytemp = __builtin_bswap32(gytemp);
 	gytemp = (gytemp & 0x3FFFC00) >> 10;
-	gyroy = 0xffff&gytemp;
+	int16_t gyroy = 0xffff&gytemp;
 
 	memmove(&gytemp,command+8,4);
 	gytemp = __builtin_bswap32(gytemp);
 	gytemp = (gytemp & 0x3FFFC00) >> 10;
-	gyroz = 0xffff&gytemp;
+	int16_t gyroz = 0xffff&gytemp;
 
-	//Set accx,y,z from  command (accelerometers) 9 bit resolution
+	//Set accx,-y,-z from  command (accelerometers) 9 bit resolution
 	memmove(&actemp,command+12,2);
 	actemp = __builtin_bswap16(actemp);
-	accy = (actemp - getxoffset()) >> 2;
+	int16_t accy = (actemp - getxoffset()) >> 2;
 
 	memmove(&actemp,command+14,2);
 	actemp = __builtin_bswap16(actemp);
-	accx = (actemp - getyoffset()) >> 2;
+	int16_t accx = (actemp - getyoffset()) >> 2;
 
 	memmove(&actemp,command+16,2);
 	actemp = __builtin_bswap16(actemp);
-	accz = (actemp - getzoffset()) >> 2;
+	int16_t accz = (actemp - getzoffset()) >> 2;
 
-	filterData(accToFloat(accx), accToFloat(accy), accToFloat(accz),
-			gyroToFloat(gyrox), gyroToFloat(gyroy*NEG_GYRO_Y), gyroToFloat(gyroz));
+	imud imudata = setMedian(accx, accy, accz, gyrox, gyroy*NEG_GYRO_Y, gyroz);
 
-}
-
-
-
-void IMUManager::filterData(double ax, double ay, double az,
-		double gx, double gy, double gz) {
-
-	double accx = (ax*FILTER_RATIO_A)+(old.accx*(1-FILTER_RATIO_A));
-	double accy = (ay*FILTER_RATIO_A)+(old.accy*(1-FILTER_RATIO_A));
-	double accz = (az*FILTER_RATIO_A)+(old.accz*(1-FILTER_RATIO_A));
-	double gyrox= (gx*(FILTER_RATIO_G))+(old.gyrox*(1-FILTER_RATIO_G));
-	double gyroy= (gy*(FILTER_RATIO_G))+(old.gyroy*(1-FILTER_RATIO_G));
-	double gyroz= (gz*(FILTER_RATIO_G))+(old.gyroz*(1-FILTER_RATIO_G));
-
-	data_lock.lock();
-	imudata.accx = accx;
-	imudata.accy = accy;
-	imudata.accz = accz;
-	imudata.gyrox= gyrox;
-	imudata.gyroy= gyroy;
-	imudata.gyroz= gyroz;
-	data_lock.unlock();
-
-	old.accx = accx;
-	old.accy = accy;
-	old.accz = accz;
-	old.gyrox= gyrox;
-	old.gyroy= gyroy;
-	old.gyroz= gyroz;
+	setFiltered(imudata);
 }
 
 
 /*
- * Reads data and calls filter
+ * Used to set median value of input command
  */
-void IMUManager::getControl() {
-	while(not signaled){
-		data_lock.lock();
-		float accx = imudata.accx;
-		float accy = imudata.accy;
-		float accz = imudata.accz;
-		float gyrox= imudata.gyrox;
-		float gyroy= imudata.gyroy;
-		float gyroz= imudata.gyroz;
-		data_lock.unlock();
+imud IMUManager::setMedian(int16_t ax, int16_t ay, int16_t az,
+		int16_t gx, int16_t gy, int16_t gz) {
+	if(medians < MEDIANS){
+		axv[medians] = ax;
+		ayv[medians] = ay;
+		azv[medians] = az;
+		gxv[medians] = gx;
+		gyv[medians] = gy;
+		gzv[medians] = gz;
+		medians++;
+	}else{
+		memcpy(axvt,axv,sizeof(axv));
+		memcpy(ayvt,ayv,sizeof(ayv));
+		memcpy(azvt,azv,sizeof(azv));
+		memcpy(gxvt,gxv,sizeof(gxv));
+		memcpy(gyvt,gyv,sizeof(gyv));
+		memcpy(gzvt,gzv,sizeof(gzv));
 
-		// wait for correct data
-		if(imuinitn <5){
-			imuinitn++;
-		}else{
-			setAngles(accx,accy,accz,gyrox,gyroy,gyroz);
-		}
-		usleep(1000000/T);
+		memcpy(axv,axvt+1,sizeof(axv));
+		memcpy(ayv,ayvt+1,sizeof(ayv));
+		memcpy(azv,azvt+1,sizeof(azv));
+		memcpy(gxv,gxvt+1,sizeof(gxv));
+		memcpy(gyv,gyvt+1,sizeof(gyv));
+		memcpy(gzv,gzvt+1,sizeof(gzv));
+		axv[medians-1] = ax;
+		ayv[medians-1] = ay;
+		azv[medians-1] = az;
+		gxv[medians-1] = gx;
+		gyv[medians-1] = gy;
+		gzv[medians-1] = gz;
 	}
+
+	memcpy(axvt,axv,sizeof(axv));
+	memcpy(ayvt,ayv,sizeof(ayv));
+	memcpy(azvt,azv,sizeof(azv));
+	memcpy(gxvt,gxv,sizeof(gxv));
+	memcpy(gyvt,gyv,sizeof(gyv));
+	memcpy(gzvt,gzv,sizeof(gzv));
+
+	std::sort(axvt,axvt+medians);
+	std::sort(ayvt,ayvt+medians);
+	std::sort(azvt,azvt+medians);
+	std::sort(gxvt,gxvt+medians);
+	std::sort(gyvt,gyvt+medians);
+	std::sort(gzvt,gzvt+medians);
+
+	imud imudata;
+
+	imudata.accx  = accToFloat(axvt[medians/2]);
+	imudata.accy  = accToFloat(ayvt[medians/2]);
+	imudata.accz  = accToFloat(azvt[medians/2]);
+	imudata.gyrox = gyroToFloat(gxvt[medians/2]);
+	imudata.gyroy = gyroToFloat(gyvt[medians/2]);
+	imudata.gyroz = gyroToFloat(gzvt[medians/2]);
+
+	return imudata;
 }
 
+
 /*
- * Used to sensorfuse gyro and acc and get angles, and linear acc.
+ * Used to extrapolate gyro and use acc to get angles, and linear acc.
  * Needs to be rewritten.
  */
-void IMUManager::setAngles(float accx, float accy, float accz,
-		float gyrox, float gyroy, float gyroz) {
+void IMUManager::setFiltered(imud imudata) {
+
+	double accx  = imudata.accx;
+	double accy  = imudata.accy;
+	double accz  = imudata.accz;
+
+	double gyrox = imudata.gyrox;
+	double gyroy = imudata.gyroy;
+	double gyroz = imudata.gyroz;
 
 	double raccxn, raccyn, racczn;
 
@@ -333,7 +352,7 @@ void IMUManager::setAngles(float accx, float accy, float accz,
 					copysign(M_PI/6,pitch) :
 					pitch);
 
-	temppack.setSensorDataValue(YAW,0);  // Use gyroz ?
+	temppack.setSensorDataValue(YAW,0);
 
 	linear_accx = (raccxn - rest[R_X]);
 	linear_accy = linear_accx*LIN_FILT + (raccyn - rest[R_Y])*(1-LIN_FILT);
@@ -348,49 +367,10 @@ void IMUManager::setAngles(float accx, float accy, float accz,
 	imupack = temppack;
 	imupack_lock.unlock();
 
-
-	//Trace: Data from IMU in deg. (acc + gyro)
-	//printf("%f   %f   %f \n", (acos(rest[R_X])*57.3),(acos(rest[R_Y])*57.3),acos(rest[R_Z])*57.3);
-
-	//Trace: Data from acc
-	//printf("%f   %f   %f \n", raccxn, raccyn, racczn);
-
-	//Trace: Data for linear acceleration
-	//printf("%f   %f   %f \n", linear_accx,linear_accy,linear_accz);
-	//printf("%f\n",fabs(linear_accz)>0.001?linear_accz/10:0);
-
-	//Trace: raw gyro data
-	//printf("%f   %f   %f \n", gyrox,gyroy,gyroz);
-
-	//Trace: Compare gyro+acc / acc
-	//printf("acc:,%f,%f,acc+gyro\n",(raccxnd-90),(acos(rest[R_X])*57.3)-90);
-
-	//printf("accx:%f  accy:%f accz:%f\n",accx,accy,accz);
-
-	//Trace: IMUPack data
-	//printf("ROLL: %f PITCH: %f \n",imupack.getSensorDataValue(ROLL),imupack.getSensorDataValue(PITCH));
-
 }
 
-/*
- * Used to send data to Oryx platform in testing purposes
- */
-
-int IMUManager::sendData() {
-	// Wait for first data
-	Packets::ImuPack temp;
-	sleep(5);
-	imupack_lock.lock();
-	temp = imupack;
-	imupack_lock.unlock();
-
-	if(sendto(simsock, (char*)&temp.sens, 32, 0, (struct sockaddr*) &simAddr, sizeof(struct sockaddr_in)) < 0){
-		return -1;
-	}
-
-	return 1;
-}
 
 IMUManager::~IMUManager() {
 }
+
 }
