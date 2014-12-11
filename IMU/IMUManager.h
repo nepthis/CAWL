@@ -9,25 +9,26 @@
 #define IMUMANAGER_H_
 
 #include <stdlib.h>
-#include <dirent.h>
 #include <string>
-#include <vector>
-#include <tuple>
-#include <map>
-#include <mutex>
-#include <thread>
 #include <cstdlib>
-#include <sstream>
-#include <iostream>
-#include <algorithm>
-#include <cmath>
-#include <bitset>
-#include "rs232.h"
-#include "../Packets/ImuPack.h"
-#include <errno.h>
+#include <dirent.h>						//Used to get directory/path of IMU
+#include <vector>						//Used for storing IMU meta-data
+#include <tuple>						//Used for storing IMU meta-data
+#include <map>							//Used for storing IMU meta-data
+#include <mutex>						//Used to safely acces vars inbetween threads
+#include <sstream>						//Used to manipuilate device path string
+#include <algorithm>					//Used for sort
+#include <cmath>						//Used for trigonometric functions etc.
+#include "rs232.h"						//GPL library used for rs232 communication
+#include <errno.h>						//Used to set error.nr
 #include <cstring>						//Used for memcpy
+#include "../Packets/ImuPack.h"			//Used to pack data for sim
 #include "../logger.h"					//Used for logging
 #include "../Globals.h"					//used for global signaling etc.
+
+//#include <bitset>						//Not used anymore
+//#include <iostream>					//Used while testing
+//#include <thread>						//Not used anymore threading is outside of class
 
 #define DAMPER 0.5						// real_tilt_angle*DAMPER, used to scale movement
 #define MEDIANS 10						// Amount of samples
@@ -77,7 +78,7 @@ public:
 	IMUManager();//bool imu_rec, bool sim_snd
 	virtual ~IMUManager();
 
-	int setupImu();
+	void setupImu();
 	Packets::ImuPack getImuPack();
 	bool isConnected();
 	void readImu();

@@ -26,22 +26,21 @@ IMUManager::IMUManager(){
 /*
  * Start interfacing the IMU using rs232
  */
-int IMUManager::setupImu(){
+void IMUManager::setupImu(){
 	while(devid<0){
 		devid = getDev();
 		if(devid == -1){
 			sleep(5);
 		}
 	}
-
 	if(RS232_OpenComport(devid, BAUD)) {
 		logError("IMUManager: Could not connect to comport ");
 		logVerbose("IMUManager: Be sure to start application in as root/sudo. Or make application member of dialout.");
-		return -1;
+		errno = ECANCELED;
+		throw errno;
 	}else{
 		conn = true;
 	}
-	return 1;
 }
 
 
