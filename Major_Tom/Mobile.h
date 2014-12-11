@@ -1,8 +1,10 @@
 /*
  * Mobile.h
- *
  *  Created on: Jun 23, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 
 #ifndef MOBILE_H_
@@ -58,6 +60,7 @@ public:
 	EBU::EBUManager em;	//Manages EBU connections
 private:
 	IMU::IMUManager imm;
+	Packets::ImuPack imuState;
 	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 

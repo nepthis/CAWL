@@ -1,8 +1,9 @@
 /*
  * Ground.cpp
- *
- *  Created on: May 19, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 
 #include "Ground.h"
@@ -10,6 +11,7 @@ using namespace std;
 using namespace Packets;
 using namespace Ground_control;
 mutex m_state;
+mutex m_ImuStateToSim;
 
 Ground::Ground(bool sctpStatus) {
 	sctpIsOn = sctpStatus;
@@ -49,8 +51,7 @@ Ground::Ground(bool sctpStatus) {
 		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);
 	}
 }
-/*	Written by Robin Bond and modified by HÃ¥kan
- * The sendPacket method receives a packet from the simulator containing data
+/* The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then transferred to Mobile.
  * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
@@ -125,7 +126,9 @@ void Ground::receiveImuPacket(){
 					continue;
 				}
 				imuErrors = 0;
-				im.setImuPack(impa);
+				m_ImuStateToSim.lock();
+				imuStateToSim = impa;
+				m_ImuStateToSim.unlock();
 			}catch(int e){
 				logError(strerror(errno));
 				logError("Fatal: Ground -> receiveImuPacket");
@@ -149,7 +152,7 @@ void Ground_control::Ground::sendSim() {
 			errno = 70; //ECOMM
 			throw errno;
 		}
-		usleep(1000000/SIM_FREQ);
+		usleep(17000);
 	}
 
 }

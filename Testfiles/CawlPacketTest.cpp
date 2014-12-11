@@ -1,11 +1,8 @@
 /*
- * CawlPacketTest.cpp
- *
- *  Created on: May 6, 2014
- *      Author: HÃ¥kan TherÃ©n
- *
- *      Description: Simple test script for testing CawlPacket.cpp
- *
+ *  Authors: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 
 

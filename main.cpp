@@ -1,13 +1,15 @@
 /*
  * main.cpp
- *
  *  Created on: Jun 19, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
-#include <stdio.h> 		//Mainly for printf()
+#include <stdio.h> 		//printf()
 #include <signal.h>	//Used for catching ctr+c
-#include <string>		//Standard string, used for addresses mostly
-#include <thread>		//for standard threads, mutexes exist in objects
+#include <string>	//Standard string, used for IP addresses mostly
+#include <thread>
 #include <regex>
 #include <chrono>
 #include <arpa/inet.h>
@@ -16,18 +18,23 @@
 #include "Ground_control/Ground.h"
 #include "Major_Tom/Mobile.h"
 #include "logger.h"
+#include "Globals.h"
 
 #define RETRIES 5 		//Amount of retries
 #define TIMEOUT 5	//Amount of seconds to wait before retrying
 #define connected true
-extern sig_atomic_t signaled = 0; //for exiting with ctrl+c
+sig_atomic_t signaled = 0;
+/* This
+ */
+
 
 void exit_handler(int dummy){
 	signaled = 1;
 }
 using namespace std;
 
-
+/* Stores the users input
+ */
 typedef struct States{
 	bool ip = false;
 	bool sctp, udp, changeLoggingLevel = false;
@@ -36,12 +43,24 @@ typedef struct States{
 	std::string loggingLevel = "error";
 }State;
 
+/* Validates IPv4 addresses
+ */
+
 bool checkIP(char *ipAddress){
 	struct sockaddr_in temp;
 	if( inet_pton(AF_INET, ipAddress, &(temp.sin_addr))){return true;}
 	else{return false;}
 }
+std::string lowercase(std::string input){
+	std::string output;
+
+	return output;
+}
+/*
+ *
+ */
 int checkInput(int argc, char * args[], State * s){
+	std::locale loc;
 	for(int i = 1; i < argc; i++){
 		if ((((std::string)args[i] == "ground") ||((std::string)args[i] == "mobile") ) && (s->mode == "empty")){
 			s->mode = (std::string)args[i];continue;
@@ -69,6 +88,11 @@ int checkInput(int argc, char * args[], State * s){
 		printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
 	return 0;
 }
+/* Based on the state set from checkInput the start function creates and runs either
+ * Mobile or Ground. It terminates if an error occurs.
+ * If one of the fucntions for setting up the sockets spits out an error it will
+ * try again until the specified amount is reached.
+ */
 void start(State * s){
 	int retr = RETRIES;
 	int rtGround = RETRIES;
@@ -82,7 +106,7 @@ void start(State * s){
 			}else{
 				try{
 					//needs more threads...IMU receive
-					printf("Main: thread starting\n");
+					logVerbose("Main: thread starting\n");
 					std::thread g1(&Ground_control::Ground::sendMobile, gc);	//For simulator data to Mobile
 					std::thread g2(&Ground_control::Ground::receiveSim, gc);	//For receiving data from simulator
 					std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
@@ -92,7 +116,6 @@ void start(State * s){
 					g2.join();
 					g3.join();
 					g4.join();
-					printf("Main: thread started, joined\n");
 				}catch(int e){
 					logError(strerror(errno));
 					break;
@@ -126,7 +149,7 @@ void start(State * s){
 						m4.join();
 					}catch(int e){
 						major->sendAllStop();
-						major->pleased = true;
+						signaled = 1;
 						logError(strerror(errno));
 						break;
 					}
@@ -134,7 +157,9 @@ void start(State * s){
 		}
 	}
 }
+
 int main(int argc, char * args[]){
+
 	signal(SIGINT, exit_handler);	//When exiting with ctrl+c
 	State s;
 	if(not (checkInput(argc, args,& s) == 0)){

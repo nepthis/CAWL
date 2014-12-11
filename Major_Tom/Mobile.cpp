@@ -1,8 +1,10 @@
 /*
- * Mobile.cpp v0.2
- *
+ * Mobile.cpp
  *  Created on: Jun 23, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 #include "Mobile.h"
 using namespace  Major_Tom;
@@ -10,6 +12,7 @@ using namespace Packets;
 using namespace std;
 mutex m_State;
 mutex m_Sendstate;
+mutex m_ImuState;
 /*	The contructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
  * 	For now sending data back over the CawlSocket is not performed but when it
@@ -154,19 +157,31 @@ void Mobile::recvGround() {
 
 	}
 }
-/*	Receives data from an IMUHandler and puts it into a state.
+/*	Sends IMU data to Ground
+ */
+void Mobile::sendIMU(){
+	ImuPack tempImu;
+	while (not signaled){
+		m_ImuState.lock();
+		tempImu = imuState;
+		m_ImuState.unlock();
+		if(sendto(sndImuSocket, (char*)&tempImu.sens, sizeof(tempImu.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
+			logError("Mobile->sendImu");
+			logError(strerror(errno));
+		}
+	}
+}
+/*Receives data from the IMU
  */
 void Mobile::recvIMU() {
 	ImuPack imp;
 	while(not signaled){
 		usleep(1000);
-		imp = imm.getImuPack();
+		imp = imm.getImuPack(); //handle error for this one.
 		logVerbose("IMUdata received");
-		if(sendto(sndImuSocket, (char*)&imp.sens, sizeof(imp.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
-			perror("Ground:sendMobile");
-			logError(strerror(errno));
-			exit(0);
-		}
+		m_ImuState.lock();
+		imuState = imp;
+		m_ImuState.unlock();
 	}
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with

@@ -41,7 +41,7 @@ void EBUManager::sendAnalogCommand(ebuAnOut data, int ebuNum){
 		break;
 	}
 }
-/*	The sendRelayCommand works similiar to the sendAnalogCommand function, the difference is that
+/*	The sendRelayCommand works similar to the sendAnalogCommand function, the difference is that
  * 	the data it sends is a bit different and is used to activate/deactivate relays on the EBU
  * 	by receiving data from the EBU we prevent it from crashing... according to it's creator.
  */
@@ -76,10 +76,10 @@ void EBU::EBUManager::sendDigitalCommand(EBUdigitalOut data, int ebuNum) {
 			errno = ECOMM;logError(strerror(errno));logError("EBUManager -> sendDigitalCommand: EBU two");throw errno;}
 		break;
 	}
-
 }
-//Read this at your own risk..
-//UDP connection, must write SCTP vers
+/* This method initiates the sockets for the UDP connection to the EBUs.
+ * For ports and IP addresses see the header file.
+ */
 bool EBU::EBUManager::setUpSockets() {
 	try{
 		//----------------------------------Sockets------------------------------------------------
@@ -191,55 +191,66 @@ bool EBU::EBUManager::setUpSockets() {
 		throw errno;
 	}
 }
-//not complete, needs to handle errors, 4 functions not needed. maybe could make it into one or two similar to "send"
+/* Receives data from EBU One, returns a data structure with the values
+ * TODO: Use the data for something.
+ */
 AnalogIn EBUManager::recvAnalogEBUOne() {
 	char buffer[255];
 	Packets::AnalogIn inData;
-	struct sockaddr_in ebuAddr; //This struct stores the senders IP
-	memset(&(ebuAddr.sin_zero), '\0', 8);
+	struct sockaddr_in ebuAddr; //stores information from the sender
+	if(memset(&(ebuAddr.sin_zero), '\0', 8) < 0){
+		logError(strerror(errno));
+		logError("EBUManager->recvAnalogEBUOne->memset");
+		throw errno;
+	}
 	if(recvfrom(sockOneAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){
 		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUOne: recvfrom");throw errno;}
-	char str[INET_ADDRSTRLEN];
-	if(inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN) <0){//Gets senders IP into readable
-		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUOne: inet_ntop");throw errno;}
-	if((string)str == EBU_IP_1){inData.setSource(1);return inData;}	//Verifies that it's the correct sender IP
-	inData.setSource(0); //0 means unvalid
+	inData.setSource(1); //0 means unvalid
 	return inData;
 }
+/* Receives data from EBU One, returns a datastructure with the values
+ * TODO: Use the data for something.
+ */
 AnalogIn EBUManager::recvAnalogEBUTwo() {
 	char buffer[255];
 	Packets::AnalogIn inData;
-	struct sockaddr_in ebuAddr; //This struct stores the senders IP
-	memset(&(ebuAddr.sin_zero), '\0', 8);
+	struct sockaddr_in ebuAddr; //stores information from the sender
+	if(memset(&(ebuAddr.sin_zero), '\0', 8) < 0){
+		logError(strerror(errno));logError("EBUManager->recvAnalogEBUOne->memset");throw errno;}
 	if(recvfrom(sockTwoAnalogIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)< 0){
 		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUTwo: recvfrom");throw errno;}
 	char str[INET_ADDRSTRLEN];
-	if(inet_ntop(AF_INET, &(ebuAddr.sin_addr), str, INET_ADDRSTRLEN) <0){//Gets senders IP into readable
-		logError(strerror(errno));logError("EBUManager -> recvAnalogEBUTwo: inet_ntop");throw errno;}
-	if((string)str == EBU_IP_2){
-		inData.setSource(2);return inData;}				//Verifies that it's the correct sender IP
-	inData.setSource(0); //0 means unvalid
+	inData.setSource(2);
 	return inData;
 }
+/* Receives data from EBU One, returns a datastructure with the values
+ * TODO: Use the data for something.
+ */
 Packets::DigitalIn EBUManager::recvDigitalEBUOne() {
 	char buffer[255];
 	Packets::DigitalIn digidata;
 	struct sockaddr_in ebuAddr;	//Stores senders IP
-	memset(&(ebuAddr.sin_zero), '\0', 8);
+	if(memset(&(ebuAddr.sin_zero), '\0', 8) < 0){
+		logError(strerror(errno));logError("EBUManager->recvAnalogEBUOne->memset");throw errno;}
 	if(recvfrom(sockOneDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){
 		logError(strerror(errno));logError("EBUManager -> recvDigitalEBUOne: recvfrom");throw errno;}
 	return digidata;
 }
+/* Receives data from EBU One, returns a datastructure with the values
+ * TODO: Use the data for something.
+ */
 Packets::DigitalIn EBUManager::recvDigitalEBUTwo() {
 	char buffer[255];
 	Packets::DigitalIn digidata;
 	struct sockaddr_in ebuAddr;	//Stores senders IP
-	memset(&(ebuAddr.sin_zero), '\0', 8);
+	if(memset(&(ebuAddr.sin_zero), '\0', 8) < 0){
+		logError(strerror(errno));logError("EBUManager->recvDigitalEBUTwo->memset");throw errno;}
 	if(recvfrom(sockTwoDigitalIn, buffer, 255, 0, (struct sockaddr *)&ebuAddr, &slen)<0){
 		logError(strerror(errno));logError("EBUManager -> recvDigitalEBUTwo: recvfrom");throw errno;}
 	return digidata;
 }
-
+/* Can be used to double check that the sockets are set up correctly
+ */
 bool EBU::EBUManager::socketsAreChecked() {
 	return socketCheck;
 }

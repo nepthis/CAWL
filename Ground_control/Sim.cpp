@@ -1,12 +1,16 @@
 /*
  * Sim.cpp
- *
  *  Created on: Apr 16, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 #include "Sim.h"
 #include "../logger.h"
+
 using namespace Ground_control;
+
 Sim::Sim() {
 	slen = sizeof(simAddr);
 	realID = 1;
@@ -16,9 +20,8 @@ Sim::Sim() {
 }
 Sim::~Sim() {
 }
-/*	The method recPac reveices a UDP packet from the simulator and
- * 	inserts the data into a SimPack with a memcpy. The SimPack will
- * 	get a new ID because the simulator returns the same one.
+/*	The method secvSim receives an UDP packet from the simulator and
+ * 	inserts the data into a SimPack with a memcpy.
  */
 Packets::SimPack Sim::recvSim(void) {
 	char recbuf[255];
@@ -31,18 +34,21 @@ Packets::SimPack Sim::recvSim(void) {
 	}
 	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 	simpack.stampTime();
-	simpack.setID(realID);
-	realID++;
 	//if(fabs(simpack.getAnalog(LIFTSTICK)) > 0.01){ss.sndPulse();}
 	return simpack;
 }
+
+/*
+ *
+ */
 void Sim::sendSim(Packets::ImuPack imudata) {
 	//Packets going out must have packe ID field of 2001
 	imudata.sens.packetId = 2001;
 }
-
+/* Sets up the sockets needed to receive data from the simulator and bins the socket.
+ * For now it returns false if it fails, true otherwise.
+ */
 bool Sim::connectToSim() {
-	//Create socket for the simulator
 	if ((simulatorSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0)
 	{logWarning("Sim -> connectToSim");return false;}
 	memset((char *)&simAddr, 0, slen);
