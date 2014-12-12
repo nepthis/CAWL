@@ -36,7 +36,7 @@
 #include "Sim.h"
 #include "../Packets/AllPackets.h"
 #include "MPManager.h"
-#include "../logger.h"
+#include "../Globals.h"
 
 
 namespace Ground_control {

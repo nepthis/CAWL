@@ -13,7 +13,7 @@ using namespace std;
 mutex m_State;
 mutex m_Sendstate;
 mutex m_ImuState;
-/*	The contructor for the Mobile gateway initializes almost everything
+/*	The constructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
  * 	For now sending data back over the CawlSocket is not performed but when it
  * 	is a separate socket for sending the data will be used.
@@ -24,9 +24,6 @@ Mobile::Mobile(bool sctp) {
 	et = EBU::EBUTranslator();
 	slen = sizeof(mobAddr);
 	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
-	//if (sctpIsOn){
-
-	//}else{
 	for (int gnd = 0; gnd < RETRIES; gnd++){
 		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 			logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
@@ -50,7 +47,6 @@ Mobile::Mobile(bool sctp) {
 	tv.tv_usec = 100000;
 	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
 		logError(strerror(errno));logError("Mobile -> Mobile: mobSocket options");exit(1);}
-	//}
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
 	for (int imu = 0; imu < RETRIES; imu++){
@@ -70,8 +66,6 @@ Mobile::Mobile(bool sctp) {
 }
 
 bool Mobile::startUp(){
-	std::thread t1 (&IMUManager::setupImu, imm);
-	t1.detach();
 	bool check = true;
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
@@ -115,13 +109,14 @@ bool Mobile::startUp(){
 		check = false;
 	}
 	return check;
+
 }
 
 //This function receives UDP packets from Ground and puts them in a state if they are changed
 //If enough errors are detected
 void Mobile::recvGround() {
 	while(not signaled){
-		if(errors == 15){
+		if(errors >= 15){
 			sendAllStop();
 			errno = ENETDOWN;
 			logError("Fatal: Mobile -> recvGround");
@@ -146,21 +141,21 @@ void Mobile::recvGround() {
 			errors ++;
 		}
 		m_State.unlock();
-
-
 	}
 }
 /*	Sends IMU data to Ground
  */
 void Mobile::sendIMU(){
 	ImuPack tempImu;
+	int errors = 0;
 	while (not signaled){
 		m_ImuState.lock();
 		tempImu = imuState;
 		m_ImuState.unlock();
 		if(sendto(sndImuSocket, (char*)&tempImu.sens, sizeof(tempImu.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
-			logError("Mobile->sendImu");
 			logError(strerror(errno));
+			logError("Mobile->sendImu");
+			errors++;
 		}
 	}
 }
@@ -212,7 +207,6 @@ void Mobile::sendEBUOne() {
 			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
 			//operations
 		}
-
 	}
 }
 void Mobile::sendEBUTwo() {

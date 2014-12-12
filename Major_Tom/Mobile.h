@@ -27,6 +27,7 @@
 #include <netdb.h> // in_addr_t
 #include <iostream>
 
+
 #include"EBUManager.h"
 #include "../Packets/AllPackets.h"
 #include "EBUTranslator.h"
@@ -58,8 +59,8 @@ public:
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
-private:
 	IMUManager imm;
+private:
 	Packets::ImuPack imuState;
 	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.

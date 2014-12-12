@@ -1,7 +1,7 @@
 /*
  * SimPack.cpp
  *  Created on: May 20, 2014
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -42,14 +42,14 @@ float Packets::SimPack::getAnalog(int i) {
 
 bool Packets::SimPack::operator ==(const SimPack& s) {
 	return (fs.digital == s.fs.digital)
-	& fs.analog[0] == s.fs.analog[0]
-	& fs.analog[1] == s.fs.analog[1]
-	& fs.analog[2] == s.fs.analog[2]
-	& fs.analog[3] == s.fs.analog[3]
-	& fs.analog[4] == s.fs.analog[4]
-	& fs.analog[5] == s.fs.analog[5]
-	& fs.analog[6] == s.fs.analog[6]
-	& fs.analog[7] == s.fs.analog[7];
+			& fs.analog[0] == s.fs.analog[0]
+										  & fs.analog[1] == s.fs.analog[1]
+																		& fs.analog[2] == s.fs.analog[2]
+																									  & fs.analog[3] == s.fs.analog[3]
+																																	& fs.analog[4] == s.fs.analog[4]
+																																								  & fs.analog[5] == s.fs.analog[5]
+																																																& fs.analog[6] == s.fs.analog[6]
+																																																							  & fs.analog[7] == s.fs.analog[7];
 }
 
 int Packets::SimPack::setDigital(int i, int value) {
@@ -74,11 +74,7 @@ int Packets::SimPack::setAnalog(int i, float value) {
 }
 
 fromSim Packets::SimPack::getData(void) {
- 	return fs;
-}
-
-void SimPack::stampTime() {
-	fs.timeStamp = std::chrono::high_resolution_clock::now();
+	return fs;
 }
 
 } /* namespace Packets */

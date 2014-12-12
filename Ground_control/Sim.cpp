@@ -1,7 +1,7 @@
 /*
  * Sim.cpp
  *  Created on: Apr 16, 2014
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -33,7 +33,6 @@ Packets::SimPack Sim::recvSim(void) {
 		throw errno;
 	}
 	memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
-	simpack.stampTime();
 	//if(fabs(simpack.getAnalog(LIFTSTICK)) > 0.01){ss.sndPulse();}
 	return simpack;
 }
