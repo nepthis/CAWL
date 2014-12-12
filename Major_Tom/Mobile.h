@@ -32,14 +32,13 @@
 #include "EBUTranslator.h"
 #include "../IMU/IMUManager.h"
 #include "../logger.h"
+#include "../Globals.h"
 
 
 namespace Major_Tom {
 /*	This class is responsible for the communication between the wheel loader's EBUs and the to the Ground running
- * 	with the simulator. In this iteration of the project we simply use UDP Sockets so that WebRTC can handle the connection
- * 	over internet from macbook - macbook.
- *		The IMU will be connected to the gateway running this mode of the application and the IMU data will be sent from here to
- *		Ground.
+ * 	with the simulator. It provides methods to be started as threads for receiving data from Ground, sending imu
+ * 	data to Ground and to send data to the EBUs.
  */
 
 class Mobile {
@@ -52,6 +51,7 @@ public:
 	void recvEBUOne();
 	void recvEBUTwo();	//Kind of, sendEBUX actualy does the receiving in order to sync data with EBUs...
 	void recvIMU();
+	void sendIMU();
 	void setSCTP();
 	void sendAllStop();
 	virtual ~Mobile();							//Destructor

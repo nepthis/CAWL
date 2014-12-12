@@ -71,10 +71,9 @@ Mobile::Mobile(bool sctp) {
 
 }
 bool Mobile::startUp(){
-	std::thread t1 (&IMUManager::readImu, imm);
-	std::thread t2 (&IMUManager::getControl , imm);
+	std::thread t1 (&IMUManager::setupImu, imm);
 	t1.detach();
-	t2.detach();
+
 	bool check = true;
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
@@ -124,19 +123,16 @@ bool Mobile::startUp(){
 //If enough errors are detected
 void Mobile::recvGround() {
 	while(not signaled){
-		if(errors == 10){
+		if(errors == 15){
 			sendAllStop();
 			errno = ENETDOWN;
 			logError("Fatal: Mobile -> recvGround");
 			logError(strerror(errno));
-			sleep(1);
+			usleep(100000);
 			exit(1);
 		}
 		SimPack simpack;
 		char recbuf[255];
-		//if(sctpIsOn){
-		//DO SCTP STUFF
-		//}else{
 		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
 			logWarning("No data received from Ground");
 			errors++;
@@ -145,7 +141,6 @@ void Mobile::recvGround() {
 			errors = 0;
 		}
 		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
-		//}
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
 		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) && (simpack.fs.packetSize == state.fs.packetSize)){
 			state = simpack;
