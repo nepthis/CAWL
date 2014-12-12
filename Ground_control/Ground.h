@@ -1,7 +1,7 @@
 /*
  * Ground.h
  *  Created on: May 19, 2014
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -35,7 +35,7 @@
 //Own classes are included here
 #include "Sim.h"
 #include "../Packets/AllPackets.h"
-#include "../IMU/IMUManager.h"
+#include "MPManager.h"
 #include "../logger.h"
 
 
@@ -46,7 +46,7 @@ namespace Ground_control {
  */
 class Ground {
 private:
-	IMU::IMUManager im;
+	MPManager mp;
 	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;

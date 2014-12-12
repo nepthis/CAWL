@@ -25,7 +25,7 @@
 #define SIM_FREQ 100
 
 
-namespace IMU{
+namespace Ground_control{
 
 class MPManager{
 

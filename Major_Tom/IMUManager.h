@@ -61,7 +61,7 @@
 #define DEG_TO_RAD 0.0174532925			// Used for conversion
 #define TO_DEG 57.3
 
-namespace IMU{
+namespace Major_Tom{
 
 typedef struct imud{
 	float gyrox;

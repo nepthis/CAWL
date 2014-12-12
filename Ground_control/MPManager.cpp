@@ -6,7 +6,7 @@
  */
 #include "MPManager.h"
 
-namespace IMU{
+namespace Ground_control{
 MPManager::MPManager() {
 	setupSockets();
 }
@@ -36,7 +36,6 @@ void MPManager::sendSim(Packets::ImuPack imu) {
 		throw errno;
 	}
 }
-
-IMUManager::~IMUManager() {
+MPManager::~MPManager() {
 }
 }

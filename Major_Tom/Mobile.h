@@ -1,7 +1,7 @@
 /*
  * Mobile.h
  *  Created on: Jun 23, 2014
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -30,8 +30,8 @@
 #include"EBUManager.h"
 #include "../Packets/AllPackets.h"
 #include "EBUTranslator.h"
-#include "../IMU/IMUManager.h"
-#include "../logger.h"
+#include "IMUManager.h"
+
 #include "../Globals.h"
 
 
@@ -50,7 +50,7 @@ public:
 	void sendEBUTwo();
 	void recvEBUOne();
 	void recvEBUTwo();	//Kind of, sendEBUX actualy does the receiving in order to sync data with EBUs...
-	void recvIMU();
+	void recvFromIMU();
 	void sendIMU();
 	void setSCTP();
 	void sendAllStop();
@@ -59,7 +59,7 @@ public:
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
-	IMU::IMUManager imm;
+	IMUManager imm;
 	Packets::ImuPack imuState;
 	int errors;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.

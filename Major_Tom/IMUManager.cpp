@@ -8,7 +8,7 @@
 
 std::mutex imupack_lock;
 
-namespace IMU{
+namespace Major_Tom{
 
 IMUManager::IMUManager(){
 	imuinit = true;
@@ -19,8 +19,6 @@ IMUManager::IMUManager(){
 	d = NULL;
 	dir = NULL;
 	devid = -1;
-
-
 }
 
 /*
@@ -34,9 +32,11 @@ void IMUManager::setupImu(){
 		}
 	}
 	if(RS232_OpenComport(devid, BAUD)) {
-		logError("IMUManager: Could not connect to comport ");
-		logVerbose("IMUManager: Be sure to start application in as root/sudo. Or make application member of dialout.");
 		errno = ECANCELED;
+		logError(strerror(errno));
+		logError("IMUManager: Could not connect to com-port ");
+		logVerbose("IMUManager: Be sure to start application in as root/sudo. Or make application member of dialout.");
+
 		throw errno;
 	}else{
 		conn = true;

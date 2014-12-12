@@ -1,6 +1,6 @@
 /*
  * Ground.cpp
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -10,6 +10,7 @@
 using namespace std;
 using namespace Packets;
 using namespace Ground_control;
+
 mutex m_state;
 mutex m_ImuStateToSim;
 
@@ -99,8 +100,8 @@ void Ground::receiveSim(){
 		continue;
 	}
 	errno = ENETUNREACH;
-	logError("Fatal: Ground -> receiveSim");
 	logError(strerror(errno));
+	logError("Fatal: Ground -> receiveSim");
 	exit(1);
 }
 
@@ -139,7 +140,7 @@ void Ground::receiveImuPacket(){
 			errno = ENOLINK;
 			logError(strerror(errno));
 			logError("Fatal: Failed to receive imuPackets for an extended period");
-			delete &im;
+			delete &mp;
 			sleep(5);
 			exit(1);
 		}
@@ -147,12 +148,25 @@ void Ground::receiveImuPacket(){
 }
 
 void Ground_control::Ground::sendSim() {
+	int errors = 0;
+	Packets::ImuPack temp;
 	while(not signaled){
-		if(im.sendData() < 0){
+		if (errors >= 100){
 			errno = 70; //ECOMM
-			throw errno;
+			logError(strerror(errno));
+			logError("Fatal: Ground -> sendSim: too many failures on sending the data");
 		}
-		usleep(17000);
+		m_ImuStateToSim.lock();
+		temp = imuStateToSim;
+		m_ImuStateToSim.unlock();
+		try{
+			mp.sendSim(temp);
+			errors = 0;
+		}catch(int e){
+			errors++;
+			logWarning("Ground -> sendSim: Could not send IMU data to sim");
+		}
+		usleep(17000);//60Hz, this is what Oryx claims their code is running at max
 	}
 
 }

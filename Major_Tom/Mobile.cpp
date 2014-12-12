@@ -1,7 +1,7 @@
 /*
  * Mobile.cpp
  *  Created on: Jun 23, 2014
- *  Author: Robin Bond & Håkan Therén
+ *  Author: Robin Bond & Hï¿½kan Therï¿½n
  *  Feel free to copy, use, and modify the code as you see fit.
  *  If you have any questions, look in the bitbucket wiki.
  *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
@@ -67,13 +67,11 @@ Mobile::Mobile(bool sctp) {
 	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
 	sndImuAddr.sin_port = htons(IMU_PORT);
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------
-	pleased = false;
-
 }
+
 bool Mobile::startUp(){
 	std::thread t1 (&IMUManager::setupImu, imm);
 	t1.detach();
-
 	bool check = true;
 	for (int i = 0; i< 14; i++){
 		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
@@ -168,15 +166,23 @@ void Mobile::sendIMU(){
 }
 /*Receives data from the IMU
  */
-void Mobile::recvIMU() {
+void Mobile::recvFromIMU() {
 	ImuPack imp;
+	int errors = 0;
 	while(not signaled){
+		if (errors >= 100)
 		usleep(1000);
-		imp = imm.getImuPack(); //handle error for this one.
-		logVerbose("IMUdata received");
-		m_ImuState.lock();
-		imuState = imp;
-		m_ImuState.unlock();
+		try{
+			imp = imm.getImuPack(); //handle error for this one.
+			m_ImuState.lock();
+			imuState = imp;
+			m_ImuState.unlock();
+		}catch(int e){
+			errors++;
+			logError(strerror(errno));
+		}
+
+
 	}
 }
 /*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
