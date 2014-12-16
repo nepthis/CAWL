@@ -15,7 +15,7 @@
 
 Netapi::cawl::cawl(int socket) {
 	value = 1;
-	//metrics = GatherMetrics();
+
 	//-----------------------------------------------------------------------------------------------------
 	memset(&heartbeat,  0, sizeof(struct sctp_paddrparams));
 	memset(&rtoinfo,    0, sizeof(struct sctp_rtoinfo));
@@ -105,24 +105,26 @@ int Netapi::cawl::sctp_sendmsg(int s, const void* msg, size_t len,
 		//What to do?
 		return 0;
 	}
-	int sstat_assoc_id 				= status.sstat_assoc_id;
-	int sstat_state					= status.sstat_state;
-	int sstat_rwnd					= status.sstat_rwnd;
-	int sstat_unackdata				= status.sstat_unackdata;
-	int sstat_penddata				= status.sstat_penddata;
-	int sstat_instrms				= status.sstat_instrms;
-	int sstat_outstrms				= status.sstat_outstrms;
-	int sstat_fragmentation_point	= status.sstat_fragmentation_point;
+	stat sctpstat;
+	sctpstat.sstat_assoc_id = status.sstat_assoc_id;
+	sctpstat.sstat_state = status.sstat_state;
+	sctpstat.sstat_rwnd	= status.sstat_rwnd;
+	sctpstat.sstat_unackdata = status.sstat_unackdata;
+	sctpstat.sstat_penddata	= status.sstat_penddata;
+	sctpstat.sstat_instrms	= status.sstat_instrms;
+	sctpstat.sstat_outstrms	= status.sstat_outstrms;
+	sctpstat.sstat_fragmentation_point = status.sstat_fragmentation_point;
 
-	//std::string spinfo_address		= status.sstat_primary.spinfo_address;
-	int spinfo_state				= status.sstat_primary.spinfo_state;
-	int spinfo_cwnd					= status.sstat_primary.spinfo_cwnd;
-	int spinfo_srtt					= status.sstat_primary.spinfo_srtt;
-	int spinfo_rto					= status.sstat_primary.spinfo_rto;
-	int spinfo_mtu					= status.sstat_primary.spinfo_mtu;
+	sctpstat.spinfo_address	= "";   //status.sstat_primary.spinfo_address;
+	sctpstat.spinfo_state = status.sstat_primary.spinfo_state;
+	sctpstat.spinfo_cwnd = status.sstat_primary.spinfo_cwnd;
+	sctpstat.spinfo_srtt = status.sstat_primary.spinfo_srtt;
+	sctpstat.spinfo_rto	= status.sstat_primary.spinfo_rto;
+	sctpstat.spinfo_mtu	= status.sstat_primary.spinfo_mtu;
 
+	//insert measurements
+	//dbc.insert(sctpstat);
 
-	printf("srtt: %d\n", spinfo_srtt);
 	int ret = ::sctp_sendmsg(s, msg, len, to, tolen, ppid, flags, stream_no, timetolive, context);
 	return ret;
 }
