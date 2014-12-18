@@ -10,11 +10,11 @@
 #ifndef EBUMANAGER_H_
 #define EBUMANAGER_H_
 
-#include <cstring> //Allows the usage of std::strings
-#include <string> //Allows the usage of std::strings
-#include <cstdint> //To access all types of ints
+#include <cstring> 		//Allows the usage of std::strings
+#include <string> 		//Allows the usage of std::strings
+#include <cstdint> 		//To access types of ints
 #include <stdlib.h>
-#include <stdio.h> //Used for printf
+#include <stdio.h> 		//Used for printf
 #include <sys/socket.h> //Used for the UDP socket to the EBU
 #include <errno.h>		//Is used for raising errors
 #include <netinet/in.h>	//Network address structs

@@ -36,7 +36,6 @@ void IMUManager::setupImu(){
 		logError(strerror(errno));
 		logError("IMUManager: Could not connect to com-port ");
 		logVerbose("IMUManager: Be sure to start application in as root/sudo. Or make application member of dialout.");
-
 		throw errno;
 	}else{
 		conn = true;
@@ -52,7 +51,6 @@ void IMUManager::setupImu(){
  *
  */
 int IMUManager::getDev() {
-
 	DIR           *d;
 	struct dirent *dir;
 
@@ -271,7 +269,6 @@ imud IMUManager::setMedian(int16_t ax, int16_t ay, int16_t az,
  * Needs to be rewritten.
  */
 void IMUManager::setFiltered(imud imudata) {
-
 	double accx  = imudata.accx;
 	double accy  = imudata.accy;
 	double accz  = imudata.accz;

@@ -33,7 +33,7 @@ void exit_handler(int dummy){
 }
 using namespace std;
 
-/* User input is stored in thsi struct
+/* User input is stored in this struct
  */
 typedef struct States{
 	bool ip = false;
@@ -84,6 +84,7 @@ int checkInput(int argc, char * args[], State * s){
 	if(s->ip && s->ipAddr.empty()){return -1;}
 	else if(not s->ipAddr.empty()){
 		printf("Amount of valid IP addresses found: %i\nCurrent mode: %s\n", s->ipAddr.size(), s->mode.c_str());}
+	return 0;
 }
 /* Based on the state set from checkInput the start function creates and runs either
  * Mobile or Ground. It terminates if an error occurs.
@@ -101,15 +102,14 @@ void start(State * s){
 				sleep(TIMEOUT);
 			}else{
 				try{
-					//needs more threads...IMU receive
 					logVerbose("Main: thread starting");
 					std::thread g1(&Ground_control::Ground::sendMobile, gc);	//For simulator data to Mobile
 					std::thread g2(&Ground_control::Ground::receiveSim, gc);	//For receiving data from simulator
-					logVerbose("Main: thread started, joining");
 					std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
 					std::thread g4(&Ground_control::Ground::sendSim, gc);
 					g1.join();
 					g2.join();
+					logVerbose("Main: thread started, joining");
 					if(s->imu){
 						g3.join();
 						g4.join();
@@ -122,13 +122,14 @@ void start(State * s){
 			}
 		}
 		if(s->mode=="mobile"){
-			Major_Tom::Mobile *major = new Major_Tom::Mobile(s->sctp); //make into input args later
-			if(not major->em.socketsAreChecked()){	//I know, nested if is ugly but meh. I am lazy with this thing.
+			logVerbose("Starting Mobile");
+			Major_Tom::Mobile *major = new Major_Tom::Mobile(); //Pass more arguments later
+			if(not major->em.socketsAreChecked()){
 				if(not major->em.setUpSockets()){logError("Can not set up sockets: Exiting");exit(1);}
 			}else
 				if(not major->startUp()){ //The bool should be sctp variable in status.
-					logVerbose("Sending relay data failed");
-					logWarning("Can not send relay packages");
+					logVerbose("Main -> Starting up the mobile class failed");
+					logWarning("Could not send relay packages");
 					retr--;
 					sleep(TIMEOUT);
 					continue;
@@ -146,11 +147,13 @@ void start(State * s){
 						std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
 						std::thread m4(&Major_Tom::Mobile::recvFromIMU, major);
 						std::thread m5(&Major_Tom::Mobile::sendIMU , major);
+						std::thread m6(&Major_Tom::Mobile::watchDog , major);
 						m1.join();
 						m2.join();
 						m3.join();
 						m4.join();
 						m5.join();
+						m6.join();
 					}catch(int e){
 						major->sendAllStop();
 						signaled = 1;

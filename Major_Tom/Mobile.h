@@ -27,6 +27,7 @@
 #include <netdb.h> // in_addr_t
 #include <iostream>
 
+#include "rs232.h"
 
 #include"EBUManager.h"
 #include "../Packets/AllPackets.h"
@@ -44,7 +45,7 @@ namespace Major_Tom {
 
 class Mobile {
 public:
-	Mobile(bool sctp);	//Constructor
+	Mobile();	//Constructor
 	bool startUp();
 	void recvGround(); 				//Receiving data from an UDP socket, port 65656
 	void sendEBUOne();
@@ -53,7 +54,7 @@ public:
 	void recvEBUTwo();	//Kind of, sendEBUX actualy does the receiving in order to sync data with EBUs...
 	void recvFromIMU();
 	void sendIMU();
-	void setSCTP();
+	void watchDog();
 	void sendAllStop();
 	virtual ~Mobile();							//Destructor
 	Packets::RelayOut rPackOne;
@@ -63,8 +64,6 @@ public:
 private:
 	Packets::ImuPack imuState;
 	int errors;
-	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
-
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs
 	socklen_t slen;
 	int mobSocket;	//Socket for mobile client, will listen for packages on port 56565
