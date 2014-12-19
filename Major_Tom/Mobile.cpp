@@ -109,7 +109,8 @@ bool Mobile::startUp(){
 	}
 	//-----------------------------Serial port for Watchdog--------------------------------------------------
 	logVerbose("Opening the comport for the watchdog");
-	for(int i = 0; i < RETRIES; i++){
+	for(int i = 0; i < 100; i++){
+		sleep(1);
 		if(RS232_OpenComport(16,9600)){
 			errno = ECANCELED;
 			logError(strerror(errno));
