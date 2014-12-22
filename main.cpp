@@ -105,15 +105,15 @@ void start(State * s){
 					logVerbose("Main: thread starting");
 					std::thread g1(&Ground_control::Ground::sendMobile, gc);	//For simulator data to Mobile
 					std::thread g2(&Ground_control::Ground::receiveSim, gc);	//For receiving data from simulator
-					std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
-					std::thread g4(&Ground_control::Ground::sendSim, gc);
+					//std::thread g3(&Ground_control::Ground::receiveImuPacket, gc);
+					//std::thread g4(&Ground_control::Ground::sendSim, gc);
 					g1.join();
 					g2.join();
 					logVerbose("Main: thread started, joining");
-					if(s->imu){
-						g3.join();
-						g4.join();
-					}
+					//					if(s->imu){
+					//						g3.join();
+					//						g4.join();
+					//					}
 				}catch(int e){
 					logError(strerror(errno));
 					signaled = 1;
@@ -123,44 +123,45 @@ void start(State * s){
 		}
 		if(s->mode=="mobile"){
 			logVerbose("Starting Mobile");
-			Major_Tom::Mobile *major = new Major_Tom::Mobile(); //Pass more arguments later
-			if(not major->em.socketsAreChecked()){
-				if(not major->em.setUpSockets()){logError("Can not set up sockets: Exiting");exit(1);}
-			}else
-				if(not major->startUp()){ //The bool should be sctp variable in status.
-					logVerbose("Main -> Starting up the mobile class failed");
-					logWarning("Could not send relay packages");
-					retr--;
-					sleep(TIMEOUT);
-					continue;
-				}else{
-					try{
-						logVerbose("Relay packages sent");
-						logVerbose("Starting threads");
-						if(s->imu){
-							logVerbose("IMU Mode chosen, setting up IMU");
-							major->imm.setupImu();
-							logVerbose("IMU is ready");
-						}
-						std::thread m1(&Major_Tom::Mobile::recvGround, major);
-						std::thread m2(&Major_Tom::Mobile::sendEBUOne, major);
-						std::thread m3(&Major_Tom::Mobile::sendEBUTwo, major);
-						std::thread m4(&Major_Tom::Mobile::recvFromIMU, major);
-						std::thread m5(&Major_Tom::Mobile::sendIMU , major);
-						std::thread m6(&Major_Tom::Mobile::watchDog , major);
-						m1.join();
-						m2.join();
-						m3.join();
-						m4.join();
-						m5.join();
-						m6.join();
-					}catch(int e){
-						major->sendAllStop();
-						signaled = 1;
-						logError(strerror(errno));
-						break;
-					}
+			Major_Tom::Mobile *mob = new Major_Tom::Mobile(); //Pass more arguments later
+			if(not mob->em.socketsAreChecked()){
+				logVerbose("setting up EBU sockets");
+				if(not mob->em.setUpSockets()){
+					logError("Can not set up sockets: Exiting");
+					exit(1);}
+			}
+			if(not mob->startUp()){ //The bool should be sctp variable in status.
+				logVerbose("Main -> Starting up the mobile class failed");
+				logWarning("Could not send relay packages");
+				retr--;
+				sleep(TIMEOUT);
+				continue;
+			}else{
+				try{
+					logVerbose("Starting threads");
+					//						if(s->imu){
+					//							logVerbose("IMU Mode chosen, setting up IMU");
+					//							major->imm.setupImu();
+					//							logVerbose("IMU is ready");
+					//						}
+					std::thread m1(&Major_Tom::Mobile::recvGround, mob);
+					std::thread m2(&Major_Tom::Mobile::sendEBUOne, mob);
+					std::thread m3(&Major_Tom::Mobile::sendEBUTwo, mob);
+					//std::thread m4(&Major_Tom::Mobile::recvFromIMU, major);
+					//std::thread m5(&Major_Tom::Mobile::sendIMU , major);
+					std::thread m6(&Major_Tom::Mobile::watchDog , mob);
+					m1.join();
+					m2.join();
+					m3.join();
+					//m4.join();
+					//m5.join();
+					m6.join();
+				}catch(int e){
+					mob->sendAllStop();
+					logError(strerror(errno));
+					break;
 				}
+			}
 		}
 	}
 

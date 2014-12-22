@@ -13,8 +13,8 @@
 #define REC_PORT 56565
 #define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
-#define GND_ADDR "192.168.2.100"
-#define DESTI_ADDR "192.168.2.100"
+#define GND_ADDR "127.0.0.1"
+#define DESTI_ADDR "127.0.0.1"
 //"10.0.0.199"
 
 #include <mutex>

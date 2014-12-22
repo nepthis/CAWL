@@ -76,6 +76,7 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 			errno = ECOMM;
 			logError(strerror(errno));
 			logError("Fatal: cannot send to Mobile: ");
+			signaled;
 			exit(1);
 		}
 
@@ -95,13 +96,15 @@ void Ground::receiveSim(){
 			continue;
 		}
 		m_state.lock();
-		if(not (sp == state)){state = sp;}
+		if(not (sp == state)){
+			state = sp;}
 		m_state.unlock();
 		continue;
 	}
 	errno = ENETUNREACH;
 	logError(strerror(errno));
 	logError("Fatal: Ground -> receiveSim");
+	signaled = 1;
 	exit(1);
 }
 
@@ -142,6 +145,7 @@ void Ground::receiveImuPacket(){
 			logError("Fatal: Failed to receive imuPackets for an extended period");
 			delete &mp;
 			sleep(5);
+			signaled = 1;
 			exit(1);
 		}
 	}
@@ -165,6 +169,7 @@ void Ground_control::Ground::sendSim() {
 		}catch(int e){
 			errors++;
 			logWarning("Ground -> sendSim: Could not send IMU data to sim");
+			signaled = 1;
 		}
 		usleep(17000);//60Hz, this is what Oryx claims their code is running at max
 	}

@@ -196,22 +196,22 @@ void mysqlconnector::insert(stat data){
 void mysqlconnector::dbInsert(stat data) {
 
 	stmt = con->createStatement();
-
+	std::string quer = "";
 	// Form querey
-	std::string quer   =(std::string)("INSERT INTO `") +
-			tbl	+
-			(std::string)(", `sstat_assoc_id`")		+
-			(std::string)(", `sstat_state`")		+
-			(std::string)(", `sstat_unackdata`")	+
-			(std::string)(", `spinfo_address`")		+
-			(std::string)(", `spinfo_srtt`")		+
-			(std::string)(") VALUES (")		+
-			(std::string)("NULL, \'")		+
-			data.sstat_assoc_id+(std::string)("\', \'")	+
-			data.sstat_state+(std::string)("\', \'")    +
-			data.sstat_unackdata+(std::string)("\', \'")   +
-			data.spinfo_address+(std::string)("\', \'")   +
-			data.spinfo_srtt+(std::string)("\')");
+//	std::string quer =(std::string)("INSERT INTO `") +
+//			tbl	+
+//			(std::string)(", `sstat_assoc_id`")		+
+//			(std::string)(", `sstat_state`")		+
+//			(std::string)(", `sstat_unackdata`")	+
+//			(std::string)(", `spinfo_address`")		+
+//			(std::string)(", `spinfo_srtt`")		+
+//			(std::string)(") VALUES (")		+
+//			(std::string)("NULL, \'")		+
+//			data.sstat_assoc_id + (std::string)("\', \'")	+
+//			data.sstat_state + (std::string)("\', \'")    +
+//			data.sstat_unackdata+(std::string)("\', \'")   +
+//			data.spinfo_address+(std::string)("\', \'")   +
+//			data.spinfo_srtt+(std::string)("\')");
 
 	// Insert into database and catch exception if any is thrown
 	try{

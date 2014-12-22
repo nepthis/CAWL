@@ -22,45 +22,45 @@ Mobile::Mobile() {
 	et = EBU::EBUTranslator();
 	slen = sizeof(mobAddr);
 	//--------------------- Receiving socket from Ground-------------------------------------------------
-	for (int gnd = 0; gnd < RETRIES; gnd++){
-		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-			logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
-			sleep(1);
-			logVerbose("Mobile -> Mobile: Retrying to set up mobSocket");
-			continue;
-		}else{
-			logVerbose("Mobile -> Mobile: Set up of mobSocket done...");
-			break;
-		}
-		logError(strerror(errno));
-		logError("Fatal: Mobile -> Mobile: Could not set up the mobile socket");
+	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
 		exit(1);
+		//continue;
 	}
+	logVerbose("Mobile -> Mobile: Set up of mobSocket done...");
 	memset((char *)&mobAddr, 0, slen);
-	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){
+		logError(strerror(errno));
+		logError("Mobile: Constructor: setting the address");
+		throw errno;}
 	mobAddr.sin_port = htons(REC_PORT);
+	logVerbose("About to bind");
 	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0){
-		logError(strerror(errno));logError("Fatal: Mobile -> Mobile: bind for mobSocket");exit(1);}
+		logError(strerror(errno));
+		logError("Fatal: Mobile -> Mobile: bind for mobSocket");
+		throw errno;}
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = 100000;
 	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
-		logError(strerror(errno));logError("Fatal: Mobile -> Mobile: mobSocket options");exit(1);}
+		logError(strerror(errno));
+		logError("Fatal: Mobile -> Mobile: mobSocket options");
+		throw errno;}
 	//------------------------------------------------------------------------------------------------------
 	//--------------------------Socket for sending IMU data-------------------------------------------------
-	for (int imu = 0; imu < RETRIES; imu++){
-		if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-			logWarning("Mobile -> Mobile: sndImuSocket, could not set up socket.");
-			continue;
-		}else{
-			break;
-		}
-		logError(strerror(errno));
-		logError("Fatal: Mobile -> Mobile: Could not set up the IMU socket");
-	}
-	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
-	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
-	sndImuAddr.sin_port = htons(IMU_PORT);
+	//	for (int imu = 0; imu < RETRIES; imu++){
+	//		if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+	//			logWarning("Mobile -> Mobile: sndImuSocket, could not set up socket.");
+	//			continue;
+	//		}else{
+	//			break;
+	//		}
+	//		logError(strerror(errno));
+	//		logError("Fatal: Mobile -> Mobile: Could not set up the IMU socket");
+	//	}
+	//	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
+	//	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
+	//	sndImuAddr.sin_port = htons(IMU_PORT);
 	//-------------------------------------------------------------------------------------------------------
 
 
@@ -120,6 +120,7 @@ bool Mobile::startUp(){
 			continue;
 		}else{
 			check = true;
+			break;
 		}
 	}
 
@@ -217,6 +218,7 @@ void Mobile::sendEBUOne() {
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
 		}catch(int e){
 			logWarning("Mobile -> sendEBUOne: could not send any data to EBU 1.");
+			sendAllStop();
 		}
 	}
 }
@@ -239,7 +241,7 @@ void Mobile::sendEBUTwo() {
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 		}catch(int e){
 			logWarning("Mobile -> sendEBUTwo: could not send any data to EBU 2.");
-			//change condition that watchdog looks for.
+			sendAllStop();
 		}
 	}
 }
