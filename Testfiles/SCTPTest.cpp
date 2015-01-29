@@ -1,8 +1,8 @@
 /*
- * SCTPTest.cpp
- *
- *  Created on: Sep 26, 2014
- *      Author: cawl-server
+ *  Authors: Robin Bond & Håkan Therén
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 #define SERV_IP "127.0.0.1"
 #define CLIENT_IP "127.0.0.1"

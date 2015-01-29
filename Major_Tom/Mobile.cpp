@@ -1,84 +1,78 @@
 /*
- * Mobile.cpp v0.2
- *
+ * Mobile.cpp
  *  Created on: Jun 23, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & H�kan Ther�n
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 #include "Mobile.h"
 using namespace  Major_Tom;
 using namespace Packets;
 using namespace std;
 mutex m_State;
-mutex m_Sendstate;
-/*	The contructor for the Mobile gateway initializes almost everything
+mutex m_ImuState;
+/*	The constructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
  * 	For now sending data back over the CawlSocket is not performed but when it
  * 	is a separate socket for sending the data will be used.
  */
-Mobile::Mobile(bool sctp) {
-	sctpIsOn = sctp;
+Mobile::Mobile() {
 	errors = 0;
 	et = EBU::EBUTranslator();
 	slen = sizeof(mobAddr);
-	//--------------------------------------------- Receiving socket from Ground-------------------------------------------------------
-	//if (sctpIsOn){
-
-	//}else{
-	for (int gnd = 0; gnd < RETRIES; gnd++){
-		if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-			logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
-			sleep(1);
-			logVerbose("Mobile -> Mobile: Retrying to set up mobSocket");
-			continue;
-		}else{
-			logVerbose("Mobile -> Mobile: Set up of mobSocket done...");
-			break;
-		}
-		logError(strerror(errno));
-		logError("Fatal: Mobile -> Mobile: Could not set up the mobile socket");
+	//--------------------- Receiving socket from Ground-------------------------------------------------
+	if ((mobSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+		logWarning("Mobile -> Mobile: mobSocket, could not set up socket.");
+		exit(1);
+		//continue;
 	}
+	logVerbose("Mobile -> Mobile: Set up of mobSocket done...");
 	memset((char *)&mobAddr, 0, slen);
-	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){perror("Mobile:Constructor");logError(strerror(errno));throw 13;}
+	if(inet_pton(AF_INET, REC_ADDR, &(mobAddr.sin_addr)) < 0){
+		logError(strerror(errno));
+		logError("Mobile: Constructor: setting the address");
+		throw errno;}
 	mobAddr.sin_port = htons(REC_PORT);
+	logVerbose("About to bind");
 	if (bind(mobSocket, (struct sockaddr *)&mobAddr, sizeof(mobAddr)) < 0){
-		logError("Mobile -> Mobile: bind for mobSocket");logError(strerror(errno));exit(1);}
+		logError(strerror(errno));
+		logError("Fatal: Mobile -> Mobile: bind for mobSocket");
+		throw errno;}
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = 100000;
 	if (setsockopt(mobSocket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0){
-		logError(strerror(errno));logError("Mobile -> Mobile: mobSocket options");exit(1);}
-	//}
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------
-	//----------------------------------------------Socket for sending IMU data-----------------------------------------------------------
-	for (int imu = 0; imu < RETRIES; imu++){
-		if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
-			logWarning("Mobile -> Mobile: sndImuSocket, could not set up socket.");
-			continue;
-		}else{
-			break;
-		}
 		logError(strerror(errno));
-		logError("Fatal: Mobile -> Mobile: Could not set up the IMU socket");
-	}
-	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
-	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
-	sndImuAddr.sin_port = htons(IMU_PORT);
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------
-	pleased = false;
+		logError("Fatal: Mobile -> Mobile: mobSocket options");
+		throw errno;}
+	//------------------------------------------------------------------------------------------------------
+	//--------------------------Socket for sending IMU data-------------------------------------------------
+	//	for (int imu = 0; imu < RETRIES; imu++){
+	//		if ((sndImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+	//			logWarning("Mobile -> Mobile: sndImuSocket, could not set up socket.");
+	//			continue;
+	//		}else{
+	//			break;
+	//		}
+	//		logError(strerror(errno));
+	//		logError("Fatal: Mobile -> Mobile: Could not set up the IMU socket");
+	//	}
+	//	memset((char *)&sndImuAddr, 0, sizeof(sndImuAddr));
+	//	inet_pton(AF_INET, DESTI_ADDR, &(sndImuAddr.sin_addr));
+	//	sndImuAddr.sin_port = htons(IMU_PORT);
+	//-------------------------------------------------------------------------------------------------------
+
 
 }
+
 bool Mobile::startUp(){
-	std::thread t1 (&IMUManager::readImu, imm);
-	std::thread t2 (&IMUManager::getControl , imm);
-	t1.detach();
-	t2.detach();
 	bool check = true;
 	for (int i = 0; i< 14; i++){
-		//printf("value in relaypack one: %i\n", rPackOne.er.channel[i]);
 		rPackOne.er.channel[i] = 0;
 		rPackTwo.er.channel[i] = 0;
-		//printf("value in relaypack two: %i\n", rPackTwo.er.channel[i]);
-	}
+	}//for some reason initialising the arrays to 0 did not work, ugly fix.
+	//-----------------------------Packet setup--------------------------------------------------
 	rPackOne.setRelayValue(R_S7, 1);		//Relay for brakelights
 	//rPackOne.setRelayValue(R_S4, 1);		//Relay for parking brake
 	//rPackOne.setRelayValue(R_S5, 1);	//Relay for Horn, not workin...maybe.
@@ -110,30 +104,44 @@ bool Mobile::startUp(){
 		em.sendRelayCommand(rPackTwo, 2);
 		logVerbose("Relay packets sent to EBU 2");
 	}catch(int e){
-		//perror("Error with sending relay commands");
 		logWarning("Mobile - > startUp: Error while syncing up EBUs for relay packets");
 		check = false;
 	}
+	//-----------------------------Serial port for Watchdog--------------------------------------------------
+	logVerbose("Opening the comport for the watchdog");
+	for(int i = 0; i < 100; i++){
+		sleep(1);
+		if(RS232_OpenComport(16,9600)){
+			errno = ECANCELED;
+			logError(strerror(errno));
+			logError("Mobile: Could not connect to watchdog");
+			logVerbose("Mobile: Be sure to start application as root. Or make application member of dialout.");
+			check = false;
+			continue;
+		}else{
+			check = true;
+			break;
+		}
+	}
+
 	return check;
+
 }
 
 //This function receives UDP packets from Ground and puts them in a state if they are changed
 //If enough errors are detected
 void Mobile::recvGround() {
 	while(not signaled){
-		if(errors == 10){
+		if(errors >= 15){
 			sendAllStop();
 			errno = ENETDOWN;
 			logError("Fatal: Mobile -> recvGround");
 			logError(strerror(errno));
-			sleep(1);
+			usleep(100000);
 			exit(1);
 		}
 		SimPack simpack;
 		char recbuf[255];
-		//if(sctpIsOn){
-		//DO SCTP STUFF
-		//}else{
 		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
 			logWarning("No data received from Ground");
 			errors++;
@@ -142,7 +150,6 @@ void Mobile::recvGround() {
 			errors = 0;
 		}
 		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
-		//}
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
 		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) && (simpack.fs.packetSize == state.fs.packetSize)){
 			state = simpack;
@@ -150,28 +157,47 @@ void Mobile::recvGround() {
 			errors ++;
 		}
 		m_State.unlock();
-
-
 	}
 }
-/*	Receives data from an IMUHandler and puts it into a state.
+/*	Sends IMU data to Ground
  */
-void Mobile::recvIMU() {
-	ImuPack imp;
-	while(not signaled){
-		usleep(1000);
-		imp = imm.getImuPack();
-		logVerbose("IMUdata received");
-		if(sendto(sndImuSocket, (char*)&imp.sens, sizeof(imp.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
-			perror("Ground:sendMobile");
+void Mobile::sendIMU(){
+	ImuPack tempImu;
+	int errors = 0;
+	while (not signaled){
+		m_ImuState.lock();
+		tempImu = imuState;
+		m_ImuState.unlock();
+		if(sendto(sndImuSocket, (char*)&tempImu.sens, sizeof(tempImu.sens), 0, (struct sockaddr*) &sndImuAddr, slen) < 0){
 			logError(strerror(errno));
-			exit(0);
+			logError("Mobile->sendImu");
+			errors++;
 		}
 	}
 }
-/*	The method ebuSend locks the packetBuffer and takes out One packet, sends it to the ebu with
- * 	the ebuManager. This method is designed to be started as a thread.
- * 	The data it sends comes from a state which is set in socketReceive() if it is different than the existing one
+/*Receives data from the IMU
+ */
+void Mobile::recvFromIMU() {
+	ImuPack imp;
+	int errors = 0;
+	while(not signaled){
+		if (errors >= 100)
+			usleep(1000);
+		try{
+			imp = imm.getImuPack(); //handle error for this one.
+			m_ImuState.lock();
+			imuState = imp;
+			m_ImuState.unlock();
+		}catch(int e){
+			errors++;
+			logError(strerror(errno));
+		}
+
+
+	}
+}
+/* The method sendEBU locks the state and copies it. The copied state is then sent with the
+ * EBUManager to either EBU One or two (depends on which function, see below).
  */
 void Mobile::sendEBUOne() {
 	AnalogOut analogOne;
@@ -179,6 +205,7 @@ void Mobile::sendEBUOne() {
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
 	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
+	logVerbose("Mobile -> sendEBUOne: starting.");
 	while(not signaled){
 		m_State.lock();
 		tempState = state;
@@ -190,13 +217,9 @@ void Mobile::sendEBUOne() {
 			em.sendDigitalCommand(digitalOne.getChannel(), digitalOne.getDestination());
 			em.sendAnalogCommand(analogOne.getChannel(), analogOne.getDestination());
 		}catch(int e){
-			perror("sendEBUOne error");
-			logError(strerror(errno));
-			throw e;
-			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
-			//operations
+			logWarning("Mobile -> sendEBUOne: could not send any data to EBU 1.");
+			sendAllStop();
 		}
-
 	}
 }
 void Mobile::sendEBUTwo() {
@@ -205,7 +228,7 @@ void Mobile::sendEBUTwo() {
 	DigitalIn digitaldummy;
 	AnalogIn analogdummy;
 	SimPack tempState; //Locking over methods in other objects might cause problem, this is safer.
-	logVerbose("Mobile -> sendEBUTro: starting.");
+	logVerbose("Mobile -> sendEBUTwo: starting.");
 	while(not signaled){
 		m_State.lock();
 		tempState = state;
@@ -217,13 +240,9 @@ void Mobile::sendEBUTwo() {
 			em.sendDigitalCommand(digitalTwo.getChannel(), digitalTwo.getDestination());
 			em.sendAnalogCommand(analogTwo.getChannel(), analogTwo.getDestination());
 		}catch(int e){
-			logError(strerror(errno));
-			logError("Fatal: Mobile -> sendEBUTwo: could not send any data to EBU 2.");
-			exit(1);
-			//HERE if it fails somehow and cannot send to the EBUs it should tell the watchdog to stop all
-			//operations
+			logWarning("Mobile -> sendEBUTwo: could not send any data to EBU 2.");
+			sendAllStop();
 		}
-
 	}
 }
 
@@ -235,7 +254,24 @@ Mobile::~Mobile() {
 	//em.sendRelayCommand(rPackOne, 1);
 	//em.sendRelayCommand(rPackTwo, 2);
 }
+/* Based on multiple conditions found in globals.h this should constantly send
+ * the char 'P' to the watchdog.
+ * Baurdrate 9600, 8 bits, 1 stopbit and no parity. TTYUSB0
+ */
+void Major_Tom::Mobile::watchDog() {
+	while(not signaled){
+		if(RS232_SendByte(16, 'P')){
+			errno = ECOMM;
+			logError(strerror(errno));
+			logError("Fatal: Mobile: Could not send signal to watchdog");
+			exit(1);
+		}
+	}
 
+}
+/* Should simply read the state that is set from the sending threads.
+ * Unless the EBUs are fixed and sending can be done separately from reading.
+ */
 void Major_Tom::Mobile::recvEBUOne() {
 
 }
@@ -243,9 +279,6 @@ void Major_Tom::Mobile::recvEBUOne() {
 void Major_Tom::Mobile::recvEBUTwo() {
 }
 
-void Major_Tom::Mobile::setSCTP() {
-	sctpIsOn = true;
-}
 
 void Major_Tom::Mobile::sendAllStop() {
 	logWarning("Mobile -> sendAllstop: changing state for full stop.");
@@ -259,5 +292,8 @@ void Major_Tom::Mobile::sendAllStop() {
 	m_State.lock();
 	state = stop;
 	m_State.unlock();
-
+	sleep(1);
+	signaled = 1;
 }
+
+

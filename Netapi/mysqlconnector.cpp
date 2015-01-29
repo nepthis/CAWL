@@ -24,11 +24,107 @@ mysqlconnector::mysqlconnector() {
 
 }
 
+void mysqlconnector::createTable(){
+	stmt = con->createStatement();
+	// Form querey
+	std::string quer;
+	quer = (std::string)"DROP TABLE IF EXISTS `"+tbl+(std::string)"`;";
+	try{
+		res = stmt->executeQuery(quer);
+	}catch (sql::SQLException &e) {
+		// log this shit, dont print!!!!!
+			///  vvvvvvvvv \\\
+		printf("%s\n",e.what());
+	}
 
-mysqlconnector::~mysqlconnector() {
-	delete res;
-	delete stmt;
-	delete con;
+	quer = (std::string)"CREATE TABLE "+tbl+(std::string)" (id INT NOT NULL"+
+		 			  (std::string)" AUTO_INCREMENT PRIMARY KEY,timestamp VARCHAR(32)"+
+					  (std::string)", sstat_assoc_id VARCHAR(32)"+
+                      (std::string)", sstat_state VARCHAR(32)"+
+                      (std::string)", sstat_rwnd VARCHAR(32)"+
+                      (std::string)", sstat_unackdata VARCHAR(32)"+
+                      (std::string)", sstat_penddata VARCHAR(32)"+
+                      (std::string)", sstat_instrms VARCHAR(32)"+
+                      (std::string)", sstat_outstrms VARCHAR(32)"+
+                      (std::string)", sstat_fragmentation_point VARCHAR(32)"+
+                      (std::string)", spinfo_address VARCHAR(32)"+
+                      (std::string)", spinfo_state VARCHAR(32)"+
+                      (std::string)", spinfo_cwnd VARCHAR(32)"+
+                      (std::string)", spinfo_srtt VARCHAR(32)"+
+                      (std::string)", spinfo_rto VARCHAR(32)"+
+                      (std::string)", spinfo_mtu VARCHAR(32));";
+	try{
+		res = stmt->executeQuery(quer);
+	}catch (sql::SQLException &e) {
+		// log this shit, dont print!!!!!
+			///  vvvvvvvvv \\\
+		printf("%s\n",e.what());
+	}
+}
+
+
+void mysqlconnector::tableCheck(){
+
+	stmt = con->createStatement();
+	// Form querey
+	std::string quer;
+	int rows;
+
+	// Forms query for checking if table exist
+	quer = (std::string)"SELECT count(*) FROM information_schema.TABLES WHERE"+
+			(std::string)"(TABLE_SCHEMA = \'" +
+			db +
+			(std::string)"\') AND (TABLE_NAME = \'" +
+			tbl +
+			(std::string)"\');";
+
+	try{
+		res = stmt->executeQuery(quer);
+		res->next();
+		rows = std::stoi(res->getString(1));
+		printf("rows: %i \n",rows);
+	}catch (sql::SQLException &e){
+		createTable();
+		// log this shit, dont print!!!!!
+		///  vvvvvvvvv \\\
+		printf("%s\n",e.what());
+	}
+
+	// Forms query to check if columns are named correct
+	quer =(std::string)"SELECT "+
+			"`sstat_assoc_id`,"+
+			"`sstat_state`,"+
+			"`sstat_rwnd`,"+
+			"`sstat_unackdata`,"+
+			"`sstat_penddata`,"+
+			"`sstat_instrms`,"+
+			"`sstat_outstrms`,"+
+			"`sstat_fragmentation_point`,"+
+
+			"`spinfo_address`,"+
+			"`spinfo_state`,"+
+			"`spinfo_cwnd`,"+
+			"`spinfo_srtt`,"+
+			"`spinfo_rto`,"+
+			"`spinfo_mtu`"+
+			" FROM `" +
+			tbl +
+			(std::string)"` LIMIT 1;"
+			;
+	if(rows > 0){
+		try{
+			res = stmt->executeQuery(quer);
+			int rows = res->rowsCount();
+			printf("Rows: %i\n", rows);
+		}catch (sql::SQLException &e) {
+			createTable();
+			// log this shit, dont print!!!!!
+			///  vvvvvvvvv \\\
+			printf("%s\n",e.what());
+		}
+	}else{
+		createTable();
+	}
 }
 
 
@@ -56,14 +152,19 @@ void mysqlconnector::insertWorker(){
 
 
 int mysqlconnector::start(int threads){
-	
+
 	try{
 		// Create a connection
 		driver = get_driver_instance();
 		con = driver->connect(add, user, password);
 
-		// Connect to the cawl database
+		/* Connect to the cawl database, should check
+		*if db exist and create if it does not
+		*/
 		con->setSchema(db);
+
+		// Check if table exist
+		tableCheck();
 
 	} catch (sql::SQLException &e) {
 		return -1;
@@ -80,7 +181,7 @@ int mysqlconnector::start(int threads){
 }
 
 
-void mysqlconnector::insert(measurementData data){
+void mysqlconnector::insert(stat data){
 	//insert into queue, add mutex etc
 	{
 		std::unique_lock<std::mutex> lk(mutex);
@@ -92,31 +193,25 @@ void mysqlconnector::insert(measurementData data){
 }
 
 
-void mysqlconnector::dbInsert(measurementData data) {
+void mysqlconnector::dbInsert(stat data) {
 
 	stmt = con->createStatement();
-	std::string name   =data.name;
-	std::string dtime  =data.timeStamp;
-	std::string type   =data.type;
-	std::string mdata  =data.value;
-	std::string cawlId =data.id;
-
+	std::string quer = "";
 	// Form querey
-	std::string quer   =(std::string)("INSERT INTO `") +
-			tbl								+
-			(std::string)("` (`id`")		+
-			(std::string)(", `name`")		+
-			(std::string)(", `type`")		+
-			(std::string)(", `time`")		+
-			(std::string)(", `data`")		+
-			(std::string)(",`cawlId`")		+
-			(std::string)(") VALUES (")		+
-			(std::string)("NULL, \'")		+
-			name+(std::string)("\', \'")	+
-			type+(std::string)("\', \'")   +
-			dtime+(std::string)("\', \'")    +
-			mdata+(std::string)("\', \'")   +
-			cawlId+(std::string)("\')");
+//	std::string quer =(std::string)("INSERT INTO `") +
+//			tbl	+
+//			(std::string)(", `sstat_assoc_id`")		+
+//			(std::string)(", `sstat_state`")		+
+//			(std::string)(", `sstat_unackdata`")	+
+//			(std::string)(", `spinfo_address`")		+
+//			(std::string)(", `spinfo_srtt`")		+
+//			(std::string)(") VALUES (")		+
+//			(std::string)("NULL, \'")		+
+//			data.sstat_assoc_id + (std::string)("\', \'")	+
+//			data.sstat_state + (std::string)("\', \'")    +
+//			data.sstat_unackdata+(std::string)("\', \'")   +
+//			data.spinfo_address+(std::string)("\', \'")   +
+//			data.spinfo_srtt+(std::string)("\')");
 
 	// Insert into database and catch exception if any is thrown
 	try{
@@ -125,6 +220,13 @@ void mysqlconnector::dbInsert(measurementData data) {
 		printf("%s\n",e.what());
 		throw 20;
 	}
+}
+
+
+mysqlconnector::~mysqlconnector() {
+	delete res;
+	delete stmt;
+	delete con;
 }
 
 } /* namespace Db */

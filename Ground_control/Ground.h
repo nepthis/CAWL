@@ -1,8 +1,10 @@
 /*
  * Ground.h
- *
  *  Created on: May 19, 2014
- *      Author: Robin Bond
+ *  Author: Robin Bond & H�kan Ther�n
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 
 
@@ -11,7 +13,7 @@
 
 #define DEST_PORT 56565
 #define REC_IMU_PORT 45454
-#define DEST_ADDR	"192.168.2.199"
+#define DEST_ADDR	"127.0.0.1"
 #define RECVBUFSIZE	255
 
 
@@ -33,8 +35,8 @@
 //Own classes are included here
 #include "Sim.h"
 #include "../Packets/AllPackets.h"
-#include "../IMU/IMUManager.h"
-#include "../logger.h"
+#include "MPManager.h"
+#include "../Globals.h"
 
 
 namespace Ground_control {
@@ -44,7 +46,7 @@ namespace Ground_control {
  */
 class Ground {
 private:
-	IMU::IMUManager im;
+	MPManager mp;
 	//----------------Common stuff--------------------
 	int grSocket;
 	int recImuSocket;
@@ -55,6 +57,7 @@ private:
 	struct sockaddr_in recImuAddr;
 	Packets::SimPack sp;
 	Packets::SimPack state;
+	Packets::ImuPack imuStateToSim;
 	//----------------------SCTP---------------------
 //	char pRecvBuffer[RECVBUFSIZE + 1];
 //	struct sockaddr_in addrSCTP;

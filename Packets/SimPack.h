@@ -1,8 +1,10 @@
 /*
  * SimPack.h
- *
  *  Created on: May 20, 2014
- *      Author: cawl-server
+ *  Author: Robin Bond & H�kan Ther�n
+ *  Feel free to copy, use, and modify the code as you see fit.
+ *  If you have any questions, look in the bitbucket wiki.
+ *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
  */
 
 #ifndef SIMPACK_H_
@@ -80,7 +82,6 @@ public:
 	int setAnalog(int, float);
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
-	void stampTime();
 	fromSim getData(void);
 };
 
