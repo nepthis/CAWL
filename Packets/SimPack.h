@@ -1,10 +1,8 @@
 /*
  * SimPack.h
+ *
  *  Created on: May 20, 2014
- *  Author: Robin Bond & H�kan Ther�n
- *  Feel free to copy, use, and modify the code as you see fit.
- *  If you have any questions, look in the bitbucket wiki.
- *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
+ *      Author: cawl-server
  */
 
 #ifndef SIMPACK_H_
@@ -68,6 +66,7 @@ typedef struct fromSim {
 	uint32_t packetSize;
 	float analog[8];
 	uint32_t digital;
+	std::chrono::system_clock::time_point timeStamp;
 }fromSim;
 
 class SimPack {
@@ -82,6 +81,7 @@ public:
 	int setAnalog(int, float);
 	bool operator==(const SimPack &s);
 	virtual ~SimPack();
+	void stampTime();
 	fromSim getData(void);
 };
 

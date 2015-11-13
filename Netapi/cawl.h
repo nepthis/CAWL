@@ -12,7 +12,7 @@
 #include<cstdlib>
 #include <cstdio>
 #include <cstring>
-#include "mysqlconnector.h"
+//#include "../Netapi/GatherMetrics.h"
 
 namespace Netapi{
 
@@ -20,9 +20,6 @@ class cawl {
 private:
 	int SctpSocket;
 	int updateStatus(int SctpSock, sctp_assoc_t id, sctp_status* stat);
-
-	// Used for database connection
-	//Netapi::mysqlconnector dbc;
 
 public:
 	long value;
