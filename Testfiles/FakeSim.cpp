@@ -1,9 +1,3 @@
-/*
- *  Authors: Robin Bond & H�kan Ther�n
- *  Feel free to copy, use, and modify the code as you see fit.
- *  If you have any questions, look in the bitbucket wiki.
- *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
- */
 #include <curses.h>
 #include <string>
 #include <sstream>
@@ -24,7 +18,7 @@
 #define MIN 0.5
 #define FREQ 1000
 #define PORT 65400
-#define ADDR "127.0.0.1"
+#define ADDR "10.0.0.1"
 
 
 #define OFF 0

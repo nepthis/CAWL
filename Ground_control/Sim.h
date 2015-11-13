@@ -1,10 +1,13 @@
 /*
  * Sim.h
+ *
  *  Created on: Apr 16, 2014
- *  Author: Robin Bond & Håkan Therén
- *  Feel free to copy, use, and modify the code as you see fit.
- *  If you have any questions, look in the bitbucket wiki.
- *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
+ *      Author: Robin Bond
+ * Description:
+ * 	A simulator object will be responsible for the connection between Ground control
+ * 	and the simulator. The object will have functions for sending and receiving data
+ * 	between the two systems.
+ *
  */
 
 #ifndef SIM_H_

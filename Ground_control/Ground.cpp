@@ -1,20 +1,19 @@
 /*
  * Ground.cpp
- *  Author: Robin Bond & H�kan Ther�n
- *  Feel free to copy, use, and modify the code as you see fit.
- *  If you have any questions, look in the bitbucket wiki.
- *  https://bitbucket.org/bondue/cawl_nxt/wiki/Home
+ *
+ *  Created on: May 19, 2014
+ *      Author: Robin Bond
  */
 
 #include "Ground.h"
 using namespace std;
 using namespace Packets;
 using namespace Ground_control;
-
 mutex m_state;
-mutex m_ImuStateToSim;
 
 Ground::Ground(bool sctpStatus) {
+
+
 	sctpIsOn = sctpStatus;
 	slen = sizeof(grAddr);
 	sp 				=  SimPack();
@@ -38,7 +37,7 @@ Ground::Ground(bool sctpStatus) {
 	logVerbose("UDP socket for remote commands is set up");
 	//----------------------------------------------------------------------------------
 	//	}
-	if ((recImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
+	/*if ((recImuSocket = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		logWarning("Mobile -> Mobile: recImuSocket, could not set up socket.");
 		sleep(1);
 		logVerbose("Mobile -> Mobile: Retrying to set up recImuSocket");
@@ -49,17 +48,18 @@ Ground::Ground(bool sctpStatus) {
 	if(inet_pton(AF_INET, "0.0.0.0", &(recImuAddr.sin_addr)) < 0){logError("Ground -> Constructor");logError(strerror(errno));exit(1);}
 	recImuAddr.sin_port = htons(REC_IMU_PORT);
 	if (bind(recImuSocket, (struct sockaddr *)&recImuAddr, sizeof(recImuAddr)) < 0){
-		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);
-	}
+		logError("Mobile -> Mobile: bind for recImuSocket");logError(strerror(errno));exit(1);}
+		*/
 }
-/* The sendPacket method receives a packet from the simulator containing data
+/*	Written by Robin Bond and modified by Håkan
+ * The sendPacket method receives a packet from the simulator containing data
  * 	on how the current position on controls are. This packet is then transferred to Mobile.
  * 	the state must be fixed and a separate thread must be created for receiving packets and changing the state
  */
 void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 	int errorMobile = 0;
 	logVerbose("Ground -> sendMobile: starting");
-	while(not signaled){
+	while(true){
 		usleep(1000);
 		SimPack temp;
 		m_state.lock();
@@ -67,6 +67,7 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 		m_state.unlock();
 		if(sendto(grSocket, (char*)&temp.fs, sizeof(temp.fs), 0, (struct sockaddr*) &grAddr, slen) < 0){
 			logWarning("Ground:sendMobile: ");
+			logWarning(strerror(errno));
 			errorMobile++;
 			continue;
 		}else{
@@ -76,7 +77,6 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 			errno = ECOMM;
 			logError(strerror(errno));
 			logError("Fatal: cannot send to Mobile: ");
-			signaled;
 			exit(1);
 		}
 
@@ -85,7 +85,7 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 void Ground::receiveSim(){
 	int errorsSim = 0;
 	logVerbose("Ground -> receiveSim: starting");
-	while((errorsSim <= 50) && not signaled){
+	while(errorsSim <= 50){
 		try{
 			sp = simulator->recvSim();
 			errorsSim = 0;
@@ -96,15 +96,13 @@ void Ground::receiveSim(){
 			continue;
 		}
 		m_state.lock();
-		if(not (sp == state)){
-			state = sp;}
+		if(not (sp == state)){state = sp;}
 		m_state.unlock();
 		continue;
 	}
 	errno = ENETUNREACH;
-	logError(strerror(errno));
 	logError("Fatal: Ground -> receiveSim");
-	signaled = 1;
+	logError(strerror(errno));
 	exit(1);
 }
 
@@ -116,7 +114,9 @@ void Ground::receiveImuPacket(){
 	int imuErrors = 0;
 	Packets::ImuPack impa = Packets::ImuPack();
 	logVerbose("Ground -> receiveImuPacket: starting");
-	while(not signaled){
+	IMU::IMUManager im = IMU::IMUManager();
+	im.init(false, true);
+	while(true){
 		if(imuErrors < 100){
 			try{
 				if(recvfrom(recImuSocket, buffer, 255, 0, (struct sockaddr *)&recImuAddr, &slen) <0 ){
@@ -130,9 +130,7 @@ void Ground::receiveImuPacket(){
 					continue;
 				}
 				imuErrors = 0;
-				m_ImuStateToSim.lock();
-				imuStateToSim = impa;
-				m_ImuStateToSim.unlock();
+				im.setImuPack(impa);
 			}catch(int e){
 				logError(strerror(errno));
 				logError("Fatal: Ground -> receiveImuPacket");
@@ -143,38 +141,14 @@ void Ground::receiveImuPacket(){
 			errno = ENOLINK;
 			logError(strerror(errno));
 			logError("Fatal: Failed to receive imuPackets for an extended period");
-			delete &mp;
+			delete &im;
 			sleep(5);
-			signaled = 1;
 			exit(1);
 		}
 	}
 }
 
-void Ground_control::Ground::sendSim() {
-	int errors = 0;
-	Packets::ImuPack temp;
-	while(not signaled){
-		if (errors >= 100){
-			errno = 70; //ECOMM
-			logError(strerror(errno));
-			logError("Fatal: Ground -> sendSim: too many failures on sending the data");
-		}
-		m_ImuStateToSim.lock();
-		temp = imuStateToSim;
-		m_ImuStateToSim.unlock();
-		try{
-			mp.sendSim(temp);
-			errors = 0;
-		}catch(int e){
-			errors++;
-			logWarning("Ground -> sendSim: Could not send IMU data to sim");
-			signaled = 1;
-		}
-		usleep(17000);//60Hz, this is what Oryx claims their code is running at max
-	}
 
-}
 
 Ground::~Ground() {
 	delete simulator;
