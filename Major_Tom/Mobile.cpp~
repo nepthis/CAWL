@@ -101,18 +101,14 @@ bool Mobile::startUp(){
 	logVerbose("Trying to sync up for the relay packets");
 
 	try{
-		em.recvAnalogEBUOne();
-		printf("Received from Analog EBU1\n");
-		em.recvDigitalEBUOne();
-		printf("Received from Digital EBU1\n");
+		//em.recvAnalogEBUOne();
+		//em.recvDigitalEBUOne();
 		em.sendRelayCommand(rPackOne, 1);
 		logVerbose("Relay packets sent to EBU 1");
-		/*em.recvAnalogEBUTwo();
-		printf("Received from Analog EBU2");
-		em.recvDigitalEBUTwo();
-		printf("Received from Digital EBU2");
+		//em.recvAnalogEBUTwo();
+		//em.recvDigitalEBUTwo();
 		em.sendRelayCommand(rPackTwo, 2);
-		logVerbose("Relay packets sent to EBU 2");*/
+		logVerbose("Relay packets sent to EBU 2");
 	}catch(int e){
 		//perror("Error with sending relay commands");
 		logWarning("Mobile - > startUp: Error while syncing up EBUs for relay packets");
@@ -125,7 +121,7 @@ bool Mobile::startUp(){
 //This function receives UDP packets from Ground and puts them in a state if they are changed
 //If enough errors are detected
 void Mobile::recvGround() {
-	//printf("rcvGrnd\n");
+	printf("rcvGrnd\n");
 	while(not pleased){
 		if(errors == 10){
 			sendAllStop();
@@ -142,13 +138,14 @@ void Mobile::recvGround() {
 		//}else{
 		
 		int rcvd;
-		if(rcvd = recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
+		if(recvfrom(mobSocket, recbuf, 255, 0, (struct sockaddr *)&mobAddr, &slen) < 0){
 			logWarning("No data received from Ground");
 			errors++;
 			continue;
 		}else{
 			errors = 0;
-			//printf("rcvd ");
+			SimPack rcvd = &recbuf;
+			printf("%i", rcvd::getData);
 		}
 		memcpy(&simpack.fs, recbuf, sizeof(simpack.fs));
 		//}

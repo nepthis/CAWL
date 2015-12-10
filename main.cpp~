@@ -97,7 +97,7 @@ void start(State * s){
 				if(not major->em.setUpSockets()){logError("Can not set up sockets: Exiting");exit(1);}
 				printf("sockets are setup\n");
 			}else
-				printf("\nafter boot\n");
+				printf("after boot\n");
 				if(not major->startUp()){ //The bool should be sctp variable in status.
 					printf("Sending relay data failed, retrying in %i seconds\n", TIMEOUT);
 					logWarning("Can not send relay packages");

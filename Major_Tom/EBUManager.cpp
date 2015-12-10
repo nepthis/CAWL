@@ -120,15 +120,23 @@ bool EBU::EBUManager::setUpSockets() {
 		//-------------------------------EBUAnalogOut for EBU 1-----------------------
 		memset((char *)&addrOneAnalogOut, 0, sizeof(addrOneAnalogOut));
 		inet_pton(AF_INET, EBU_IP_1, &(addrOneAnalogOut.sin_addr));
-		addrOneAnalogOut.sin_port = htons(PORT_ANALOG_OUT);
+		addrOneAnalogOut.sin_port = htons(PORT_ANALOG_OUT1);
 		//--------------------------------EBUDigitalOut for EBU 1-----------------------
 		memset((char *)&addrOneDigitalOut, 0, sizeof(addrOneDigitalOut));
 		inet_pton(AF_INET, EBU_IP_1, &(addrOneDigitalOut.sin_addr));
-		addrOneDigitalOut.sin_port = htons(PORT_DIGITAL_OUT);
+		addrOneDigitalOut.sin_port = htons(PORT_DIGITAL_OUT1);
+		//---------------------25200 //EBU 1 & 2
+/*#define PORT_ANALOG_IN 25101		//EBU 1
+#define PORT_ANALOG2_IN 25102	//EBU 2
+#define PORT_DIGITAL_OUT 25300	//EBU 1 & 2
+#define PORT_DIGITAL_IN 25301 		//EBU 1
+#define PORT_DIGITAL2_IN 25302	//EBU 2
+#define PORT_RELAYS1 25401
+#define PORT_RELAYS2 25402		*/
 		//-------------------------------Relays for EBU 1-------------------------------------
 		memset((char *)&addrOneRelay, 0, sizeof(addrOneRelay));
 		inet_pton(AF_INET, EBU_IP_1, &(addrOneRelay.sin_addr));
-		addrOneRelay.sin_port = htons(PORT_RELAYS);
+		addrOneRelay.sin_port = htons(PORT_RELAYS1);
 		//-------------------------------EBUAnalogIn for EBU 1-----------------------
 		memset((char *)&addrOneAnalogIn, 0, sizeof(addrOneAnalogIn));
 		inet_pton(AF_INET, EBU_IP_ANY, &(addrOneAnalogIn.sin_addr));
@@ -140,15 +148,15 @@ bool EBU::EBUManager::setUpSockets() {
 		//--------------------------------EBUAnalogOut for EBU 2------------------------
 		memset((char *)&addrTwoAnalogOut, 0, sizeof(addrTwoAnalogOut));
 		inet_pton(AF_INET, EBU_IP_2, &(addrTwoAnalogOut.sin_addr));
-		addrTwoAnalogOut.sin_port = htons(PORT_ANALOG_OUT);
+		addrTwoAnalogOut.sin_port = htons(PORT_ANALOG_OUT2);
 		//--------------------------------EBUDigitalOut for EBU 2-----------------------
 		memset((char *)&addrTwoDigitalOut, 0, sizeof(addrTwoDigitalOut));
 		inet_pton(AF_INET, EBU_IP_2, &(addrTwoDigitalOut.sin_addr));
-		addrTwoDigitalOut.sin_port = htons(PORT_DIGITAL_OUT);
+		addrTwoDigitalOut.sin_port = htons(PORT_DIGITAL_OUT2);
 		//-------------------------------Relays for EBU 2--------------------------------------
 		memset((char *)&addrTwoRelay, 0, sizeof(addrTwoRelay));
 		inet_pton(AF_INET, EBU_IP_2, &(addrTwoRelay.sin_addr));
-		addrTwoRelay.sin_port = htons(PORT_RELAYS);
+		addrTwoRelay.sin_port = htons(PORT_RELAYS2);
 		//-------------------------------EBUAnalogIn for EBU 2-----------------------
 		memset((char *)&addrTwoAnalogIn, 0, sizeof(addrTwoAnalogIn));
 		inet_pton(AF_INET, EBU_IP_ANY, &(addrTwoAnalogIn.sin_addr));

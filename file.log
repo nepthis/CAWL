@@ -1,0 +1,20 @@
+Wed Dec  9 09:46:46 2015: error: Fatal: Mobile -> recvGround
+Wed Dec  9 09:46:46 2015: error: Success
+Wed Dec  9 09:49:15 2015: error: Fatal: Mobile -> recvGround
+Wed Dec  9 09:49:15 2015: error: Success
+Wed Dec  9 10:05:00 2015: error: Fatal: Mobile -> recvGround
+Wed Dec  9 10:05:00 2015: error: Success
+Wed Dec  9 10:08:07 2015: error: Fatal: Mobile -> recvGround
+Wed Dec  9 10:08:07 2015: error: Success
+Thu Dec 10 10:15:36 2015: error: Mobile -> Mobile: bind for mobSocket
+Thu Dec 10 10:15:36 2015: error: Success
+Thu Dec 10 10:16:22 2015: error: Mobile -> Mobile: bind for mobSocket
+Thu Dec 10 10:16:22 2015: error: Success
+Thu Dec 10 10:16:41 2015: error: Mobile -> Mobile: bind for mobSocket
+Thu Dec 10 10:16:41 2015: error: Success
+Thu Dec 10 10:17:09 2015: error: Mobile -> Mobile: bind for mobSocket
+Thu Dec 10 10:17:09 2015: error: Success
+Thu Dec 10 10:23:30 2015: error: Fatal: Mobile -> recvGround
+Thu Dec 10 10:23:30 2015: error: Success
+Thu Dec 10 10:24:24 2015: error: Fatal: Mobile -> recvGround
+Thu Dec 10 10:24:24 2015: error: Success

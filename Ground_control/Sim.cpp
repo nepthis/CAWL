@@ -37,7 +37,7 @@ Packets::SimPack Sim::recvSim(void) {
 	return simpack;
 }
 void Sim::sendSim(Packets::ImuPack imudata) {
-	//Packets going out must have packe ID field of 2001
+	//Packets going out must have packet ID field of 2001
 	imudata.sens.packetId = 2001;
 }
 

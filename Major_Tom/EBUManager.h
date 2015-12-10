@@ -26,16 +26,22 @@
 
 namespace EBU{
 
-#define EBU_IP_1 "10.0.0.2"
-#define EBU_IP_2 "10.0.0.3"
+#define EBU_IP_1 "localhost" //Original: 10.0.0.2
+#define EBU_IP_2 "localhost" //Original: 10.0.0.3
 #define EBU_IP_ANY "0.0.0.0"
-#define PORT_ANALOG_OUT 25200 //EBU 1 & 2
+//#define PORT_ANALOG_OUT 25200 //EBU 1 & 2
+#define PORT_ANALOG_OUT1 25201 //EBU 1
+#define PORT_ANALOG_OUT2 25202 //EBU 2
 #define PORT_ANALOG_IN 25101		//EBU 1
 #define PORT_ANALOG2_IN 25102	//EBU 2
-#define PORT_DIGITAL_OUT 25300	//EBU 1 & 2
+//#define PORT_DIGITAL_OUT 25300	//EBU 1 & 2
+#define PORT_DIGITAL_OUT1 25501	//EBU 1
+#define PORT_DIGITAL_OUT2 25502	//EBU 2
 #define PORT_DIGITAL_IN 25301 		//EBU 1
 #define PORT_DIGITAL2_IN 25302	//EBU 2
-#define PORT_RELAYS 25400				//EBU 1 & 2
+//#define PORT_RELAYS 25400		//EBU 1 & 2
+#define PORT_RELAYS1 25401		//EBU 1
+#define PORT_RELAYS2 25402		//EBU 2
 
 #define RETRIES 5
 
