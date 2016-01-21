@@ -85,8 +85,7 @@ void Ground::sendMobile() { //NOTE: This is for UDP. Write another for sctp
 void Ground::receiveSim(){
 	int errorsSim = 0;
 	logVerbose("Ground -> receiveSim: starting");
-	//while(errorsSim <= 50){
-	while(true){
+	while(errorsSim <= 50){
 		try{
 			sp = simulator->recvSim();
 			errorsSim = 0;
