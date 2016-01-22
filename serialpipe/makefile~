@@ -1,0 +1,2 @@
+all:
+	c++ example.cpp ../serialpipe/example.cpp -o example -std=c++14 -pthread
