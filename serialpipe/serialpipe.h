@@ -29,7 +29,7 @@
 #include <string>
 
 /* Serial include (https://github.com/wjwwood/serial) */
-#include "serial/serial.h" // Needs to be updated based on project
+#include "serial/include/serial/serial.h" // Needs to be updated based on project
 
 /* Threading includes */
 #include <thread>
