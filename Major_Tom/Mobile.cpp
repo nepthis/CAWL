@@ -10,6 +10,7 @@ using namespace Packets;
 using namespace std;
 mutex m_State;
 mutex m_Sendstate;
+
 /*	The contructor for the Mobile gateway initializes almost everything
  * 	and also sends the relay information to the EBU enabling the needed relays.
  * 	For now sending data back over the CawlSocket is not performed but when it
@@ -155,6 +156,7 @@ void Mobile::recvGround() {
 		m_State.lock();//(not (state == simpack)) && (state.fs.timeStamp < simpack.fs.timeStamp)
 		if ((not (state == simpack)&& (state.fs.packetId < simpack.fs.packetId)) && (simpack.fs.packetSize == state.fs.packetSize)){
 			state = simpack;
+			interrupted = true;
 		}else{
 			errors ++;
 		}
@@ -240,6 +242,45 @@ void Mobile::sendEBUTwo() {
 	}
 }
 
+void Mobile::startLoading(){
+	interrupted = false;
+	std::thread t1(Mobile::noSensorLoading);
+}
+
+void Mobile::noSensorLoading(){
+	/*while(not (interrupted)){
+		//do stuff
+		//state.setAnalog(GASPEDAL, 0.5);	//examples
+		//state.setDigital(GEARSELECT1, 1);
+	}
+	*/
+	state.setDigital(GEARSELECTFOR, 1); // Set gear to forward
+	state.setDigital(GEARSELECT1, 1); // Set first gear
+	state.setAnalog(BRAKEPEDAL, 0); // Set brake off
+	state.setAnalog(GASPEDAL, DEFAULT); // Press gas pedal
+	usleep(1000);
+	state.setAnalog(GASPEDAL, 0); // Release gas pedal
+	state.setAnalog(BRAKEPEDAL, DEFAULT); // Press brake pedal
+
+	// Perform lift
+	state.setAnalog(TILTSTICK, DEFAULT); // Start tilting bucket
+	usleep(1000);
+	state.setAnalog(TILTSTICK, 0); // Stop tilting bucket
+	state.setAnalog(LIFTSTICK, DEFAULT); // Start lifting boom
+	usleep(2000);
+	state.setAnalog(LIFTSTICK, 0);; // Stop lifting boom
+
+	// Drive backwards
+	state.setDigital(GEARSELECTREV, 1); // Set gear to reverse
+	state.setAnalog(BRAKEPEDAL, 0); // Set brake off
+	state.setAnalog(GASPEDAL, DEFAULT); // Press gas pedal
+	usleep(1000);
+	state.setAnalog(GASPEDAL, 0); // Release gas pedal
+	state.setAnalog(BRAKEPEDAL, DEFAULT); // Press brake pedal
+	usleep(1000);
+	state.setAnalog(BRAKEPEDAL, 1); // Set brake on
+}
+
 Mobile::~Mobile() {
 	//	em.sendAnalogCommand(stopPacket.getChannel(), 1);
 	//	rPackOne = RelayOut();
@@ -269,8 +310,11 @@ void Major_Tom::Mobile::sendAllStop() {
 	stop.setDigital(GEARCLCREVERSE, 0);
 	stop.setDigital(GEARCLCFORWARD, 0);
 	stop.setAnalog(JOYSTICK, 0.0);
+	interrupted = true;
 	m_State.lock();
 	state = stop;
 	m_State.unlock();
 
 }
+
+

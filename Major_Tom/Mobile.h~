@@ -11,8 +11,8 @@
 #define REC_PORT 56565
 #define IMU_PORT 45454
 #define REC_ADDR "0.0.0.0"
-#define GND_ADDR "192.168.2.100"
-#define DESTI_ADDR "192.168.2.100"
+#define GND_ADDR "130.240.5.40"
+#define DESTI_ADDR "130.240.5.40"
 //"10.0.0.199"
 
 #include <mutex>
@@ -59,6 +59,7 @@ public:
 	EBU::EBUManager em;	//Manages EBU connections
 private:
 	int errors;
+	int interrupted;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs

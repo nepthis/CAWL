@@ -13,6 +13,7 @@
 #define REC_ADDR "0.0.0.0"
 #define GND_ADDR "130.240.5.40"
 #define DESTI_ADDR "130.240.5.40"
+#define DEFAULT 0.5
 //"10.0.0.199"
 
 #include <mutex>
@@ -53,12 +54,15 @@ public:
 	void recvIMU();
 	void setSCTP();
 	void sendAllStop();
+	void startLoading();
+	void loading();
 	virtual ~Mobile();							//Destructor
 	Packets::RelayOut rPackOne;
 	Packets::RelayOut rPackTwo;
 	EBU::EBUManager em;	//Manages EBU connections
 private:
 	int errors;
+	bool interrupted;
 	bool sctpIsOn;		//if set to true sctp will be used instead of udp.
 
 	EBU::EBUTranslator et;	//Translates simdata for the EBUs
